@@ -200,7 +200,7 @@ See [this](https://interoperable-europe.ec.europa.eu/collection/semic-support-ce
 Other vocabulary have fields about privacy but coarse and table level.
 
 
-## SHACL Validation Rules (TODO)
+## SHACL Validation Rules
 
 ### Nullability
 - If `dp:nullable` is `true`, then `dp:nullableProportion` **MUST be greater than 0**.
@@ -238,6 +238,58 @@ For groupings over multiple columns:
 
 
 Standard SPARQL 1.1 can’t directly compute product() over a list of values. Need pySHACL.
+
+
+## Theoretical Upper Bounds for `dp:Groupable`
+
+When grouping by multiple columns, it is possible to derive worst-case upper bounds on the resulting partitions from the bounds declared on each individual column.
+These derived bounds are always conservative and are safe for differential privacy accounting.
+
+If tighter (less pessimistic) bounds are known, they SHOULD be expressed explicitly using a `dp:ColumnGroup` entry in the metadata.
+
+The following rules describe how bounds may be inferred for a multi-column group-by when no explicit `dp:ColumnGroup` is provided assuming a group-by over columns `C_1, C_2, …, C_n`.
+
+#### `dp:publicPartitions`
+- If all grouped columns define `dp:publicPartitions`, the effective public partitions are the Cartesian product of those lists.
+- Example:
+  - Column A: `["Male", "Female"]`
+  - Column B: `["Adelie", "Gentoo", "Chinstrap"]`
+  - Derived partitions:
+    - `("Male","Adelie")`, `("Male","Gentoo")`, `("Male","Chinstrap")`, `("Female","Adelie")`, `("Female","Gentoo")`, `("Female","Chinstrap")`
+- If **any** grouped column does not declare `dp:publicPartitions`, the composite grouping MUST NOT be treated as public.
+
+
+#### `dp:maxPartitionLength`
+- The upper bound is the minimum of the known `dp:maxPartitionLength` values   across all grouped columns.
+- If some columns omit this property, the minimum is taken over the known values.
+- Rationale: no composite partition can exceed the smallest contributing bound.
+
+#### `dp:maxNumPartitions`
+- The upper bound is the product of each column’s `dp:maxNumPartitions`.
+- If any grouped column omits `dp:maxNumPartitions`, the composite bound MUST NOT be inferred.
+- Rationale: the number of distinct composite keys grows multiplicatively.
+
+#### `dp:maxInfluencedPartitions`
+- The upper bound is the minimum of the known `dp:maxInfluencedPartitions` values.
+- If some columns omit this property, the minimum is taken over the known values.
+- Rationale: a person cannot influence more composite partitions than the tightest contributing bound.
+
+#### `dp:maxPartitionContribution`
+- The upper bound is the minimum of the known `dp:maxPartitionContribution` values.
+- If some columns omit this property, the minimum is taken over the known values.
+- Rationale: per-partition contribution is constrained by the strictest column.
+
+
+
+## TODOs - WIP
+
+- Make a file for the rules (in SHACL)
+- `dp:publicPartitions` maybe duplicate of csvw format of possible values for string. it could also be extended to categorical number (not just strings)
+-  `dp:maxNumPartitions` may be duplicate of cardinality in datatype of csvw.
+- more in depth type specification (lomas also has precision.. but it was for opendp 0.12, which is not needed anymore with the context). See [datatypes](https://w3c.github.io/csvw/primer/#datatypes). Is xmlschema enough ? See point [3 Built-in Datatypes and Their Definitions](https://www.w3.org/TR/xmlschema11-2/).
+- logic for lomas to combine columns if worst case (outside of csvw-dp)
+
+
 
 ## Status
 
