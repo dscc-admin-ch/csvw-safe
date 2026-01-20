@@ -10,7 +10,7 @@ It defines terms needed to express bounded influence assumptions about individua
 
 Differential privacy libraries assume (and often require) metadata such as:
 
-- `max_contributions` per person  
+- maximum number of row with the same person
 - maximum group sizes
 - bounds on how many partitions a person touches  
 - constraints that prevent overflow or numerical instability during aggregation
@@ -24,7 +24,7 @@ CSVW-DP introduces new terms so that a dataset can explicitly declare:
 - multi-column grouping assumptions
 
 
-The vocabulary intentionally avoids descriptive notions such as 'cardinality' or 'categories' in favor of DP-semantic bounds.
+The vocabulary intentionally avoids descriptive notions such as 'cardinality' or 'categories' in favor of DP-semantic bounds. (TODO: but is it a good idea?)
 
 ---
 
@@ -43,6 +43,9 @@ Machine-readable definitions live in: csvw-dp-ext.ttl
 | `dp:tableLength` | positive integer | Number of rows in table (if known). |
 | `dp:maxContributions` | positive integer | Max number of rows per individual (≈ L0 bound). |
 
+See [Widespread Underestimation of Sensitivity in Differentially
+Private Libraries and How to Fix It](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708) (Casacuberta, Silvia and Shoemate, Michael and Vadhan, Salil and Wagaman, Connor) for `dp:maxTableLength` motivation.
+
 
 ### Column-level properties
 
@@ -56,14 +59,11 @@ Machine-readable definitions live in: csvw-dp-ext.ttl
 
 ### Groupable
 
-CSVW-DP introduces an abstract helper class:
+CSVW-DP introduces an abstract helper class: `dp:Groupable`
 
-dp:Groupable
+It represents any entity that can be used to form groups (partitions) for aggregation and differential privacy analysis.
 
-dp:Groupable represents any entity that can be used to form groups (partitions) for aggregation and differential privacy analysis.
-
-It is not instantiated directly.
-Instead, two concrete CSVW concepts specialize it:
+It is not instantiated directly. Instead, two concrete CSVW concepts specialize it:
 
 | Class | Meaning |
 |-------|---------|
@@ -85,16 +85,14 @@ Instead, two concrete CSVW concepts specialize it:
 
 ### Multi-column grouping support
 
-CSVW-DP introduces a helper class:
+CSVW-DP introduces a helper class: `dp:ColumnGroup`
 
-dp:ColumnGroup
-
-Represents a grouping key formed by two or more columns, or a single column reused in a composite context.
+Represents a grouping key formed by two or more columns, or a single column reused in a composite context. Only useful if less privacy spending than worst case of single columns.
 
 | Term | Applies to | Meaning |
 |------|------------|---------|
 | `dp:columns` | ColumnGroup | List of columns that jointly define the composite key. |
-| `dp:maxPartitionLength` | ColumnGroup | Max size of any group when grouping by the column. |
+| `dp:maxPartitionLength` | ColumnGroup | Max size of any group when grouping by the columns. |
 | `dp:maxNumPartitions` | ColumnGroup | Max number of distinct groups keys. |
 | `dp:maxInfluencedPartitions` | ColumnGroup | Max number of groups a person may contribute to. |
 | `dp:maxPartitionContribution` | ColumnGroup | Max contributions inside one partition. |
@@ -144,20 +142,20 @@ csvw:Table
 
 | Concept / Role             | OpenDP                      | SmartNoise SQL| PipelineDP                      | Tumult Analytics   | ZetaSQL        | Vocabulary term    | Already defined? |
 |----------------------------|-----------------------------|---------------|---------------------------------|--------------------|----------------|-------------------------------|---------|
-| Table max length           | margin max_length           | —             | —                               | —                  | —              | `maxTableLength`             | ❌ new  |
-| Table size (if known)      | margin length invariant     | n_row         | —                               | —                  | —              | `tableLength`                | ❌ new  |
-| Max contribution per PU    | privacy_unit contribution   | max_ids       | max_contribution                | MaxRowsPerID       | —              | `maxContributions`           | ❌ new  |
+| Table max length           | margin max_length           | —             | —                               | —                  | —              | `maxTableLength`             | new  |
+| Table size (if known)      | margin length invariant     | n_row         | —                               | —                  | —              | `tableLength`                | new  |
+| Max contribution per PU    | privacy_unit contribution   | max_ids       | max_contribution                | MaxRowsPerID       | —              | `maxContributions`           | new  |
 | Column datatype            | ColumnDomain                | type          | —                               | —                  | —              | `datatype`                   | ✔ CSVW  |
-| Privacy ID column          | —                           | private_id    | privacy_id                      | id_column          | privacy_unit   | `privacyId`                  | ❌ new  |
+| Privacy ID column          | —                           | private_id    | privacy_id                      | id_column          | privacy_unit   | `privacyId`                  | new  |
 | Nullability                | —                           | nullable      | —                               | —                  | —              | `nullable`                   | ✔ CSVW-equivalent |
 | Default / missing          | —                           | missing_value | —                               | —                  | —              | `default`                    | ✔ CSVW  |
 | Bounds lower               | lower                       | lower         | min_value                       | low                | —              | `minimum`                    | ✔ CSVW  |
 | Bounds upper               | upper                       | upper         | max_value                       | high               | —              | `maximum`                    | ✔ CSVW  |
-| Public partitions key list | with_keys, margin keys invariant | —        | partition_key                   | keyset             | partition key  | `publicPartitions`           | ❌ new  |
-| Partition max length           | max_partition_length         | —        | —                               | —                  | —              | `maxPartitionLength`         | ❌ new  |
-| Max number of partition per PU | max_influenced_partitions    | —        | max_partition_contributed       | MaxGroupsPerID     | max_groups_contributed | `maxInfluencedPartitions` | ❌ new  |
-| Max PU per partition           | max_partition_contribution   | —        | max_contributions_per_partition | MaxRowsPerGroupPerID | —          | `maxPartitionContribution`     | ❌ new  |
-| Max number of partition    | max_group                   | —             | max_partitions                  | —                  | (1)            | `maxNumPartitions`           | ❌ new  |
+| Public partitions key list | with_keys, margin keys invariant | —        | partition_key                   | keyset             | partition key  | `publicPartitions`           | new  |
+| Partition max length           | max_partition_length         | —        | —                               | —                  | —              | `maxPartitionLength`         | new  |
+| Max number of partition per PU | max_influenced_partitions    | —        | max_partition_contributed       | MaxGroupsPerID     | max_groups_contributed | `maxInfluencedPartitions` | new  |
+| Max PU per partition           | max_partition_contribution   | —        | max_contributions_per_partition | MaxRowsPerGroupPerID | —          | `maxPartitionContribution`     | new  |
+| Max number of partition    | max_group                   | —             | max_partitions                  | —                  | (1)            | `maxNumPartitions`           | new  |
 
 (1): contribution_bounds_per_group: (max_contribution_per_partition*bounds)
 
@@ -237,9 +235,6 @@ For groupings over multiple columns:
 - `dp:maxPartitionLength` **MUST equal** the minimum `dp:maxPartitionLength` across all grouped columns.
 
 
-Standard SPARQL 1.1 can’t directly compute product() over a list of values. Need pySHACL.
-
-
 ## Theoretical Upper Bounds for `dp:Groupable`
 
 When grouping by multiple columns, it is possible to derive worst-case upper bounds on the resulting partitions from the bounds declared on each individual column.
@@ -280,15 +275,42 @@ The following rules describe how bounds may be inferred for a multi-column group
 - Rationale: per-partition contribution is constrained by the strictest column.
 
 
+#### Example
+Two columns: `year` and `month`. It is publicly know that data ranges from 06.2026 to 05.2027 and there is one row per day. A person can contribute once per year.
+- column `year` has metadata:
+    - `dp:publicPartitions`: [2026, 2027]
+    - `dp:maxPartitionLength`: 366
+    - `dp:maxNumPartitions`: 2
+    - `dp:maxInfluencedPartitions`: 2
+    - `dp:maxPartitionContribution`: 1
+- column `sex` has metadata:
+    - `dp:publicPartitions`: [01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12]
+    - `dp:maxPartitionLength`: 31*2 (max days in month * nb year)
+    - `dp:maxNumPartitions`: 12
+    - `dp:maxInfluencedPartitions`: 2 (2 different month in 2 years)
+    - `dp:maxPartitionContribution`: 2 (same month in the 2 years)
+
+In the worst case rules, ColumnGroup [`year`, `month`] has metadata:
+    - `dp:publicPartitions`: cartesian product of all years and months: all months of 2026 and all months of 2027.
+    - `dp:maxPartitionLength`: 366 + 365 = 731
+    - `dp:maxNumPartitions`: 2 * 12=24
+    - `dp:maxInfluencedPartitions`: 2
+    - `dp:maxPartitionContribution`: 2
+
+But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has metadata:
+    - `dp:publicPartitions`: [06, 07, 08, 09, 10, 11, 12] of 2026 and [01, 02, 03, 04, 05] of 2027.
+    - `dp:maxPartitionLength`: 366
+    - `dp:maxNumPartitions`: 12
+    - `dp:maxInfluencedPartitions`: 1
+    - `dp:maxPartitionContribution`: 1
 
 ## TODOs - WIP
 
-- Make a file for the rules (in SHACL)
+- Make a file for the rules (in SHACL) or pyshacl ? 
 - `dp:publicPartitions` maybe duplicate of csvw format of possible values for string. it could also be extended to categorical number (not just strings)
--  `dp:maxNumPartitions` may be duplicate of cardinality in datatype of csvw.
+- `dp:maxNumPartitions` may be duplicate of cardinality in datatype of csvw.
 - more in depth type specification (lomas also has precision.. but it was for opendp 0.12, which is not needed anymore with the context). See [datatypes](https://w3c.github.io/csvw/primer/#datatypes). Is xmlschema enough ? See point [3 Built-in Datatypes and Their Definitions](https://www.w3.org/TR/xmlschema11-2/).
-- logic for lomas to combine columns if worst case (outside of csvw-dp)
-
+- logic for combining continuous columns if binned with known breaks
 
 
 ## Status
