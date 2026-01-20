@@ -1,0 +1,169 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix csvw: <http://www.w3.org/ns/csvw#> .
+@prefix dp:   <https://example.org/csvw-dp-ext#> .
+
+######################################################################
+# Ontology header
+######################################################################
+
+dp: a owl:Ontology ;
+    dct:title "CSVW Differential Privacy Extension Vocabulary" ;
+    dct:creator "DSCC - BFS" ;
+    dct:description """
+An extension vocabulary for CSVW metadata that captures properties 
+needed to analyze bounded individual contribution and differential-
+privacy robustness. Includes limits aimed at preventing privacy loss
+via overflow, skew, or numerical instability during aggregation.
+""" ;
+    dct:source """
+Concepts and terminology influenced by OpenDP,  SmartNoise-SQL,
+Tumult Analytics, PipelineDP, Google DPE, and the broader differential 
+privacy engineering community.
+""" ;
+    dct:license <https://creativecommons.org/publicdomain/zero/1.0/> .
+
+######################################################################
+# Core category
+######################################################################
+
+dp:Groupable a rdfs:Class ;
+    rdfs:label "Groupable" ;
+    rdfs:comment """
+Superclass for things that induce partitions for DP accounting.
+Includes individual columns and multi-column group specifications.
+""" .
+
+csvw:Column rdfs:subClassOf dp:Groupable .
+# TableSchema still owns them via CSVW; no structural changes
+
+######################################################################
+# Table-level properties
+######################################################################
+
+dp:maxTableLength a rdf:Property ;
+    rdfs:label "Maximum theoretical table length" ;
+    rdfs:comment """
+Upper bound on total row count under worst-case data expansion.
+Used to avoid overflow and numerical-instability paths that could
+weaken privacy guarantees.
+""" ;
+    rdfs:domain csvw:Table ;
+    rdfs:range xsd:positiveInteger .
+
+dp:maxContributions a rdf:Property ;
+    rdfs:label "Maximum contributions per person (table)" ;
+    rdfs:comment """
+Maximum number of rows a single person may contribute.
+""" ;
+    rdfs:domain csvw:Table ;
+    rdfs:range xsd:positiveInteger .
+
+dp:tableLength a rdf:Property ;
+    rdfs:label "Exact table length" ;
+    rdfs:comment """
+Exact number of rows, if known.
+Should be <= dp:maxTableLength.
+""" ;
+    rdfs:domain csvw:Table ;
+    rdfs:range xsd:positiveInteger .
+
+######################################################################
+# Column-level properties
+######################################################################
+
+dp:privacyId a rdf:Property ;
+    rdfs:label "Privacy ID column" ;
+    rdfs:comment """
+True if this column contains identifiers mapping rows to a person/
+unit. Supports automated DP scope detection.
+""" ;
+    rdfs:domain csvw:Column ;
+    rdfs:range xsd:boolean .
+
+dp:nullable a rdf:Property ;
+    rdfs:label "Nullable flag" ;
+    rdfs:comment "True if the column may contain missing/null/NaN values." ;
+    rdfs:domain csvw:Column ;
+    rdfs:range xsd:boolean .
+
+dp:nullableProportion a rdf:Property ;
+    rdfs:label "Proportion null" ;
+    rdfs:comment """
+Fraction of values that are null, in [0.0, 1.0].
+Useful for accuracy estimates and imputations under DP.
+""" ;
+    rdfs:domain csvw:Column ;
+    rdfs:range xsd:decimal .
+
+dp:publicPartitions a rdf:Property ;
+    rdfs:label "Public partitions / declared buckets" ;
+    rdfs:comment """
+Explicit universe of allowed partition keys for grouping.
+For categorical columns, values are category labels.
+For derived/binned columns, values represent bin identifiers.
+Declaring this list constrains group-by outputs and prevents
+unbounded category leakage.
+""" ;
+    rdfs:domain dp:Groupable ;
+    rdfs:range rdf:List .
+
+######################################################################
+# DP bounds applying to one or more groupable keys
+######################################################################
+
+dp:maxPartitionLength a rdf:Property ;
+    rdfs:label "Max partition length" ;
+    rdfs:comment """
+Upper bound on the size of any partition induced by a groupable key.
+""" ;
+    rdfs:domain dp:Groupable ;
+    rdfs:range xsd:positiveInteger .
+
+dp:maxNumPartitions a rdf:Property ;
+    rdfs:label "Max number of partitions" ;
+    rdfs:comment "Upper bound on number of distinct partitions." ;
+    rdfs:domain dp:Groupable ;
+    rdfs:range xsd:positiveInteger .
+
+dp:maxInfluencedPartitions a rdf:Property ;
+    rdfs:label "Max influenced partitions" ;
+    rdfs:comment """
+Upper bound on the number of distinct partitions to which one person
+may contribute.
+""" ;
+    rdfs:domain dp:Groupable ;
+    rdfs:range xsd:positiveInteger .
+
+dp:maxPartitionContribution a rdf:Property ;
+    rdfs:label "Max contribution within a partition" ;
+    rdfs:comment """
+Upper bound on per-person contributions within any single partition.
+""" ;
+    rdfs:domain dp:Groupable ;
+    rdfs:range xsd:positiveInteger .
+
+######################################################################
+# Multi-column grouping (columnGroup resources)
+######################################################################
+
+dp:ColumnGroup a rdfs:Class ;
+    rdfs:subClassOf dp:Groupable ;
+    rdfs:label "Column group" ;
+    rdfs:comment """
+A resource describing grouping over one or more CSVW columns.
+Attach DP bounds here when grouping spans multiple columns.
+""" .
+
+dp:columns a rdf:Property ;
+    rdfs:label "Grouping columns" ;
+    rdfs:comment """
+List of CSVW column resources participating in this group.
+Interpretation: jointly define the group-by key.
+MUST contain at least one column.
+""" ;
+    rdfs:domain dp:ColumnGroup ;
+    rdfs:range rdf:List .

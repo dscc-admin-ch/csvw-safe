@@ -1,0 +1,121 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/csvw",
+    {
+      "dp": "http://example.org/ns/csvw-dp-ext#"
+    }
+  ],
+  "url": "penguins.csv",
+  "tableSchema": {
+    "dp:maxContributions": 2,
+    "dp:maxTableLength": 500,
+    "dp:tableLength": 344,
+
+    "columns": [
+      {
+        "name": "species",
+        "datatype": "string",
+        "dp:privacyId": false,
+        "dp:nullable": false,
+        "dp:nullableProportion": 0,
+        "dp:publicPartitions": ["Adelie", "Chinstrap", "Gentoo"],
+        "dp:maxNumPartitions": 3,
+        "dp:maxPartitionLength": 200,
+        "dp:maxInfluencedPartitions": 1,
+        "dp:maxPartitionContribution": 2
+      },
+      {
+        "name": "island",
+        "datatype": "string",
+        "dp:privacyId": false,
+        "dp:nullable": false,
+        "dp:nullableProportion": 0,
+        "dp:cardinality": 3,
+        "dp:publicPartitions": ["Torgersen", "Biscoe", "Dream"],
+        "dp:maxNumPartitions": 3,
+        "dp:maxPartitionLength": 200,
+        "dp:maxInfluencedPartitions": 1,
+        "dp:maxPartitionContribution": 2
+      },
+      {
+        "name": "bill_length_mm",
+        "datatype": "double",
+        "dp:privacyId": false,
+        "minimum": 30.0,
+        "maximum": 65.0,
+        "dp:nullable": false,
+        "dp:nullableProportion": 0
+      },
+      {
+        "name": "bill_depth_mm",
+        "datatype": "double",
+        "dp:privacyId": false,
+        "minimum": 13.0,
+        "maximum": 23.0,
+        "dp:nullable": false,
+        "dp:nullableProportion": 0
+      },
+      {
+        "name": "flipper_length_mm",
+        "datatype": "double",
+        "dp:privacyId": false,
+        "minimum": 150.0,
+        "maximum": 250.0,
+        "dp:nullable": false,
+        "dp:nullableProportion": 0
+      },
+      {
+        "name": "body_mass_g",
+        "datatype": "double",
+        "dp:privacyId": false,
+        "minimum": 2000.0,
+        "maximum": 7000.0,
+        "dp:nullable": false,
+        "dp:nullableProportion": 0
+      },
+      {
+        "name": "sex",
+        "datatype": "string",
+        "dp:privacyId": false,
+        "dp:nullable": true,
+        "dp:nullableProportion": 0.05,
+        "dp:publicPartitions": ["MALE", "FEMALE"],
+        "dp:maxNumPartitions": 2,
+        "dp:maxPartitionLength": 300,
+        "dp:maxInfluencedPartitions": 1,
+        "dp:maxPartitionContribution": 2
+      }
+    ],
+
+    "dp:columnGroup": [
+      {
+        "columns": ["species", "sex"],
+        "dp:maxNumPartitions": 6,
+        "dp:maxPartitionLength": 100,
+        "dp:maxInfluencedPartitions": 1,
+        "dp:maxPartitionContribution": 2
+      },
+      {
+        "columns": ["species", "island"],
+        "dp:maxNumPartitions": 9,
+        "dp:maxPartitionLength": 100,
+        "dp:maxInfluencedPartitions": 1,
+        "dp:maxPartitionContribution": 2
+      },
+      {
+        "columns": ["sex", "island"],
+        "dp:maxNumPartitions": 6,
+        "dp:maxPartitionLength": 100,
+        "dp:maxInfluencedPartitions": 1,
+        "dp:maxPartitionContribution": 2
+      },
+      {
+        "columns": ["species", "island", "sex"],
+        "dp:maxNumPartitions": 18,
+        "dp:maxPartitionLength": 50,
+        "dp:maxInfluencedPartitions": 1,
+        "dp:maxPartitionContribution": 2
+      }
+    ]
+  }
+}

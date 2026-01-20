@@ -1,0 +1,80 @@
+{
+  "@context": {
+    /* -----------------------
+     * Namespaces
+     * --------------------- */
+    "csvw": "http://www.w3.org/ns/csvw#",
+    "dp":   "https://example.org/csvw-dp-ext#",
+
+    /* -----------------------
+     * Core classes
+     * --------------------- */
+    "Groupable":   "dp:Groupable",
+    "ColumnGroup": "dp:ColumnGroup",
+
+    /* -----------------------
+     * Table-level DP metadata
+     * --------------------- */
+    "maxTableLength": {
+      "@id": "dp:maxTableLength",
+      "@type": "xsd:positiveInteger"
+    },
+    "tableLength": {
+      "@id": "dp:tableLength",
+      "@type": "xsd:positiveInteger"
+    },
+    "maxContributions": {
+      "@id": "dp:maxContributions",
+      "@type": "xsd:positiveInteger"
+    },
+
+    /* -----------------------
+     * Column-level DP metadata
+     * --------------------- */
+    "privacyId": {
+      "@id": "dp:privacyId",
+      "@type": "xsd:boolean"
+    },
+    "nullable": {
+      "@id": "dp:nullable",
+      "@type": "xsd:boolean"
+    },
+    "nullableProportion": {
+      "@id": "dp:nullableProportion",
+      "@type": "xsd:decimal"
+    },
+    "publicPartitions": {
+      "@id": "dp:publicPartitions",
+      "@container": "@list"
+    },
+
+    /* -----------------------
+     * ColumnGroup (multi-column group-by)
+     * --------------------- */
+    "columns": {
+      "@id": "dp:columns",
+      "@container": "@list"
+    },
+
+    /* -----------------------
+     * Unified DP group-by bounds
+     * (apply to any dp:Groupable)
+     * --------------------- */
+    "maxPartitionLength": {
+      "@id": "dp:maxPartitionLength",
+      "@type": "xsd:positiveInteger"
+    },
+    "maxNumPartitions": {
+      "@id": "dp:maxNumPartitions",
+      "@type": "xsd:positiveInteger"
+    },
+    "maxInfluencedPartitions": {
+      "@id": "dp:maxInfluencedPartitions",
+      "@type": "xsd:positiveInteger"
+    },
+    "maxPartitionContribution": {
+      "@id": "dp:maxPartitionContribution",
+      "@type": "xsd:positiveInteger"
+    }
+  }
+}
