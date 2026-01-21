@@ -84,12 +84,6 @@ unit. Supports automated DP scope detection.
     rdfs:domain csvw:Column ;
     rdfs:range xsd:boolean .
 
-dp:nullable a rdf:Property ;
-    rdfs:label "Nullable flag" ;
-    rdfs:comment "True if the column may contain missing/null/NaN values." ;
-    rdfs:domain csvw:Column ;
-    rdfs:range xsd:boolean .
-
 dp:nullableProportion a rdf:Property ;
     rdfs:label "Proportion null" ;
     rdfs:comment """

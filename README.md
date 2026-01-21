@@ -4,7 +4,10 @@
 
 The **CSVW Differential Privacy Extension (CSVW-DP)** is a vocabulary designed to complement the W3C [CSV on the Web](https://www.w3.org/TR/tabular-data-model/) metadata model.
 
-It defines terms needed to express bounded influence assumptions about individuals in tabular data — the assumptions most differential privacy (DP) systems require but CSVW cannot describe today.
+It defines terms needed to express bounded influence assumptions about individuals in tabular data — the assumptions most differential privacy (DP) systems require but CSVW cannot describe.
+
+See guidelines and notes [here](https://github.com/dscc-admin-ch/csvw-dp/blob/main/guidelines.md).
+
 
 ## Motivation
 
@@ -23,15 +26,13 @@ CSVW-DP introduces new terms so that a dataset can explicitly declare:
 - per-column DP roles and limits  
 - multi-column grouping assumptions
 
-
-The vocabulary intentionally avoids descriptive notions such as 'cardinality' or 'categories' in favor of DP-semantic bounds. (TODO: but is it a good idea?)
+See various libraries and their terms [here](https://github.com/dscc-admin-ch/csvw-dp/blob/main/dp_libraries.md).
 
 ---
 
 ## Namespace
 
 **Default namespace:** https://github.com/dscc-admin-ch/csvw-dp/csvw-dp-ext#
-
 
 Machine-readable definitions live in: csvw-dp-ext.ttl
 
@@ -41,7 +42,7 @@ Machine-readable definitions live in: csvw-dp-ext.ttl
 |------|------|---------|
 | `dp:maxTableLength` | positive integer | Upper bound on total rows (used to avoid overflow / numerical instability). |
 | `dp:tableLength` | positive integer | Number of rows in table (if known). |
-| `dp:maxContributions` | positive integer | Max number of rows per individual (≈ L0 bound). |
+| `dp:maxContributions` | positive integer | Max number of rows per individual. |
 
 See [Widespread Underestimation of Sensitivity in Differentially
 Private Libraries and How to Fix It](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708) (Casacuberta, Silvia and Shoemate, Michael and Vadhan, Salil and Wagaman, Connor) for `dp:maxTableLength` motivation.
@@ -52,9 +53,17 @@ Private Libraries and How to Fix It](https://dl.acm.org/doi/pdf/10.1145/3548606.
 | Term | Type | Meaning |
 |------|------|---------|
 | `dp:privacyId` | boolean | True if the column identifies individuals/units for DP. |
-| `dp:nullable` | boolean | Whether null values may appear. |
 | `dp:nullableProportion` | decimal 0–1 | Fraction of values that are null. |
 | `dp:publicPartitions` | list(string) | Declared category set if partitions are known ahead of time. |
+
+`required` in csvw is a boolean for wether the cell must be present and non-empty. 
+`dp:nullableProportion` is useful to make more representative dummy dataframe but is optinal (no need to be exact, just coarse idea). 
+
+Specification for datatype: xmlschema seems enough. See point [3 Built-in Datatypes and Their Definitions](https://www.w3.org/TR/xmlschema11-2/). See [datatypes](https://w3c.github.io/csvw/primer/#datatypes).  
+
+If required is false and column has a list of `dp:publicPartitions`, is Nan in `dp:publicPartitions` ? - i think yes by default as it is public?
+
+penguin dataset sex column could be boolean with "format": ("MALE"|"FEMALE") and required=false (for now string). i think it is more a preprocessing issue. in the end it is the same.. a boolean is two categories.
 
 
 ### Groupable
@@ -83,6 +92,7 @@ It is not instantiated directly. Instead, two concrete CSVW concepts specialize 
 | `dp:maxPartitionContribution` | positive integer | Max contributions inside one partition. |
 
 
+
 ### Multi-column grouping support
 
 CSVW-DP introduces a helper class: `dp:ColumnGroup`
@@ -99,6 +109,9 @@ Represents a grouping key formed by two or more columns, or a single column reus
 
 DP properties on dp:ColumnGroup reuse the same terms as columns (dp:maxPartitionLength, etc.), since both are subclasses of dp:Groupable.
 
+`dp:publicPartitions` is not a duplicate of csvw `format` of possible values for string. 
+datatype is more the value domain and format explain how to interpret the dp:publicPartitions.
+also publicPartitions may be different than actual partitions and the user might agree to spend delta to have more freedom there.
 
 ## Diagram
 
@@ -115,7 +128,6 @@ csvw:Table
         │                                          ⊂ dp:Groupable
         │        |
         │        ├─ dp:privacyId                : xsd:boolean
-        │        ├─ dp:nullable                 : xsd:boolean
         │        ├─ dp:nullableProportion       : xsd:decimal
         │        |
         │        ├─ dp:publicPartitions         : rdf:List
@@ -135,74 +147,12 @@ csvw:Table
                  └─ dp:maxPartitionContribution : xsd:positiveInteger
 ```
 
-## Library mapping (tentative)
-
-> Terminology varies across DP frameworks.
-> PU: Privacy Unit
-
-| Concept / Role             | OpenDP                      | SmartNoise SQL| PipelineDP                      | Tumult Analytics   | ZetaSQL        | Vocabulary term    | Already defined? |
-|----------------------------|-----------------------------|---------------|---------------------------------|--------------------|----------------|-------------------------------|---------|
-| Table max length           | margin max_length           | —             | —                               | —                  | —              | `maxTableLength`             | new  |
-| Table size (if known)      | margin length invariant     | n_row         | —                               | —                  | —              | `tableLength`                | new  |
-| Max contribution per PU    | privacy_unit contribution   | max_ids       | max_contribution                | MaxRowsPerID       | —              | `maxContributions`           | new  |
-| Column datatype            | ColumnDomain                | type          | —                               | —                  | —              | `datatype`                   | ✔ CSVW  |
-| Privacy ID column          | —                           | private_id    | privacy_id                      | id_column          | privacy_unit   | `privacyId`                  | new  |
-| Nullability                | —                           | nullable      | —                               | —                  | —              | `nullable`                   | ✔ CSVW-equivalent |
-| Default / missing          | —                           | missing_value | —                               | —                  | —              | `default`                    | ✔ CSVW  |
-| Bounds lower               | lower                       | lower         | min_value                       | low                | —              | `minimum`                    | ✔ CSVW  |
-| Bounds upper               | upper                       | upper         | max_value                       | high               | —              | `maximum`                    | ✔ CSVW  |
-| Public partitions key list | with_keys, margin keys invariant | —        | partition_key                   | keyset             | partition key  | `publicPartitions`           | new  |
-| Partition max length           | max_partition_length         | —        | —                               | —                  | —              | `maxPartitionLength`         | new  |
-| Max number of partition per PU | max_influenced_partitions    | —        | max_partition_contributed       | MaxGroupsPerID     | max_groups_contributed | `maxInfluencedPartitions` | new  |
-| Max PU per partition           | max_partition_contribution   | —        | max_contributions_per_partition | MaxRowsPerGroupPerID | —          | `maxPartitionContribution`     | new  |
-| Max number of partition    | max_group                   | —             | max_partitions                  | —                  | (1)            | `maxNumPartitions`           | new  |
-
-(1): contribution_bounds_per_group: (max_contribution_per_partition*bounds)
-
----
-
-## (Notes from) Guidelines from Open Data Support (European Commission)
-
-[Designing and developing RDF vocabularies](https://data.europa.eu/sites/default/files/d2.1.2_training_module_2.4_designing_and_developing_vocabularies_in_rdf_en_edp.pdf)
-
-RDF vocabulary: A vocabulary is a data model comprising classes, properties and relationships which can be used for describing your data and metadata.
-
-RDF Vocabularies are sets of terms used to describe things.
-A term is either a class or a property
-- Object type properties (relationships)
-- Data type properties (attributes) -- in our case, only attributes (To verify)
-
-Properties begin with a lower case letter, e.g. rdfs:label.
-Data type properties should be nouns, e.g. dcterms:description.
-Use camel case if a term has more than one word, e.g. foaf:isPrimaryTopicOf
-
-### Steps for modelling data
-1. Start with a robust Domain Model developed following a structured process and methodology.
-2. Research existing terms and their usage and maximise reuse of those terms. Reusable RDF vocabularies on [Linked Open Vocabulary](https://lov.linkeddata.es/dataset/lov/).
-4. Where new terms can be seen as specialisations of existing terms, create sub class and sub properties.
-5. Where new terms are required, create them following commonly agreed best practice.
-6. Publish within a highly stable environment designed to be persistent. Choose a stable namespace for your RDF schema (e.g. W3C, Purl...). Use good practices on the publication of persistent Uniform  Resource Identifiers (URI) sets, both in terms of format and of their design rules and management.
-7. Publicise the RDF schema by registering it with relevant services (Joinup and Linked Open Vocabularies).
-
-See [this](https://interoperable-europe.ec.europa.eu/collection/semic-support-centre/document/process-and-methodology-developing-core-vocabularies).
-
-### Already existing vocabulary:
-['Privacy' in search engine](https://lov.linkeddata.es/dataset/lov/terms?q=privacy)
-
-**DCAT**: Describing Dataset: recommends DCAT but here we mean something else. We want to describe the 'inside' of the dataset not the way to share it. 
-
-**dcterms:accessRights**: access or restrictions based on privacy, security, or other policies
-
-**dpv:DifferentialPrivacy**: https://w3c.github.io/dpv/2.2/dpv/#DifferentialPrivacy. But more legal, consent, residual risk, access control management. Also has a 'Data & Personal Data' part but more about is sensitive, confidential or other data.
-
-Other vocabulary have fields about privacy but coarse and table level.
-
 
 ## SHACL Validation Rules
 
 ### Nullability
-- If `dp:nullable` is `true`, then `dp:nullableProportion` **MUST be greater than 0**.
-- If `dp:nullable` is `false`, then `dp:nullableProportion` **MUST be 0** (if `dp:nullableProportion` is provided).
+- If `dp:required` is `false`, then `dp:nullableProportion` **MUST be greater than 0** (or not, TODO).
+- If `dp:required` is `true`, then `dp:nullableProportion` **MUST be 0** (if `dp:nullableProportion` is provided).
 
 
 ### Privacy ID constraints
@@ -251,7 +201,7 @@ The following rules describe how bounds may be inferred for a multi-column group
   - Column B: `["Adelie", "Gentoo", "Chinstrap"]`
   - Derived partitions:
     - `("Male","Adelie")`, `("Male","Gentoo")`, `("Male","Chinstrap")`, `("Female","Adelie")`, `("Female","Gentoo")`, `("Female","Chinstrap")`
-- If **any** grouped column does not declare `dp:publicPartitions`, the composite grouping MUST NOT be treated as public.
+- If any grouped column does not declare `dp:publicPartitions`, the composite grouping MUST NOT be treated as public.
 
 
 #### `dp:maxPartitionLength`
@@ -291,29 +241,27 @@ Two columns: `year` and `month`. It is publicly know that data ranges from 06.20
     - `dp:maxPartitionContribution`: 2 (same month in the 2 years)
 
 In the worst case rules, ColumnGroup [`year`, `month`] has metadata:
-    - `dp:publicPartitions`: cartesian product of all years and months: all months of 2026 and all months of 2027.
-    - `dp:maxPartitionLength`: 366 + 365 = 731
-    - `dp:maxNumPartitions`: 2 * 12=24
-    - `dp:maxInfluencedPartitions`: 2
-    - `dp:maxPartitionContribution`: 2
+- `dp:publicPartitions`: cartesian product of all years and months: all months of 2026 and all months of 2027.
+- `dp:maxPartitionLength`: 366 + 365 = 731
+- `dp:maxNumPartitions`: 2 * 12=24
+- `dp:maxInfluencedPartitions`: 2
+- `dp:maxPartitionContribution`: 2
 
 But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has metadata:
-    - `dp:publicPartitions`: [06, 07, 08, 09, 10, 11, 12] of 2026 and [01, 02, 03, 04, 05] of 2027.
-    - `dp:maxPartitionLength`: 366
-    - `dp:maxNumPartitions`: 12
-    - `dp:maxInfluencedPartitions`: 1
-    - `dp:maxPartitionContribution`: 1
+- `dp:publicPartitions`: [06, 07, 08, 09, 10, 11, 12] of 2026 and [01, 02, 03, 04, 05] of 2027.
+- `dp:maxPartitionLength`: 366
+- `dp:maxNumPartitions`: 12
+- `dp:maxInfluencedPartitions`: 1
+- `dp:maxPartitionContribution`: 1
+
 
 ## TODOs - WIP
 
 - Make a file for the rules (in SHACL) or pyshacl ? 
-- `dp:publicPartitions` maybe duplicate of csvw format of possible values for string. it could also be extended to categorical number (not just strings)
-- `dp:maxNumPartitions` may be duplicate of cardinality in datatype of csvw.
-- more in depth type specification (lomas also has precision.. but it was for opendp 0.12, which is not needed anymore with the context). See [datatypes](https://w3c.github.io/csvw/primer/#datatypes). Is xmlschema enough ? See point [3 Built-in Datatypes and Their Definitions](https://www.w3.org/TR/xmlschema11-2/).
-- logic for combining continuous columns if binned with known breaks
+- logic for combining continuous columns if binned with known breaks (for lomas feature store potentially, out of scope here)
 
 
 ## Status
 
-It is a **work in progress** and subject to change.
+It is a work in progress and subject to change.
 To be used in Lomas.
