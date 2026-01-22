@@ -158,7 +158,10 @@ csvw:Table
         |                      ├─ dp:maxPartitionLength       : xsd:positiveInteger
         |                      ├─ dp:maxNumPartitions         : xsd:positiveInteger
         |                      ├─ dp:maxInfluencedPartitions  : xsd:positiveInteger
-        |                      └─ dp:maxPartitionContribution : xsd:positiveInteger
+        |                      ├─ dp:maxPartitionContribution : xsd:positiveInteger
+        |                      ├─ csvw:csvw:virtual           : xsd:boolean
+        |                      ├─ dp:derivedFrom              : csvw:Column
+        |                      └─ dp:transformationType       : string
         |
         +── dp:ColumnGroup (0..n) ───────────────────────────→ dp:ColumnGroup ⊂ dp:Groupable
                    |
@@ -169,6 +172,7 @@ csvw:Table
                    ├─ dp:maxInfluencedPartitions  : xsd:positiveInteger
                    └─ dp:maxPartitionContribution : xsd:positiveInteger
 ```
+
 ---
 
 ## Validation Rules

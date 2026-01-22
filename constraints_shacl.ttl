@@ -272,3 +272,167 @@ dp:TableShape
         }
         """
     ] .
+
+################################################################################
+# Virtual Columns constraints
+################################################################################
+dp:DerivedFromOnlyOnVirtualShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:derivedFrom ;
+  sh:property [
+    sh:path csvw:virtual ;
+    sh:hasValue true ;
+    sh:message "dp:derivedFrom may only be used on virtual columns (csvw:virtual = true)." ;
+  ] .
+
+dp:VirtualColumnsShouldDeclareDerivedFromShape
+  a sh:NodeShape ;
+  sh:targetClass csvw:Column ;
+  sh:property [
+    sh:path csvw:virtual ;
+    sh:hasValue true ;
+  ] ;
+  sh:property [
+    sh:path dp:derivedFrom ;
+    sh:minCount 1 ;
+    sh:severity sh:Warning ;
+    sh:message "Virtual columns SHOULD declare dp:derivedFrom to document provenance and support DP validation." ;
+  ] .
+
+dp:DerivedMaxContributionsMonotonicShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:derivedFrom ;
+  sh:sparql [
+    sh:message "Derived dp:maxContributions must be ≤ source dp:maxContributions." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:derivedFrom ?src .
+        $this dp:maxContributions ?d .
+        ?src dp:maxContributions ?s .
+        FILTER (?d > ?s)
+      }
+    """ ;
+  ] .
+
+dp:DerivedMaxTableLengthMonotonicShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:derivedFrom ;
+  sh:sparql [
+    sh:message "Derived dp:maxTableLength must be ≤ source dp:maxTableLength." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:derivedFrom ?src .
+        $this dp:maxTableLength ?d .
+        ?src dp:maxTableLength ?s .
+        FILTER (?d > ?s)
+      }
+    """ ;
+  ] .
+
+dp:DerivedMaxNumPartitionsMonotonicShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:derivedFrom ;
+  sh:sparql [
+    sh:message "Derived dp:maxNumPartitions must be ≤ source dp:maxNumPartitions." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:derivedFrom ?src .
+        $this dp:maxNumPartitions ?d .
+        ?src dp:maxNumPartitions ?s .
+        FILTER (?d > ?s)
+      }
+    """ ;
+  ] .
+
+dp:DerivedNumericRangeMonotonicShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:derivedFrom ;
+  sh:sparql [
+    sh:message "Derived numeric range must be tighter: minimum ≥ source minimum AND maximum ≤ source maximum." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:derivedFrom ?src .
+        OPTIONAL { $this csvw:minimum ?dmin . }
+        OPTIONAL { $this csvw:maximum ?dmax . }
+        OPTIONAL { ?src csvw:minimum ?smin . }
+        OPTIONAL { ?src csvw:maximum ?smax . }
+        FILTER (
+          (bound(?dmin) && bound(?smin) && ?dmin < ?smin) ||
+          (bound(?dmax) && bound(?smax) && ?dmax > ?smax)
+        )
+      }
+    """ ;
+  ] .
+
+dp:BinningRequiresPublicPartitionsShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:transformationType ;
+  sh:sparql [
+    sh:message "Columns with dp:transformationType = 'bin' MUST define dp:publicPartitions." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:transformationType "bin" .
+        FILTER NOT EXISTS { $this dp:publicPartitions ?p }
+      }
+    """ ;
+  ] .
+
+dp:ClippingRequiresBoundsShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:transformationType ;
+  sh:sparql [
+    sh:message "Columns with dp:transformationType = 'clip' MUST define both csvw:minimum and csvw:maximum." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:transformationType "clip" .
+        FILTER NOT EXISTS { $this csvw:minimum ?m } ||
+        FILTER NOT EXISTS { $this csvw:maximum ?M }
+      }
+    """ ;
+  ] .
+
+dp:TruncationRequiresMaxContributionsShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:transformationType ;
+  sh:sparql [
+    sh:message "Columns with dp:transformationType = 'truncate' MUST define dp:maxContributions." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:transformationType "truncate" .
+        FILTER NOT EXISTS { $this dp:maxContributions ?m }
+      }
+    """ ;
+  ] .
+
+dp:RecodingRequiresPublicPartitionsShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:transformationType ;
+  sh:sparql [
+    sh:message "Columns with dp:transformationType = 'recode' MUST define dp:publicPartitions." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:transformationType "recode" .
+        FILTER NOT EXISTS { $this dp:publicPartitions ?p }
+      }
+    """ ;
+  ] .
+
+dp:FilteringShouldReduceTableLengthShape
+  a sh:NodeShape ;
+  sh:targetSubjectsOf dp:transformationType ;
+  sh:sparql [
+    sh:severity sh:Warning ;
+    sh:message "Filtering SHOULD reduce dp:maxTableLength relative to source." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this dp:transformationType "filter" .
+        $this dp:derivedFrom ?src .
+        $this dp:maxTableLength ?d .
+        ?src dp:maxTableLength ?s .
+        FILTER (?d = ?s)
+      }
+    """ ;
+  ] .
+
+
+
