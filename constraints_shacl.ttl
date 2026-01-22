@@ -1,0 +1,139 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix dp: <http://example.org/dp#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+################################################################################
+# Column-level constraints
+################################################################################
+dp:ColumnShape
+    a sh:NodeShape ;
+    sh:targetClass dp:Column ;
+
+    # Nullability
+    sh:property [
+        sh:path dp:nullableProportion ;
+        sh:datatype xsd:decimal ;
+        sh:message "If required=true, dp:nullableProportion must be 0." ;
+        sh:sparql """
+        ASK WHERE {
+            ?this dp:required true .
+            ?this dp:nullableProportion ?np .
+            FILTER(?np != 0)
+        }
+        """
+    ] ;
+
+    # Privacy ID restrictions (cannot have grouping fields)
+    sh:property [
+        sh:path dp:privacyId ;
+        sh:datatype xsd:boolean ;
+        sh:message "Columns with dp:privacyId=true must not have grouping fields." ;
+        sh:sparql """
+        ASK WHERE {
+            ?this dp:privacyId true .
+            {
+                ?this dp:maxInfluencedPartitions ?v .
+            } UNION {
+                ?this dp:maxPartitionContribution ?v .
+            } UNION {
+                ?this dp:maxNumPartitions ?v .
+            } UNION {
+                ?this dp:maxPartitionLength ?v .
+            }
+        }
+        """
+    ] ;
+
+    # Public partitions
+    sh:property [
+        sh:path dp:publicPartitions ;
+        sh:message "Each value in dp:publicPartitions must conform to the column's datatype." ;
+        sh:sparql """
+        ASK WHERE {
+            ?this dp:publicPartitions ?pp .
+            ?this dp:dataType ?dt .
+            FILTER (datatype(?pp) != ?dt)
+        }
+        """
+    ] .
+
+################################################################################
+# Multi-column level constraints (dp:ColumnGroup)
+################################################################################
+dp:ColumnGroupShape
+    a sh:NodeShape ;
+    sh:targetClass dp:ColumnGroup ;
+
+    # Must not include privacy ID columns
+    sh:property [
+        sh:path dp:columns ;
+        sh:message "ColumnGroups must not include columns where dp:privacyId=true." ;
+        sh:sparql """
+        ASK WHERE {
+            ?this dp:columns ?col .
+            ?col dp:privacyId true .
+        }
+        """
+    ] ;
+
+    # dp:maxNumPartitions <= product of individual columns' dp:maxNumPartitions
+    sh:property [
+        sh:path dp:maxNumPartitions ;
+        sh:message "dp:maxNumPartitions of a group must be ≤ product of dp:maxNumPartitions of all individual columns." ;
+        sh:sparql """
+        ASK WHERE {
+            ?this dp:columns ?col .
+            ?this dp:maxNumPartitions ?grpMax .
+            ?col dp:maxNumPartitions ?colMax .
+            FILTER(?grpMax > ?colMax)
+        }
+        """
+    ] ;
+
+    # dp:maxPartitionLength = min(dp:maxPartitionLength of individual columns)
+    sh:property [
+        sh:path dp:maxPartitionLength ;
+        sh:message "dp:maxPartitionLength of a group must equal the minimum dp:maxPartitionLength across all columns." ;
+        sh:sparql """
+        ASK WHERE {
+            ?this dp:columns ?col .
+            ?col dp:maxPartitionLength ?len .
+            ?this dp:maxPartitionLength ?grpLen .
+            FILTER(?grpLen != ?len)
+        }
+        """
+    ] .
+
+################################################################################
+# Table-level constraints
+################################################################################
+dp:TableShape
+    a sh:NodeShape ;
+    sh:targetClass dp:Table ;
+
+    # Table length consistency
+    sh:property [
+        sh:path dp:tableLength ;
+        sh:lessThanOrEquals dp:maxTableLength ;
+        sh:message "dp:tableLength must equal dp:maxTableLength if provided."
+    ] ;
+
+    # Column/group partition length <= table max
+    sh:property [
+        sh:path dp:maxPartitionLength ;
+        sh:lessThanOrEquals dp:maxTableLength ;
+        sh:message "dp:maxPartitionLength of a column or group must be ≤ dp:maxTableLength of the table."
+    ] ;
+
+    # Contribution bounds
+    sh:property [
+        sh:path dp:maxInfluencedPartitions ;
+        sh:lessThanOrEquals dp:maxContributions ;
+        sh:message "dp:maxInfluencedPartitions of a column or group must be ≤ dp:maxContributions of the table."
+    ] ;
+
+    sh:property [
+        sh:path dp:maxPartitionContribution ;
+        sh:lessThanOrEquals dp:maxContributions ;
+        sh:message "dp:maxPartitionContribution of a column or group must be ≤ dp:maxContributions of the table."
+    ] .

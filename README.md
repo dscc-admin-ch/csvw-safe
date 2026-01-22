@@ -23,7 +23,7 @@ These assumptions are essential for meaningful DP guarantees, but the core CSVW 
 
 CSVW-DP introduces new terms so that a dataset can explicitly declare contribution bounds at the table, column and multi-column levels.
 
-The motivation for the terms was found y looking at what is needed in the various dp libraries and their terms. See [dp_libraries.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/dp_libraries.md). # TODO rewrite
+The motivation for the terms was found by looking at what is needed in the various dp libraries and their terms. See [dp_libraries.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/dp_libraries.md).
 
 ---
 
@@ -96,6 +96,9 @@ Apply when grouping or aggregating by a single column
 | `dp:maxPartitionContribution` | positive integer | Max contributions inside one partition. |
 
 
+`dp:maxNumPartitions` is not necessarily equal to the length of `dp:publicPartitions` when they are provided because some partitions might not be public.
+
+
 #### Multi-column grouping support
 
 CSVW-DP introduces a helper class: `dp:ColumnGroup`
@@ -112,6 +115,7 @@ It is useful when domain knowledge allows tighter bounds than the worst case of 
 | `dp:maxPartitionContribution` | Max contributions inside one partition. |
 
 DP properties on `dp:ColumnGroup` reuse the same terms as columns (`dp:maxPartitionLength`, etc.), since both are subclasses of `dp:Groupable`.
+
 
 **publicPartitions vs format**: 
 `datatype` and `format` describe the value domain while `dp:publicPartitions` describes the grouping universe used for DP accounting.
@@ -163,41 +167,38 @@ csvw:Table
 ```
 
 
-## SHACL Validation Rules
+## Validation Rules
 
-### Nullability
-- If `required` is `false`, then `dp:nullableProportion` **MUST be greater than 0** (or not, TODO).
+### Column-level
 - If `required` is `true`, then `dp:nullableProportion` **MUST be 0** (if `dp:nullableProportion` is provided).
 
+- A column with `dp:privacyId = true` **MUST NOT** cannot have fields `dp:maxInfluencedPartitions`, `dp:maxPartitionContribution`, `dp:maxNumPartitions`, `dp:maxPartitionLength`.
 
-### Privacy ID constraints
-- A column with `dp:privacyId = true` **MUST NOT** be groupable.
-- A `dp:ColumnGroup` **MUST NOT** include any column where `dp:privacyId = true`.
+- If `dp:publicPartitions` is provided:
+  - Each value in `dp:publicPartitions` **MUST conform to the column’s declared datatype**.
+
+
+### Multi-column level (`dp:ColumnGroup`)
+For groupings over multiple columns:
+
+- `dp:maxNumPartitions` of a group of columns **MUST be less than or equal to** the product of `dp:maxNumPartitions` of all the individual columns.
+
+- `dp:maxPartitionLength` of a group of columns **MUST equal** the minimum `dp:maxPartitionLength` across all individual columns.
+
+- A `dp:columns` in`dp:ColumnGroup` **MUST NOT** include any column where `dp:privacyId = true`.
 
 
 ### Table-level consistency
 - If `dp:tableLength` is provided, it **MUST equal** `dp:maxTableLength`.
-- `dp:maxPartitionLength` **MUST be less than or equal to** `dp:maxTableLength`.
 
+- `dp:maxPartitionLength` of a column or of a group of columns **MUST be less than or equal to** `dp:maxTableLength` of the table.
 
-### Contribution bounds
-- `dp:maxInfluencedPartitions` **MUST be less than or equal to** `dp:maxContributions`.
-- `dp:maxPartitionContribution` **MUST be less than or equal to** `dp:maxContributions`.
+- `dp:maxInfluencedPartitions` of a column or of a group of columns **MUST be less than or equal to** `dp:maxContributions` of the table.
 
+- `dp:maxPartitionContribution` of a column or of a group of columns **MUST be less than or equal to** `dp:maxContributions` of the table.
 
-### Public partitions
-- If `dp:publicPartitions` is provided:
-  - `dp:maxNumPartitions` **MUST equal** the size of `dp:publicPartitions`.
-  - Each value in `dp:publicPartitions` **MUST conform to the column’s declared datatype**.
+See SHACL file for constraints in [constraints_shacl.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/constraints_shacl.ttl).
 
-
-### Multi-column grouping (`dp:ColumnGroup`)
-For groupings over multiple columns:
-
-- `dp:maxInfluencedPartitions` **MUST be less than or equal to** `dp:maxContributions`.
-- `dp:maxPartitionContribution` **MUST be less than or equal to** `dp:maxContributions`.
-- `dp:maxNumPartitions` **MUST be less than or equal to** the product of `dp:maxNumPartitions` of the individual columns.
-- `dp:maxPartitionLength` **MUST equal** the minimum `dp:maxPartitionLength` across all grouped columns.
 
 
 ## Theoretical Upper Bounds for `dp:Groupable`

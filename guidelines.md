@@ -34,3 +34,11 @@ See [this](https://interoperable-europe.ec.europa.eu/collection/semic-support-ce
 **dpv:DifferentialPrivacy**: https://w3c.github.io/dpv/2.2/dpv/#DifferentialPrivacy. But more legal, consent, residual risk, access control management. Also has a 'Data & Personal Data' part but more about is sensitive, confidential or other data.
 
 Other vocabulary have fields about privacy but coarse and table level.
+
+
+## Validation and adding constraints
+[SHACL](https://openmetadatastandards.org/rdf/shapes/overview/) (Shapes Constraint Language) validates RDF data.
+
+This [document on W3C](https://www.w3.org/TR/shacl/) defines the SHACL Shapes Constraint Language, a language for validating RDF graphs against a set of conditions.
+
+RDF metadata validation rules define constraints (like data types, formats, cardinality, and relationships) for RDF graphs, primarily using W3C standards like SHACL (Shapes Constraint Language) for expressing shapes and rules, with older methods like SPIN being superseded; these rules ensure data quality, consistency, and interoperability, often checking against specific vocabularies like DCAT-AP or schema.org.
