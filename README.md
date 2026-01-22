@@ -54,9 +54,12 @@ CSVW’s existing `csvw:tableSchema` remains responsible for defining the table 
 | `dp:privacyId` | boolean | True if the column identifies individuals/units for DP. |
 | `dp:nullableProportion` | decimal 0–1 | Fraction of values that are null. |
 | `dp:publicPartitions` | list(string) | Declared set of partition keys when grouping values are publicly known. |
+| `dp:derivedFrom` | csvw:Column | Source column to derive virtual column.. |
 
 Note: 
 CSVW's `required` field already expresses whether a cell must be present and non-empty. `dp:nullableProportion` is optional and intended for approximate modeling (e.g., generating representative dummy data or estimating accuracy). Exactness is not required; coarse bounds are sufficient.
+
+`dp:derivedFrom` is better explained at the end of the README.
 
 #### Reuse of existing CSVW terms:
 CSVW-DP intentionally reuses existing CSVW vocabulary where semantics already exist.
@@ -258,7 +261,153 @@ But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has me
 - `dp:maxInfluencedPartitions`: 1
 - `dp:maxPartitionContribution`: 1
 
+---
 
-## TODOs - WIP
-- logic for combining continuous columns if binned with known breaks (for lomas feature store potentially, out of scope here)
+## Logic for derived columns
+In many data processing pipelines, preprocessing steps such as filtering, binning, clipping, truncation, and recoding are applied before differential privacy (DP) mechanisms. These transformations often lead to tighter contribution bounds and sensitivity limits than those implied by the raw data.
 
+For example:
+
+- In OpenDP, filtering introduces conservative slack in sensitivity estimates. If tighter bounds are known, preserving them can significantly improve utility.
+- Binning is frequently used to convert continuous variables into categorical ones (e.g., age groups, time buckets, or synthetic data generation), and domain knowledge may allow the declaration of precise public partitions.
+
+To support these cases, CSVW-DP leverages CSVW virtual columns, allowing derived data to be described declaratively in metadata while attaching refined DP bounds.
+
+#### Virtual Columns in CSVW
+
+CSVW supports virtual columns, i.e., columns that do not exist physically in the CSV file but are defined by transformation expressions in metadata.
+
+Virtual columns can represent preprocessing steps such as filtering, binning, truncation, clipping, recoding, mapping, etc.
+
+They are declared using:
+```
+"virtual": true,
+"valueUrl": "... expression ..."
+```
+and in this DP extension should declare their source columns using:
+```
+dp:derivedFrom : csvw:Column
+```
+
+CSVW-DP reuses all DP properties on virtual columns exactly as on physical columns, allowing tighter post-transformation bounds to be expressed without introducing new DP-specific transformation primitives.
+
+#### Common Transformations and Their DP Effects
+
+Derived columns may declare the transformation category using:
+```
+dp:transformationType ∈ {filter, bin, clip, truncate, recode}
+```
+
+| Operation  | Effect                                                       | Canonical Form              |
+| ---------- | ------------------------------------------------------------ | --------------------------- |
+| filter     | reduces `dp:maxTableLength`, `dp:maxContributions`           | `filter(col, predicate)`    |
+| binning    | reduces `dp:maxNumPartitions`, defines `dp:publicPartitions` | `bin(col, min, max, width)` |
+| clipping   | tightens `minimum` / `maximum`                               | `clip(col, lower, upper)`   |
+| truncation | tightens per-individual contribution bounds                  | `truncate(col, max_rows)`   |
+| recoding   | shrinks categorical universe                                 | `recode(col, mapping)`      |
+
+###### Examples: 
+**Binning**
+Raw
+```
+"name": "age",
+"datatype": "integer",
+"minimum": 0,
+"maximum": 120
+```
+
+Derived
+```
+"name": "age_bin_10y",
+"dp:derivedFrom": ["age"]
+"virtual": true,
+"valueUrl": "bin(age, 0, 120, 10)",
+"datatype": "string",
+"format": "(0-9|10-19|...|110-119|120+)",
+"dp:publicPartitions": ["0-9","10-19","20-29",...,"120+"],
+"dp:maxNumPartitions": 13,
+"dp:maxPartitionLength": 100000,
+"dp:maxInfluencedPartitions": 1,
+"dp:maxPartitionContribution": 1
+```
+
+**Filtering**
+Filtering reduces dataset size and per-person contribution bounds.
+
+Raw
+```
+"name": "days",
+dp:maxTableLength = 1_000_000
+dp:maxContributions = 365
+```
+
+Derived
+```
+"name": "days_filtered_june",
+"virtual": true,
+"dp:derivedFrom": ["days"],
+"valueUrl": "filter(days, month == 6)",
+"dp:maxTableLength": 30000,
+"dp:maxContributions": 30
+```
+
+
+**Clipping**
+Clipping limits numeric ranges to reduce sensitivity.
+
+Raw
+```
+"name": "salary",
+"datatype": "integer",
+"minimum": 0,
+"maximum": 10000000
+```
+
+Derived
+```
+"name": "salary_clipped",
+"virtual": true,
+"dp:derivedFrom": ["salary"],
+"valueUrl": "clip(salary, 0, 200000)",
+"minimum": 0,
+"maximum": 200000
+```
+
+**Truncating**
+Truncation enforces per-individual contribution caps at the preprocessing level.
+
+Raw
+```
+"name": "events",
+"dp:maxContributions": 1000
+```
+
+Derived
+```
+"name": "events_truncated",
+"virtual": true,
+"dp:derivedFrom": ["events"],
+"valueUrl": "truncate(events, 100)",
+"dp:maxContributions": 100
+```
+
+**Recoding**
+Recoding collapses or maps categories to a smaller public universe.
+
+Raw
+```
+"name": "occupation",
+"datatype": "string",
+"format": "string"
+```
+
+Derived
+```
+"name": "occupation_grouped",
+"virtual": true,
+"dp:derivedFrom": ["occupation"],
+"valueUrl": "recode(occupation, {teacher,professor -> education; nurse,doctor -> healthcare; * -> other})",
+"datatype": "string",
+"dp:publicPartitions": ["education", "healthcare", "other"],
+"dp:maxNumPartitions": 3
+```
