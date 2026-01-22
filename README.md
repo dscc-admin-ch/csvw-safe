@@ -122,6 +122,7 @@ DP properties on `dp:ColumnGroup` reuse the same terms as columns (`dp:maxPartit
 Thus, `dp:publicPartitions` may be larger or smaller than observed values. It may include values not present in the data and declaring publicPartitions can reduce the sensitivity and avoid worst-case assumptions. Users may still choose to spend privacy budget (e.g. δ) to explore unknown partitions.
 If `required = false` and `dp:publicPartitions` is present, the partition of missing values (e.g. NaN) is assumed to be publicly known.
 
+---
 
 ## Diagram
 ```
@@ -165,9 +166,11 @@ csvw:Table
                    ├─ dp:maxInfluencedPartitions  : xsd:positiveInteger
                    └─ dp:maxPartitionContribution : xsd:positiveInteger
 ```
-
+---
 
 ## Validation Rules
+
+SHACL file for enforcing constraints in [constraints_shacl.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/constraints_shacl.ttl).
 
 ### Column-level
 - If `required` is `true`, then `dp:nullableProportion` **MUST be 0** (if `dp:nullableProportion` is provided).
@@ -179,13 +182,36 @@ csvw:Table
 
 
 ### Multi-column level (`dp:ColumnGroup`)
-For groupings over multiple columns:
 
-- `dp:maxNumPartitions` of a group of columns **MUST be less than or equal to** the product of `dp:maxNumPartitions` of all the individual columns.
+- A `dp:columns` in`dp:ColumnGroup` **MUST NOT** include any column where `dp:privacyId = true`.
+- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:publicPartitions`, the composite grouping **MUST NOT** any declare `dp:publicPartitions`.
+- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:maxNumPartitions`, the composite grouping **MUST NOT** any declare `dp:maxNumPartitions`.
+
+When grouping by multiple columns, it is possible to derive worst-case upper bounds on the resulting partitions from the bounds declared on each individual column.
+These derived bounds are always conservative and are safe for differential privacy accounting.
+If bounds are larger then there is an error.
+
+- If all grouped columns define `dp:publicPartitions`, the public partitions **MUST be** the Cartesian product of those lists.
+- Example:
+  - Column A: `["Male", "Female"]`
+  - Column B: `["Adelie", "Gentoo", "Chinstrap"]`
+  - Derived partitions:
+    - `("Male","Adelie")`, `("Male","Gentoo")`, `("Male","Chinstrap")`, `("Female","Adelie")`, `("Female","Gentoo")`, `("Female","Chinstrap")`
 
 - `dp:maxPartitionLength` of a group of columns **MUST equal** the minimum `dp:maxPartitionLength` across all individual columns.
 
-- A `dp:columns` in`dp:ColumnGroup` **MUST NOT** include any column where `dp:privacyId = true`.
+
+- `dp:maxNumPartitions` of a group of columns **MUST be less than or equal to** the product of `dp:maxNumPartitions` of all the individual columns.
+
+- The upper bound is the minimum of the known `dp:maxInfluencedPartitions` values.
+
+
+- The upper bound is the minimum of the known `dp:maxPartitionContribution` values.
+
+**Note**: for allowed aggregations with missing columns:
+- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:maxPartitionLength`, the minimum **SHOULD** be taken over the known values.
+- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:maxInfluencedPartitions`, the minimum **SHOULD** be taken over the known values.
+- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:maxPartitionContribution`, the minimum **SHOULD** be taken over the known values.
 
 
 ### Table-level consistency
@@ -197,52 +223,14 @@ For groupings over multiple columns:
 
 - `dp:maxPartitionContribution` of a column or of a group of columns **MUST be less than or equal to** `dp:maxContributions` of the table.
 
-See SHACL file for constraints in [constraints_shacl.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/constraints_shacl.ttl).
 
-
+---
 
 ## Theoretical Upper Bounds for `dp:Groupable`
 
-When grouping by multiple columns, it is possible to derive worst-case upper bounds on the resulting partitions from the bounds declared on each individual column.
-These derived bounds are always conservative and are safe for differential privacy accounting.
+If tighter (less pessimistic) bounds are known than the worst case enforced by the validation file, they SHOULD be expressed explicitly using a `dp:ColumnGroup` entry in the metadata.
 
-If tighter (less pessimistic) bounds are known, they SHOULD be expressed explicitly using a `dp:ColumnGroup` entry in the metadata.
-
-The following rules describe how bounds may be inferred for a multi-column group-by when no explicit `dp:ColumnGroup` is provided assuming a group-by over columns `C_1, C_2, …, C_n`.
-
-#### `dp:publicPartitions`
-- If all grouped columns define `dp:publicPartitions`, the effective public partitions are the Cartesian product of those lists.
-- Example:
-  - Column A: `["Male", "Female"]`
-  - Column B: `["Adelie", "Gentoo", "Chinstrap"]`
-  - Derived partitions:
-    - `("Male","Adelie")`, `("Male","Gentoo")`, `("Male","Chinstrap")`, `("Female","Adelie")`, `("Female","Gentoo")`, `("Female","Chinstrap")`
-- If any grouped column does not declare `dp:publicPartitions`, the composite grouping MUST NOT be treated as public.
-
-
-#### `dp:maxPartitionLength`
-- The upper bound is the minimum of the known `dp:maxPartitionLength` values   across all grouped columns.
-- If some columns omit this property, the minimum is taken over the known values.
-- Rationale: no composite partition can exceed the smallest contributing bound.
-
-#### `dp:maxNumPartitions`
-- The upper bound is the product of each column’s `dp:maxNumPartitions`.
-- If any grouped column omits `dp:maxNumPartitions`, the composite bound MUST NOT be inferred.
-- Rationale: the number of distinct composite keys grows multiplicatively.
-
-#### `dp:maxInfluencedPartitions`
-- The upper bound is the minimum of the known `dp:maxInfluencedPartitions` values.
-- If some columns omit this property, the minimum is taken over the known values.
-- Rationale: a person cannot influence more composite partitions than the tightest contributing bound.
-
-#### `dp:maxPartitionContribution`
-- The upper bound is the minimum of the known `dp:maxPartitionContribution` values.
-- If some columns omit this property, the minimum is taken over the known values.
-- Rationale: per-partition contribution is constrained by the strictest column.
-
-
-#### Example
-Two columns: `year` and `month`. It is publicly know that data ranges from 06.2026 to 05.2027 and there is one row per day. A person can contribute once per year.
+For example, with two columns: `year` and `month`. It is publicly know that data ranges from 06.2026 to 05.2027 and there is one row per day. A person can contribute once per year.
 - column `year` has metadata:
     - `dp:publicPartitions`: [2026, 2027]
     - `dp:maxPartitionLength`: 366
@@ -270,12 +258,8 @@ But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has me
 - `dp:maxInfluencedPartitions`: 1
 - `dp:maxPartitionContribution`: 1
 
-
 ## TODOs - WIP
-
-- Make a file for the rules (in SHACL) or pyshacl ? 
 - logic for combining continuous columns if binned with known breaks (for lomas feature store potentially, out of scope here)
-- os columngroup in group schema?
 
 ## Status
 

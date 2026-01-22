@@ -5,101 +5,200 @@
 ################################################################################
 # Column-level constraints
 ################################################################################
+
 dp:ColumnShape
     a sh:NodeShape ;
     sh:targetClass dp:Column ;
 
-    # Nullability
-    sh:property [
-        sh:path dp:nullableProportion ;
-        sh:datatype xsd:decimal ;
-        sh:message "If required=true, dp:nullableProportion must be 0." ;
-        sh:sparql """
-        ASK WHERE {
-            ?this dp:required true .
-            ?this dp:nullableProportion ?np .
+    ########################################################################
+    # If required=true, nullableProportion must be 0 (if provided)
+    ########################################################################
+    sh:sparql [
+        sh:message "If dp:required=true, then dp:nullableProportion must be 0." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:required true ;
+                  dp:nullableProportion ?np .
             FILTER(?np != 0)
         }
         """
     ] ;
 
-    # Privacy ID restrictions (cannot have grouping fields)
-    sh:property [
-        sh:path dp:privacyId ;
-        sh:datatype xsd:boolean ;
-        sh:message "Columns with dp:privacyId=true must not have grouping fields." ;
-        sh:sparql """
-        ASK WHERE {
-            ?this dp:privacyId true .
+    ########################################################################
+    # Privacy ID columns must not have grouping fields
+    ########################################################################
+    sh:sparql [
+        sh:message "Columns with dp:privacyId=true must not declare grouping fields." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:privacyId true .
             {
-                ?this dp:maxInfluencedPartitions ?v .
+                $this dp:maxInfluencedPartitions ?v
             } UNION {
-                ?this dp:maxPartitionContribution ?v .
+                $this dp:maxPartitionContribution ?v
             } UNION {
-                ?this dp:maxNumPartitions ?v .
+                $this dp:maxNumPartitions ?v
             } UNION {
-                ?this dp:maxPartitionLength ?v .
+                $this dp:maxPartitionLength ?v
             }
         }
         """
     ] ;
 
-    # Public partitions
-    sh:property [
-        sh:path dp:publicPartitions ;
-        sh:message "Each value in dp:publicPartitions must conform to the column's datatype." ;
-        sh:sparql """
-        ASK WHERE {
-            ?this dp:publicPartitions ?pp .
-            ?this dp:dataType ?dt .
-            FILTER (datatype(?pp) != ?dt)
+    ########################################################################
+    # Public partitions must conform to declared datatype
+    ########################################################################
+    sh:sparql [
+        sh:message "Each dp:publicPartitions value must conform to the column's declared datatype." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:publicPartitions ?pp ;
+                  dp:dataType ?dt .
+            FILTER(datatype(?pp) != ?dt)
         }
         """
     ] .
 
 ################################################################################
-# Multi-column level constraints (dp:ColumnGroup)
+# Multi-column grouping constraints (dp:ColumnGroup)
 ################################################################################
+
 dp:ColumnGroupShape
     a sh:NodeShape ;
     sh:targetClass dp:ColumnGroup ;
 
-    # Must not include privacy ID columns
-    sh:property [
-        sh:path dp:columns ;
-        sh:message "ColumnGroups must not include columns where dp:privacyId=true." ;
-        sh:sparql """
-        ASK WHERE {
-            ?this dp:columns ?col .
+    ########################################################################
+    # Must not include privacyId columns
+    ########################################################################
+    sh:sparql [
+        sh:message "ColumnGroups must not include any column where dp:privacyId=true." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:columns ?col .
             ?col dp:privacyId true .
         }
         """
     ] ;
 
-    # dp:maxNumPartitions <= product of individual columns' dp:maxNumPartitions
-    sh:property [
-        sh:path dp:maxNumPartitions ;
-        sh:message "dp:maxNumPartitions of a group must be ≤ product of dp:maxNumPartitions of all individual columns." ;
-        sh:sparql """
-        ASK WHERE {
-            ?this dp:columns ?col .
-            ?this dp:maxNumPartitions ?grpMax .
-            ?col dp:maxNumPartitions ?colMax .
-            FILTER(?grpMax > ?colMax)
+    ########################################################################
+    # If any column lacks dp:publicPartitions → group must not declare it
+    ########################################################################
+    sh:sparql [
+        sh:message "If any grouped column lacks dp:publicPartitions, the group must not declare dp:publicPartitions." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:publicPartitions ?grpPP .
+            $this dp:columns ?col .
+            FILTER NOT EXISTS { ?col dp:publicPartitions ?pp }
         }
         """
     ] ;
 
-    # dp:maxPartitionLength = min(dp:maxPartitionLength of individual columns)
-    sh:property [
-        sh:path dp:maxPartitionLength ;
-        sh:message "dp:maxPartitionLength of a group must equal the minimum dp:maxPartitionLength across all columns." ;
-        sh:sparql """
-        ASK WHERE {
-            ?this dp:columns ?col .
-            ?col dp:maxPartitionLength ?len .
-            ?this dp:maxPartitionLength ?grpLen .
-            FILTER(?grpLen != ?len)
+    ########################################################################
+    # If any column lacks dp:maxNumPartitions → group must not declare it
+    ########################################################################
+    sh:sparql [
+        sh:message "If any grouped column lacks dp:maxNumPartitions, the group must not declare dp:maxNumPartitions." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:maxNumPartitions ?grpMax .
+            $this dp:columns ?col .
+            FILTER NOT EXISTS { ?col dp:maxNumPartitions ?m }
+        }
+        """
+    ] ;
+
+    ########################################################################
+    # Group maxPartitionLength = minimum of column maxPartitionLength
+    # (MUST rule: only when group declares the field)
+    ########################################################################
+    sh:sparql [
+        sh:message "dp:maxPartitionLength of group must equal the minimum across all grouped columns." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:maxPartitionLength ?grpLen .
+            {
+                SELECT $this (MIN(?len) AS ?minLen)
+                WHERE {
+                    $this dp:columns ?col .
+                    ?col dp:maxPartitionLength ?len .
+                }
+                GROUP BY $this
+            }
+            FILTER(?grpLen != ?minLen)
+        }
+        """
+    ] ;
+
+    ########################################################################
+    # Group maxNumPartitions ≤ product of column maxNumPartitions
+    ########################################################################
+    sh:sparql [
+        sh:message "dp:maxNumPartitions of group must be ≤ product of grouped column dp:maxNumPartitions." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:maxNumPartitions ?grpMax .
+            {
+                SELECT $this (EXP(SUM(LOG(?m))) AS ?product)
+                WHERE {
+                    $this dp:columns ?col .
+                    ?col dp:maxNumPartitions ?m .
+                }
+                GROUP BY $this
+            }
+            FILTER(?grpMax > ?product)
+        }
+        """
+    ] ;
+
+    ########################################################################
+    # Group maxInfluencedPartitions = minimum of known column values (MUST)
+    ########################################################################
+    sh:sparql [
+        sh:message "dp:maxInfluencedPartitions of group must equal the minimum of known column values." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:maxInfluencedPartitions ?grpVal .
+            {
+                SELECT $this (MIN(?v) AS ?minVal)
+                WHERE {
+                    $this dp:columns ?col .
+                    ?col dp:maxInfluencedPartitions ?v .
+                }
+                GROUP BY $this
+            }
+            FILTER(?grpVal != ?minVal)
+        }
+        """
+    ] ;
+
+    ########################################################################
+    # Group maxPartitionContribution = minimum of known column values (MUST)
+    ########################################################################
+    sh:sparql [
+        sh:message "dp:maxPartitionContribution of group must equal the minimum of known column values." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:maxPartitionContribution ?grpVal .
+            {
+                SELECT $this (MIN(?v) AS ?minVal)
+                WHERE {
+                    $this dp:columns ?col .
+                    ?col dp:maxPartitionContribution ?v .
+                }
+                GROUP BY $this
+            }
+            FILTER(?grpVal != ?minVal)
         }
         """
     ] .
@@ -107,33 +206,69 @@ dp:ColumnGroupShape
 ################################################################################
 # Table-level constraints
 ################################################################################
+
 dp:TableShape
     a sh:NodeShape ;
     sh:targetClass dp:Table ;
 
-    # Table length consistency
-    sh:property [
-        sh:path dp:tableLength ;
-        sh:lessThanOrEquals dp:maxTableLength ;
-        sh:message "dp:tableLength must equal dp:maxTableLength if provided."
+    ########################################################################
+    # tableLength == maxTableLength (if provided)
+    ########################################################################
+    sh:sparql [
+        sh:message "If dp:tableLength is provided, it must equal dp:maxTableLength." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:tableLength ?l ;
+                  dp:maxTableLength ?max .
+            FILTER(?l != ?max)
+        }
+        """
     ] ;
 
-    # Column/group partition length <= table max
-    sh:property [
-        sh:path dp:maxPartitionLength ;
-        sh:lessThanOrEquals dp:maxTableLength ;
-        sh:message "dp:maxPartitionLength of a column or group must be ≤ dp:maxTableLength of the table."
+    ########################################################################
+    # maxPartitionLength ≤ table maxTableLength
+    ########################################################################
+    sh:sparql [
+        sh:message "dp:maxPartitionLength of columns or groups must be ≤ dp:maxTableLength." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:maxTableLength ?tblMax .
+            {
+                ?x dp:maxPartitionLength ?len .
+            }
+            FILTER(?len > ?tblMax)
+        }
+        """
     ] ;
 
-    # Contribution bounds
-    sh:property [
-        sh:path dp:maxInfluencedPartitions ;
-        sh:lessThanOrEquals dp:maxContributions ;
-        sh:message "dp:maxInfluencedPartitions of a column or group must be ≤ dp:maxContributions of the table."
+    ########################################################################
+    # maxInfluencedPartitions ≤ table maxContributions
+    ########################################################################
+    sh:sparql [
+        sh:message "dp:maxInfluencedPartitions must be ≤ dp:maxContributions of the table." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:maxContributions ?maxC .
+            ?x dp:maxInfluencedPartitions ?v .
+            FILTER(?v > ?maxC)
+        }
+        """
     ] ;
 
-    sh:property [
-        sh:path dp:maxPartitionContribution ;
-        sh:lessThanOrEquals dp:maxContributions ;
-        sh:message "dp:maxPartitionContribution of a column or group must be ≤ dp:maxContributions of the table."
+    ########################################################################
+    # maxPartitionContribution ≤ table maxContributions
+    ########################################################################
+    sh:sparql [
+        sh:message "dp:maxPartitionContribution must be ≤ dp:maxContributions of the table." ;
+        sh:select """
+        SELECT $this
+        WHERE {
+            $this dp:maxContributions ?maxC .
+            ?x dp:maxPartitionContribution ?v .
+            FILTER(?v > ?maxC)
+        }
+        """
     ] .
