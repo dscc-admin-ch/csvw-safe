@@ -175,60 +175,53 @@ csvw:Table
 
 ---
 
-## Validation Rules
+## CONSTRAINTS
+
+### Worst-Case Bounds for Multi-Column Aggregations (dp:ColumnGroup)
+| **Property**                    | **Worst-case bound for grouped columns**                   | **Rule / Derivation**                                                                           | **Notes**                                                                                               |
+| ------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **dp:publicPartitions**         | Cartesian product of individual columns’ public partitions | If all grouped columns declare dp:publicPartitions, then group partitions = Cartesian product | If any column does not declare dp:publicPartitions → the group MUST NOT declare dp:publicPartitions |
+| **dp:maxPartitionLength**       | `min(dp:maxPartitionLength_i)`                             | Minimum across all grouped columns                                                              | Conservative upper bound; if some columns missing → take min over known values                          |
+| **dp:maxNumPartitions**         | `≤ ∏ dp:maxNumPartitions_i`                                | Product of per-column maxima                                                                    | If any column lacks dp:maxNumPartitions → group MUST NOT declare dp:maxNumPartitions                    |
+| **dp:maxInfluencedPartitions**  | `min(dp:maxInfluencedPartitions_i)`                        | Minimum of all known column values                                                              | If missing, take min of known values                                                                    |
+| **dp:maxPartitionContribution** | `min(dp:maxPartitionContribution_i)`                       | Minimum of all known column values                                                              | If missing, take min of known values                                                                    |
+
+Example for cartesion product of **dp:publicPartitions**:
+- Column A: `["Male", "Female"]`
+- Column B: `["Adelie", "Gentoo", "Chinstrap"]`
+- Derived partitions:
+  - `("Male","Adelie")`, `("Male","Gentoo")`, `("Male","Chinstrap")`, `("Female","Adelie")`, `("Female","Gentoo")`, `("Female","Chinstrap")`
+
+### Column-Level Structural Constraints
+| **Rule**                                                                                                                                                        | **Meaning**                                    |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| If `required = true` → `dp:nullableProportion = 0`                                                                                                              | Required columns cannot be nullable            |
+| Column with `dp:privacyId = true` MUST NOT declare: `dp:maxInfluencedPartitions`, `dp:maxPartitionContribution`, `dp:maxNumPartitions`, `dp:maxPartitionLength` | Privacy ID columns cannot be used for bounding |
+| If `dp:publicPartitions` is provided → all values must match the declared datatype                                                                              | Type safety constraint                         |
+
+
+### Multi-Column Group Constraints (dp:ColumnGroup)
+| **Rule**                                                                                         | **Meaning**                                       |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| Group MUST NOT include any column with `dp:privacyId = true`                                     | Privacy ID columns cannot participate in grouping |
+| If any grouped column lacks `dp:publicPartitions` → group MUST NOT declare `dp:publicPartitions` | Prevents unsafe assumptions                       |
+| If any grouped column lacks `dp:maxNumPartitions` → group MUST NOT declare `dp:maxNumPartitions` | Avoids underestimating partition count            |
+
+
+### Table-Level Consistency Rules
+
+| **Property**                                    | **Constraint**                  |
+| ----------------------------------------------- | ------------------------------- |
+| `dp:tableLength`                                | MUST equal `dp:maxTableLength`  |
+| `dp:maxPartitionLength (column or group)`       | ≤ `dp:maxTableLength`           |
+| `dp:maxInfluencedPartitions (column or group)`  | ≤ `dp:maxContributions (table)` |
+| `dp:maxPartitionContribution (column or group)` | ≤ `dp:maxContributions (table)` |
+
+
+
+### Resulting Validation Rules
 
 SHACL file for enforcing constraints in [constraints_shacl.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/constraints_shacl.ttl).
-
-### Column-level
-- If `required` is `true`, then `dp:nullableProportion` **MUST be 0** (if `dp:nullableProportion` is provided).
-
-- A column with `dp:privacyId = true` **MUST NOT** cannot have fields `dp:maxInfluencedPartitions`, `dp:maxPartitionContribution`, `dp:maxNumPartitions`, `dp:maxPartitionLength`.
-
-- If `dp:publicPartitions` is provided:
-  - Each value in `dp:publicPartitions` **MUST conform to the column’s declared datatype**.
-
-
-### Multi-column level (`dp:ColumnGroup`)
-
-- A `dp:columns` in`dp:ColumnGroup` **MUST NOT** include any column where `dp:privacyId = true`.
-- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:publicPartitions`, the composite grouping **MUST NOT** any declare `dp:publicPartitions`.
-- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:maxNumPartitions`, the composite grouping **MUST NOT** any declare `dp:maxNumPartitions`.
-
-When grouping by multiple columns, it is possible to derive worst-case upper bounds on the resulting partitions from the bounds declared on each individual column.
-These derived bounds are always conservative and are safe for differential privacy accounting.
-If bounds are larger then there is an error.
-
-- If all grouped columns define `dp:publicPartitions`, the public partitions **MUST be** the Cartesian product of those lists.
-- Example:
-  - Column A: `["Male", "Female"]`
-  - Column B: `["Adelie", "Gentoo", "Chinstrap"]`
-  - Derived partitions:
-    - `("Male","Adelie")`, `("Male","Gentoo")`, `("Male","Chinstrap")`, `("Female","Adelie")`, `("Female","Gentoo")`, `("Female","Chinstrap")`
-
-- `dp:maxPartitionLength` of a group of columns **MUST equal** the minimum `dp:maxPartitionLength` across all individual columns.
-
-
-- `dp:maxNumPartitions` of a group of columns **MUST be less than or equal to** the product of `dp:maxNumPartitions` of all the individual columns.
-
-- The upper bound is the minimum of the known `dp:maxInfluencedPartitions` values.
-
-
-- The upper bound is the minimum of the known `dp:maxPartitionContribution` values.
-
-**Note**: for allowed aggregations with missing columns:
-- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:maxPartitionLength`, the minimum **SHOULD** be taken over the known values.
-- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:maxInfluencedPartitions`, the minimum **SHOULD** be taken over the known values.
-- If any `dp:columns` in`dp:ColumnGroup` does not declare `dp:maxPartitionContribution`, the minimum **SHOULD** be taken over the known values.
-
-
-### Table-level consistency
-- If `dp:tableLength` is provided, it **MUST equal** `dp:maxTableLength`.
-
-- `dp:maxPartitionLength` of a column or of a group of columns **MUST be less than or equal to** `dp:maxTableLength` of the table.
-
-- `dp:maxInfluencedPartitions` of a column or of a group of columns **MUST be less than or equal to** `dp:maxContributions` of the table.
-
-- `dp:maxPartitionContribution` of a column or of a group of columns **MUST be less than or equal to** `dp:maxContributions` of the table.
 
 
 ---
