@@ -306,6 +306,7 @@ dp:transformationType ∈ {filter, bin, clip, truncate, recode, concatenation, o
 | recoding   | shrinks categorical universe                                 | `recode(col, mapping)`        |
 | concatenation | combines multiple columns into a composite categorical domain | `concatenation(col_1, col_2, ...)` |
 | one-hot encoding | expands a categorical column into binary indicator columns | `onehot(col)`                 |
+| pivot         | reshapes rows → columns using grouping + aggregation      | `pivot(index, columns, values, agg)` |
 
 | Transformation | Cardinality (per column) | Row Count    | Partition Count   | Privacy Impact                      |
 | ---------------| ----------------------- | ------------- | ----------------- | ----------------------------------- |
@@ -316,11 +317,45 @@ dp:transformationType ∈ {filter, bin, clip, truncate, recode, concatenation, o
 | recoding      | **decreases**            | same          | **decreases**     | ↓ sensitivity, ↓ domain leakage     |
 | concatenation | **increases**            | same          | **increases**     | ↑ sensitivity                       |
 | onehot        | expands columns          | same          | constant (2 each) | ↑ dimensionality                    |
+| pivot         | **increases**            | same or ↓     | **strongly increases** | **↑↑ sensitivity**             |
 
+
+| Rank      | Transformation |
+| --------- | -------------- |
+| 1 Best    | filter         |
+| 1         | truncation     |
+| 1         | clipping       |
+| 2         | binning        |
+| 2         | recoding       |
+| 3         | concatenation  |
+| 3         | onehot         |
+| 4 Worst   | pivot          | I think it is one-hot encoding + aggregation + reshaping. not for now.
 
 
 ###### Examples: 
 **Binning**
+
+From
+```
+"user_id" | "age"
+----------------------------
+1         | 5
+1         | 6
+2         | 19
+2         | 21
+3         | 38
+```
+to (with `bin(age, 0, 120, 10)`)
+```
+"user_id" | "bin_age_0_120_10" |
+--------------------------------
+1         | (0-9               |
+1         | (0-9               |
+2         | (10-19             |
+2         | (20-29             |
+3         | (30-28             |
+```
+
 Raw
 ```
 "name": "age",
@@ -331,7 +366,7 @@ Raw
 
 Derived
 ```
-"name": "age_bin_0_120_10",
+"name": "bin_age_0_120_10",
 "dp:derivedFrom": ["age"]
 "virtual": true,
 "valueUrl": "bin(age, 0, 120, 10)",
@@ -347,6 +382,25 @@ Derived
 **Filtering**
 Filtering reduces dataset size and per-person contribution bounds.
 
+From
+```
+"user_id" | "date"
+--------------------
+1         | 2025-06-01
+1         | 2025-07-02
+2         | 2025-06-15
+2         | 2025-08-03
+3         | 2025-06-20
+```
+to (with `filter(date, month == 6)`)
+```
+"user_id" | "filter_days_6"
+--------------------
+1         | 2025-06-01
+2         | 2025-06-15
+3         | 2025-06-20
+```
+
 Raw
 ```
 "name": "days",
@@ -356,7 +410,7 @@ dp:maxContributions = 365
 
 Derived
 ```
-"name": "days_filtered_6",
+"name": "filter_days_6",
 "virtual": true,
 "dp:derivedFrom": ["days"],
 "valueUrl": "filter(days, month == 6)",
@@ -368,6 +422,25 @@ Derived
 **Clipping**
 Clipping limits numeric ranges to reduce sensitivity.
 
+From
+```
+"user_id" | "salary"
+---------------------
+1         | 180000
+2         | 250000
+3         | 75000
+4         | 5000000
+```
+to (with `clip(salary, 0, 200000)`)
+```
+"user_id" | "clip_salary_0_200000"
+-----------------------------------
+1         | 180000
+2         | 200000
+3         | 75000
+4         | 200000
+```
+
 Raw
 ```
 "name": "salary",
@@ -378,7 +451,7 @@ Raw
 
 Derived
 ```
-"name": "salary_clipped_0_200000",
+"name": "clip_salary_0_200000",
 "virtual": true,
 "dp:derivedFrom": ["salary"],
 "valueUrl": "clip(salary, 0, 200000)",
@@ -389,6 +462,33 @@ Derived
 **Truncating**
 Truncation enforces per-individual contribution caps at the preprocessing level.
 
+From
+```
+"user_id" | "event_id"
+-----------------------
+1         | 1
+1         | 2
+...
+1         | 1000
+2         | 1
+2         | 2
+...
+2         | 1000
+```
+to (with `truncate(events, 100)`)
+```
+"user_id" | "event_id"
+-----------------------
+1         | 1
+1         | 2
+...
+1         | 100
+2         | 1
+2         | 2
+...
+2         | 100
+```
+
 Raw
 ```
 "name": "events",
@@ -397,7 +497,7 @@ Raw
 
 Derived
 ```
-"name": "events_truncated_100",
+"name": "truncate_events_100",
 "virtual": true,
 "dp:derivedFrom": ["events"],
 "valueUrl": "truncate(events, 100)",
@@ -406,6 +506,27 @@ Derived
 
 **Recoding**
 Recoding collapses or maps categories to a smaller public universe.
+
+From
+```
+"user_id" | "occupation"
+-------------------------
+1         | teacher
+2         | doctor
+3         | taxi_driver
+4         | nurse
+5         | professor
+```
+to (with `recode(occupation, {...})`)
+```
+"user_id" | "recode_occupation_education_healthcare_other"
+-----------------------------------------------------------
+1         | education
+2         | healthcare
+3         | other
+4         | healthcare
+5         | education
+```
 
 Raw
 ```
@@ -416,7 +537,7 @@ Raw
 
 Derived
 ```
-"name": "occupation_grouped_education_healthcare_other",
+"name": "recode_occupation_education_healthcare_other",
 "virtual": true,
 "dp:derivedFrom": ["occupation"],
 "valueUrl": "recode(occupation, {teacher, professor -> education; nurse, doctor -> healthcare; * -> other})",
@@ -427,6 +548,25 @@ Derived
 
 **Concatenation**
 Recoding collapses or maps categories to a smaller public universe.
+
+From
+```
+"user_id" | "is_before_1_august" | "planned_caesarean"
+--------------------------------------------------------
+1         | True                 | False
+2         | False                | False
+3         | True                 | True
+4         | False                | True
+```
+to (with `concatenation(is_before_1_august, planned_caesarean)`)
+```
+"user_id" | "concat_is_before_1_august_planned_caesarean"
+-----------------------------------------------------------
+1         | True_False
+2         | False_False
+3         | True_True
+4         | False_True
+```
 
 Raw
 ```
@@ -441,7 +581,7 @@ and
 
 Derived
 ```
-"name": "is_before_1_august_planned_caesarean",
+"name": "concat_is_before_1_august_planned_caesarean",
 "dp:derivedFrom": ["is_before_1_august", "planned_caesarean"],
 "virtual": true,
 "valueUrl": "concatenation(is_before_1_august, planned_caesarean)",
@@ -462,6 +602,27 @@ Derived
 **One-Hot Encoding**
 Recoding collapses or maps categories to a smaller public universe.
 
+From
+```
+"user_id" | "delivery_mode"
+----------------------------
+1         | spontaneous
+1         | planned_cesarean
+1         | spontaneous
+2         | spontaneous
+2         | emergency_cesarean
+```
+to (with `onehot(delivery_mode)`)
+```
+"user_id" | "one_hot_delivery_mode_spontaneous" | "one_hot_delivery_mode_planned_cesarean" | "one_hot_delivery_mode_emergency_cesarean"
+------------------------------------------------------------------------
+1         | True          | False              | False
+1         | False         | True               | False
+1         | True          | False              | False
+2         | True          | False              | False
+2         | False         | False              | True
+```
+
 Raw
 ```
 "name": "delivery_mode",
@@ -471,7 +632,7 @@ Raw
 
 Derived
 ```
-"name": "delivery_mode_spontaneous",
+"name": "one_hot_delivery_mode_spontaneous",
 "dp:derivedFrom": ["delivery_mode"],
 "virtual": true,
 "valueUrl": "onehot(delivery_mode)",
@@ -484,7 +645,7 @@ Derived
 ```
 and
 ```
-"name": "delivery_mode_planned_cesarean",
+"name": "one_hot_delivery_mode_planned_cesarean",
 "dp:derivedFrom": ["delivery_mode"],
 "virtual": true,
 "valueUrl": "onehot(delivery_mode)",
@@ -493,7 +654,7 @@ and
 ```
 and
 ```
-"name": "delivery_mode_emergency_cesarean",
+"name": "one_hot_delivery_mode_emergency_cesarean",
 "dp:derivedFrom": ["delivery_mode"],
 "virtual": true,
 "valueUrl": "onehot(delivery_mode)",
