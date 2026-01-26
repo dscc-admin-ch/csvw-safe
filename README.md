@@ -2,16 +2,6 @@
 
 ## Overview
 
-The **CSVW Differential Privacy Extension (CSVW-DP)** is a vocabulary designed to complement the W3C [CSV on the Web](https://www.w3.org/TR/tabular-data-model/) metadata model.
-
-It introduces terms needed to express bounded individual influence assumptions about tabular data —
-assumptions that most differential privacy (DP) systems require, but which cannot be expressed using the core CSVW vocabulary alone.
-
-See guidelines and notes [here](https://github.com/dscc-admin-ch/csvw-dp/blob/main/guidelines.md).
-
-
-## Motivation
-
 Differential privacy libraries assume (and often require) metadata such as:
 
 - maximum number of rows contributed by the same person
@@ -19,15 +9,26 @@ Differential privacy libraries assume (and often require) metadata such as:
 - bounds on how many partitions a person can influence
 - constraints that prevent overflow or numerical instability during aggregation
 
-These assumptions are essential for meaningful DP guarantees, but the core CSVW vocabulary cannot express them.
+These assumptions are essential for meaningful DP guarantees, but the core CSVW vocabulary cannot express them. 
 
-CSVW-DP introduces new terms so that a dataset can explicitly declare contribution bounds at the table, column and multi-column levels.
+The **CSVW Differential Privacy Extension (CSVW-DP)** is a vocabulary designed to complement the W3C [CSV on the Web](https://www.w3.org/TR/tabular-data-model/) metadata vocabulary. It is a declarative, semantic, DP-aware data modeling system.
 
-The motivation for the terms was found by looking at what is needed in the various dp libraries and their terms. See [dp_libraries.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/dp_libraries.md).
+It introduces terms needed to explicitly declare contribution bounds at the table, column and multi-column levels —
+values that most differential privacy (DP) systems require, but which cannot be expressed using the core CSVW vocabulary alone.
+
+See guidelines and notes [here](https://github.com/dscc-admin-ch/csvw-dp/blob/main/guidelines.md).
+
+We define
+1) Vocabulary → What does data mean?
+2) Constraints → What values are allowed?
+
+We provide a comprehensive example on the [Penguin dataset]("https://raw.githubusercontent.com/mwaskom/seaborn-data/master/penguins.csv") in [here](https://github.com/dscc-admin-ch/csvw-dp/blob/main/penguin_metadata.yaml).
 
 ---
 
-## Namespace
+## 1 VOCABULARY
+
+The motivation for the terms was found by looking at what is needed in the various dp libraries and their terms. See [dp_libraries.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/dp_libraries.md).
 
 **Default namespace:** https://github.com/dscc-admin-ch/csvw-dp/csvw-dp-ext#
 
@@ -127,7 +128,7 @@ If `required = false` and `dp:publicPartitions` is present, the partition of mis
 
 ---
 
-## Diagram
+### Diagram
 ```
 csvw:Table
  ├─ csvw:tableSchema → csvw:TableSchema
@@ -175,7 +176,7 @@ csvw:Table
 
 ---
 
-## CONSTRAINTS
+## 2. CONSTRAINTS
 
 ### Worst-Case Bounds for Multi-Column Aggregations (dp:ColumnGroup)
 | **Property**                    | **Worst-case bound for grouped columns**                   | **Rule / Derivation**                                                                           | **Notes**                                                                                               |
@@ -190,7 +191,8 @@ Example for cartesion product of **dp:publicPartitions**:
 - Column A: `["Male", "Female"]`
 - Column B: `["Adelie", "Gentoo", "Chinstrap"]`
 - Derived partitions:
-  - `("Male","Adelie")`, `("Male","Gentoo")`, `("Male","Chinstrap")`, `("Female","Adelie")`, `("Female","Gentoo")`, `("Female","Chinstrap")`
+  - `("Male","Adelie")`, `("Male","Gentoo")`, `("Male","Chinstrap")`,
+    `("Female","Adelie")`, `("Female","Gentoo")`, `("Female","Chinstrap")`
 
 ### Column-Level Structural Constraints
 | **Rule**                                                                                                                                                        | **Meaning**                                    |
@@ -224,7 +226,7 @@ Example for cartesion product of **dp:publicPartitions**:
 SHACL file for enforcing constraints in [constraints_shacl.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/constraints_shacl.ttl).
 
 
----
+-------------------------------------------------------
 
 ## Theoretical Upper Bounds for `dp:Groupable`
 
@@ -237,7 +239,7 @@ For example, with two columns: `year` and `month`. It is publicly know that data
     - `dp:maxNumPartitions`: 2
     - `dp:maxInfluencedPartitions`: 2
     - `dp:maxPartitionContribution`: 1
-- column `sex` has metadata:
+- column `month` has metadata:
     - `dp:publicPartitions`: [01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12]
     - `dp:maxPartitionLength`: 31 (max days in months)
     - `dp:maxNumPartitions`: 12
@@ -295,13 +297,15 @@ Derived columns may declare the transformation category using:
 dp:transformationType ∈ {filter, bin, clip, truncate, recode}
 ```
 
-| Operation  | Effect                                                       | Canonical Form              |
-| ---------- | ------------------------------------------------------------ | --------------------------- |
-| filter     | reduces `dp:maxTableLength`, `dp:maxContributions`           | `filter(col, predicate)`    |
-| binning    | reduces `dp:maxNumPartitions`, defines `dp:publicPartitions` | `bin(col, min, max, width)` |
-| clipping   | tightens `minimum` / `maximum`                               | `clip(col, lower, upper)`   |
-| truncation | tightens per-individual contribution bounds                  | `truncate(col, max_rows)`   |
-| recoding   | shrinks categorical universe                                 | `recode(col, mapping)`      |
+| Operation  | Effect                                                       | Canonical Form                |
+| ---------- | ------------------------------------------------------------ | ------------------------------|
+| filter     | reduces `dp:maxTableLength`, `dp:maxContributions`           | `filter(col, predicate)`      |
+| binning    | reduces `dp:maxNumPartitions`, defines `dp:publicPartitions` | `bin(col, min, max, width)`   |
+| clipping   | tightens `minimum` / `maximum`                               | `clip(col, lower, upper)`     |
+| truncation | tightens per-individual contribution bounds                  | `truncate(col, max_rows)`     |
+| recoding   | shrinks categorical universe                                 | `recode(col, mapping)`        |
+| concatenation | -                                                         | `concatenation(col_1, col_2)` |
+| one-hot encoding | -                                                      | `onehot(col)`                 |
 
 ###### Examples: 
 **Binning**
@@ -315,7 +319,7 @@ Raw
 
 Derived
 ```
-"name": "age_bin_10y",
+"name": "age_bin_0_120_10",
 "dp:derivedFrom": ["age"]
 "virtual": true,
 "valueUrl": "bin(age, 0, 120, 10)",
@@ -340,7 +344,7 @@ dp:maxContributions = 365
 
 Derived
 ```
-"name": "days_filtered_june",
+"name": "days_filtered_6",
 "virtual": true,
 "dp:derivedFrom": ["days"],
 "valueUrl": "filter(days, month == 6)",
@@ -362,7 +366,7 @@ Raw
 
 Derived
 ```
-"name": "salary_clipped",
+"name": "salary_clipped_0_200000",
 "virtual": true,
 "dp:derivedFrom": ["salary"],
 "valueUrl": "clip(salary, 0, 200000)",
@@ -381,7 +385,7 @@ Raw
 
 Derived
 ```
-"name": "events_truncated",
+"name": "events_truncated_100",
 "virtual": true,
 "dp:derivedFrom": ["events"],
 "valueUrl": "truncate(events, 100)",
@@ -400,10 +404,10 @@ Raw
 
 Derived
 ```
-"name": "occupation_grouped",
+"name": "occupation_grouped_education_healthcare_other",
 "virtual": true,
 "dp:derivedFrom": ["occupation"],
-"valueUrl": "recode(occupation, {teacher,professor -> education; nurse,doctor -> healthcare; * -> other})",
+"valueUrl": "recode(occupation, {teacher, professor -> education; nurse, doctor -> healthcare; * -> other})",
 "datatype": "string",
 "dp:publicPartitions": ["education", "healthcare", "other"],
 "dp:maxNumPartitions": 3
