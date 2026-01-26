@@ -294,7 +294,7 @@ CSVW-DP reuses all DP properties on virtual columns exactly as on physical colum
 
 Derived columns may declare the transformation category using:
 ```
-dp:transformationType ∈ {filter, bin, clip, truncate, recode}
+dp:transformationType ∈ {filter, bin, clip, truncate, recode, concatenation, onehot}
 ```
 
 | Operation  | Effect                                                       | Canonical Form                |
@@ -304,8 +304,20 @@ dp:transformationType ∈ {filter, bin, clip, truncate, recode}
 | clipping   | tightens `minimum` / `maximum`                               | `clip(col, lower, upper)`     |
 | truncation | tightens per-individual contribution bounds                  | `truncate(col, max_rows)`     |
 | recoding   | shrinks categorical universe                                 | `recode(col, mapping)`        |
-| concatenation | -                                                         | `concatenation(col_1, col_2)` |
-| one-hot encoding | -                                                      | `onehot(col)`                 |
+| concatenation | combines multiple columns into a composite categorical domain | `concatenation(col_1, col_2, ...)` |
+| one-hot encoding | expands a categorical column into binary indicator columns | `onehot(col)`                 |
+
+| Transformation | Cardinality (per column) | Row Count    | Partition Count   | Privacy Impact                      |
+| ---------------| ----------------------- | ------------- | ----------------- | ----------------------------------- |
+| filter        | same                     | **decreases** | same              | ↓ sensitivity, ↓ total contribution |
+| binning       | **decreases**            | same          | **decreases**     | ↓ sensitivity, ↓ partition leakage  |
+| clipping      | same                     | same          | same              | ↓ sensitivity (bounds tightening)   |
+| truncation    | same                     | same          | same              | ↓ per-user influence                |
+| recoding      | **decreases**            | same          | **decreases**     | ↓ sensitivity, ↓ domain leakage     |
+| concatenation | **increases**            | same          | **increases**     | ↑ sensitivity                       |
+| onehot        | expands columns          | same          | constant (2 each) | ↑ dimensionality                    |
+
+
 
 ###### Examples: 
 **Binning**
@@ -411,4 +423,80 @@ Derived
 "datatype": "string",
 "dp:publicPartitions": ["education", "healthcare", "other"],
 "dp:maxNumPartitions": 3
+```
+
+**Concatenation**
+Recoding collapses or maps categories to a smaller public universe.
+
+Raw
+```
+"name": "is_before_1_august",
+"datatype": "boolean"
+```
+and
+```
+"name": "planned_caesarean",
+"datatype": "boolean"
+```
+
+Derived
+```
+"name": "is_before_1_august_planned_caesarean",
+"dp:derivedFrom": ["is_before_1_august", "planned_caesarean"],
+"virtual": true,
+"valueUrl": "concatenation(is_before_1_august, planned_caesarean)",
+"datatype": "string",
+"format": "(True|False)_(True|False)",
+"dp:publicPartitions": [
+  "True_True",
+  "True_False",
+  "False_True",
+  "False_False"
+],
+"dp:maxNumPartitions": 4,
+"dp:maxPartitionLength": 100000,
+"dp:maxInfluencedPartitions": 1,
+"dp:maxPartitionContribution": 1
+```
+
+**One-Hot Encoding**
+Recoding collapses or maps categories to a smaller public universe.
+
+Raw
+```
+"name": "delivery_mode",
+"datatype": "string",
+"format": "(spontaneous|planned_cesarean|emergency_cesarean)"
+```
+
+Derived
+```
+"name": "delivery_mode_spontaneous",
+"dp:derivedFrom": ["delivery_mode"],
+"virtual": true,
+"valueUrl": "onehot(delivery_mode)",
+"datatype": "boolean",
+"dp:publicPartitions": ["True", "False"],
+"dp:maxNumPartitions": 2,
+"dp:maxPartitionLength": 100000,
+"dp:maxInfluencedPartitions": 1,
+"dp:maxPartitionContribution": 1
+```
+and
+```
+"name": "delivery_mode_planned_cesarean",
+"dp:derivedFrom": ["delivery_mode"],
+"virtual": true,
+"valueUrl": "onehot(delivery_mode)",
+"datatype": "boolean",
+"dp:publicPartitions": ["True", "False"]
+```
+and
+```
+"name": "delivery_mode_emergency_cesarean",
+"dp:derivedFrom": ["delivery_mode"],
+"virtual": true,
+"valueUrl": "onehot(delivery_mode)",
+"datatype": "boolean",
+"dp:publicPartitions": ["True", "False"]
 ```
