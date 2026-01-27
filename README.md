@@ -53,6 +53,7 @@ CSVW’s existing `csvw:tableSchema` remains responsible for defining the table 
 | Term | Type | Meaning |
 |------|------|---------|
 | `dp:privacyId` | boolean | True if the column identifies individuals/units for DP. |
+| `dp:groupable` | boolean | True if the column is groupable. |
 | `dp:nullableProportion` | decimal 0–1 | Fraction of values that are null. |
 | `dp:publicPartitions` | list(string) | Declared set of partition keys when grouping values are publicly known. |
 | `dp:derivedFrom` | csvw:Column | Source column to derive virtual column.. |
@@ -61,6 +62,8 @@ Note:
 CSVW's `required` field already expresses whether a cell must be present and non-empty. `dp:nullableProportion` is optional and intended for approximate modeling (e.g., generating representative dummy data or estimating accuracy). Exactness is not required; coarse bounds are sufficient.
 
 `dp:derivedFrom` is better explained at the end of the README.
+
+`dp:groupable` boolean does it clash with class `dp:Groupable` ? 
 
 #### Reuse of existing CSVW terms:
 CSVW-DP intentionally reuses existing CSVW vocabulary where semantics already exist.
@@ -125,6 +128,20 @@ DP properties on `dp:ColumnGroup` reuse the same terms as columns (`dp:maxPartit
 `datatype` and `format` describe the value domain while `dp:publicPartitions` describes the grouping universe used for DP accounting.
 Thus, `dp:publicPartitions` may be larger or smaller than observed values. It may include values not present in the data and declaring publicPartitions can reduce the sensitivity and avoid worst-case assumptions. Users may still choose to spend privacy budget (e.g. δ) to explore unknown partitions.
 If `required = false` and `dp:publicPartitions` is present, the partition of missing values (e.g. NaN) is assumed to be publicly known.
+
+#### Derived columns (preprocessing) privacy bounds (WIP)
+
+When preprocessing column
+
+| Term | Type | Meaning |
+|------|------|---------|
+| `csvw:virtual` | boolean| If the column is a preprocessed column. |
+| `dp:derivedFrom` | union(string, list(string)) | Column from which the column is derived. |
+| `dp:transformationType` | string | Type of proprocessing operation. |
+| `dp:transformationArguments` | Tuple(?) | Argument of transformation (depends on transformationType). |
+
+If better than worst case. 
+Or if recommandation: like breaks for a binning operation.
 
 ---
 
@@ -299,37 +316,41 @@ dp:transformationType ∈ {filter, bin, clip, truncate, recode, concatenation, o
 
 | Operation  | Effect                                                       | Canonical Form                |
 | ---------- | ------------------------------------------------------------ | ------------------------------|
-| filter     | reduces `dp:maxTableLength`, `dp:maxContributions`           | `filter(col, predicate)`      |
-| binning    | reduces `dp:maxNumPartitions`, defines `dp:publicPartitions` | `bin(col, min, max, width)`   |
 | clipping   | tightens `minimum` / `maximum`                               | `clip(col, lower, upper)`     |
 | truncation | tightens per-individual contribution bounds                  | `truncate(col, max_rows)`     |
+| fill_na_constant | replaces missing values with a public constant         | `fill_na_constant(col, val)`  |
+| fill_na_data_derived | replaces missing values data-derived value (mean/median/mode) | `fill_na_data_derived(col, func)`  |
+| filter     | reduces `dp:maxTableLength`, `dp:maxContributions`           | `filter(col, predicate)`      |
+| binning    | reduces `dp:maxNumPartitions`, defines `dp:publicPartitions` | `bin(col, min, max, width)`   |
 | recoding   | shrinks categorical universe                                 | `recode(col, mapping)`        |
 | concatenation | combines multiple columns into a composite categorical domain | `concatenation(col_1, col_2, ...)` |
 | one-hot encoding | expands a categorical column into binary indicator columns | `onehot(col)`                 |
-| pivot         | reshapes rows → columns using grouping + aggregation      | `pivot(index, columns, values, agg)` |
 
-| Transformation | Cardinality (per column) | Row Count    | Partition Count   | Privacy Impact                      |
-| ---------------| ----------------------- | ------------- | ----------------- | ----------------------------------- |
-| filter        | same                     | **decreases** | same              | ↓ sensitivity, ↓ total contribution |
-| binning       | **decreases**            | same          | **decreases**     | ↓ sensitivity, ↓ partition leakage  |
-| clipping      | same                     | same          | same              | ↓ sensitivity (bounds tightening)   |
-| truncation    | same                     | same          | same              | ↓ per-user influence                |
-| recoding      | **decreases**            | same          | **decreases**     | ↓ sensitivity, ↓ domain leakage     |
-| concatenation | **increases**            | same          | **increases**     | ↑ sensitivity                       |
-| onehot        | expands columns          | same          | constant (2 each) | ↑ dimensionality                    |
-| pivot         | **increases**            | same or ↓     | **strongly increases** | **↑↑ sensitivity**             |
+| Transformation | Cardinality (per column) | Row Count     | Partition Count   | Privacy Impact                      |
+| ---------------| ------------------------ | ------------- | ----------------- | ----------------------------------- |
+| clipping       | same                     | same          | same              | ↓ sensitivity (bounds tightening)   |
+| truncation     | same                     | same          | same              | ↓ per-user influence                |
+| fill_na_constant | same                   | same          | same              | neutral                             |
+| fill_na_data_derived | same               | same          | same              | ↑ sensitivity                       |
+| filter         | same                     | **decreases** | same              | ↓ sensitivity, ↓ total contribution |
+| binning        | **decreases**            | same          | **decreases**     | ↓ sensitivity, ↓ partition leakage  |
+| recoding       | **decreases**            | same          | **decreases**     | ↓ sensitivity, ↓ domain leakage     |
+| concatenation  | **increases**            | same          | **increases**     | ↑ sensitivity                       |
+| onehot         | expands columns          | same          | constant (=2)     | ↑ dimensionality                    |
 
 
-| Rank      | Transformation |
-| --------- | -------------- |
-| 1 Best    | filter         |
-| 1         | truncation     |
-| 1         | clipping       |
-| 2         | binning        |
-| 2         | recoding       |
-| 3         | concatenation  |
-| 3         | onehot         |
-| 4 Worst   | pivot          | I think it is one-hot encoding + aggregation + reshaping. not for now.
+| Rank    | Transformation       | Notes on DP Risk                                           |
+| ------- | -------------------- | ---------------------------------------------------------- |
+| 1 Best  | truncation           | caps per-user rows → very safe                             |
+| 1       | clipping             | tightens value bounds → very safe                          |
+| 1       | fill_na_constant     | fills missing with public constant → neutral               |
+| 2       | binning              | reduces domain size → moderate safety improvement          |
+| 2       | recoding             | reduces categorical universe → moderate safety improvement |
+| 3       | filter               | removes rows, reduces contributions but might single out   |
+| 3       | concatenation        | multiplies domain → increased sensitivity                  |
+| 3       | onehot               | expands columns → increases dimensionality                 |
+| 4 Worst | fill_na_data_derived | injects data-dependent value → increased sensitivity       |
+
 
 
 ###### Examples: 
@@ -661,3 +682,6 @@ and
 "datatype": "boolean",
 "dp:publicPartitions": ["True", "False"]
 ```
+
+In Lomas, can give get_dummy(with_virtual=True) with virtual columns.
+
