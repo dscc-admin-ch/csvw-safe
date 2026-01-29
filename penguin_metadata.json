@@ -16,7 +16,7 @@
         "name": "species",
         "datatype": "string",
         "dp:privacyId": false,
-        "dp:nullable": false,
+        "required": true,
         "dp:nullableProportion": 0,
         "dp:publicPartitions": ["Adelie", "Chinstrap", "Gentoo"],
         "dp:maxNumPartitions": 3,
@@ -28,9 +28,8 @@
         "name": "island",
         "datatype": "string",
         "dp:privacyId": false,
-        "dp:nullable": false,
+        "required": true,
         "dp:nullableProportion": 0,
-        "dp:cardinality": 3,
         "dp:publicPartitions": ["Torgersen", "Biscoe", "Dream"],
         "dp:maxNumPartitions": 3,
         "dp:maxPartitionLength": 200,
@@ -43,7 +42,7 @@
         "dp:privacyId": false,
         "minimum": 30.0,
         "maximum": 65.0,
-        "dp:nullable": false,
+        "required": true,
         "dp:nullableProportion": 0
       },
       {
@@ -52,8 +51,8 @@
         "dp:privacyId": false,
         "minimum": 13.0,
         "maximum": 23.0,
-        "dp:nullable": false,
-        "dp:nullableProportion": 0
+        "required": false,
+        "dp:nullableProportion": 0.05
       },
       {
         "name": "flipper_length_mm",
@@ -61,8 +60,8 @@
         "dp:privacyId": false,
         "minimum": 150.0,
         "maximum": 250.0,
-        "dp:nullable": false,
-        "dp:nullableProportion": 0
+        "required": false,
+        "dp:nullableProportion": 0.05
       },
       {
         "name": "body_mass_g",
@@ -70,15 +69,27 @@
         "dp:privacyId": false,
         "minimum": 2000.0,
         "maximum": 7000.0,
-        "dp:nullable": false,
-        "dp:nullableProportion": 0
+        "required": false,
+        "dp:nullableProportion": 0.05
+      },
+      {
+        "name": "bin__2000_7000_1000__body_mass_g",
+        "virtual": true,
+        "datatype": "string",
+        "format": "(2000-2999|3000-3999|...|6000-7000|)",
+        "dp:privacyId": false,
+        "dp:publicPartitions": ["(2000-2999]", "(3000-3999]", "(4000-4999]", "(5000-5999]", "(6000-7000]"],
+        "dp:maxNumPartitions": 5,
+        "dp:maxPartitionLength": 200,
+        "dp:maxInfluencedPartitions": 2,
+        "dp:maxPartitionContribution": 1
       },
       {
         "name": "sex",
         "datatype": "string",
         "dp:privacyId": false,
-        "dp:nullable": true,
-        "dp:nullableProportion": 0.05,
+        "required": false,
+        "dp:nullableProportion": 0.2,
         "dp:publicPartitions": ["MALE", "FEMALE"],
         "dp:maxNumPartitions": 2,
         "dp:maxPartitionLength": 300,
@@ -94,6 +105,13 @@
         "dp:maxPartitionLength": 100,
         "dp:maxInfluencedPartitions": 1,
         "dp:maxPartitionContribution": 2
+      },
+      {
+        "columns": ["species", "bin__2000_7000_1000__body_mass_g"],
+        "dp:maxNumPartitions": 12,
+        "dp:maxPartitionLength": 50,
+        "dp:maxInfluencedPartitions": 1,
+        "dp:maxPartitionContribution": 1
       },
       {
         "columns": ["species", "island"],

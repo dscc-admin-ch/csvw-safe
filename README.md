@@ -56,12 +56,9 @@ CSVW’s existing `csvw:tableSchema` remains responsible for defining the table 
 | `dp:groupable` | boolean | True if the column is groupable. |
 | `dp:nullableProportion` | decimal 0–1 | Fraction of values that are null. |
 | `dp:publicPartitions` | list(string) | Declared set of partition keys when grouping values are publicly known. |
-| `dp:derivedFrom` | csvw:Column | Source column to derive virtual column.. |
 
 Note: 
 CSVW's `required` field already expresses whether a cell must be present and non-empty. `dp:nullableProportion` is optional and intended for approximate modeling (e.g., generating representative dummy data or estimating accuracy). Exactness is not required; coarse bounds are sufficient.
-
-`dp:derivedFrom` is better explained at the end of the README.
 
 `dp:groupable` boolean does it clash with class `dp:Groupable` ? 
 
@@ -131,29 +128,48 @@ If `required = false` and `dp:publicPartitions` is present, the partition of mis
 
 #### Derived columns (preprocessing) privacy bounds (WIP)
 
-When preprocessing column
+CSVW-DP introduces a new class: `dp:DerivedColumn rdfs:subClassOf csvw:Column .`
+
+To identify these columns, we add `csvw:virtual = True`. 
+This makes the column non-physical (not present in raw CSV) but part of the logical schema.
 
 | Term | Type | Meaning |
 |------|------|---------|
-| `csvw:virtual` | boolean| If the column is a preprocessed column. |
-| `dp:derivedFrom` | union(string, list(string)) | Column from which the column is derived. |
-| `dp:transformationType` | string | Type of proprocessing operation. |
-| `dp:transformationArguments` | Tuple(?) | Argument of transformation (depends on transformationType). |
+| `csvw:virtual` | boolean| True if column is derived/preprocessed and not present in the raw input. |
+| `dp:derivedFrom` | [string] | Source column(s) used to compute this column. |
+| `dp:transformationType` | `dp:Transformation` | Identifier of the preprocessing operation. |
+| `dp:transformationArguments` | object | Parameters of the transformation. |
 
-If better than worst case. 
-Or if recommandation: like breaks for a binning operation.
+Can give private contributions if better than worst case based on source column. Otherwise, will be computed based on worst case.
+
+Design choice: `dp:derivedFrom` should always be a list, even if length = 1, to keep the model uniform.
+
+In Lomas, can give `get_dummy(with_virtual=True)` with virtual columns.
+More on derived columns below (enabled `dp:Transformation`, their associated `dp:transformationArguments` and examples).
 
 ---
 
 ### Diagram
 ```
 csvw:Table
- ├─ csvw:tableSchema → csvw:TableSchema
- │      └─ csvw:column (0..n)
- └─ dp:ColumnGroup (0..n)
-        └─ dp:columns → csvw:Column (1..n)
+ ├─ dp:maxTableLength
+ ├─ dp:tableLength
+ ├─ dp:maxContributions
+ │
+ ├─ csvw:tableSchema ──────────────→ csvw:TableSchema
+ │        |
+ │        └─ csvw:column ──────────→ csvw:Column ⊂ dp:Groupable
+ │                   |
+ │                   ├─ core CSVW schema
+ │                   ├─ DP group-by bounds
+ │                   └─ derived-column semantics
+ │
+ └─ dp:ColumnGroup ───────────────→ dp:ColumnGroup ⊂ dp:Groupable
+             |
+             └─ multi-column DP bounds
 ```
 
+In full:
 ```
 csvw:Table
  ├─ dp:maxTableLength        : xsd:positiveInteger
@@ -179,7 +195,8 @@ csvw:Table
         |                      ├─ dp:maxPartitionContribution : xsd:positiveInteger
         |                      ├─ csvw:csvw:virtual           : xsd:boolean
         |                      ├─ dp:derivedFrom              : csvw:Column
-        |                      └─ dp:transformationType       : string
+        |                      ├─ dp:transformationType       : string
+        |                      └─ dp:transformationArguments  : object
         |
         +── dp:ColumnGroup (0..n) ───────────────────────────→ dp:ColumnGroup ⊂ dp:Groupable
                    |
@@ -352,6 +369,8 @@ dp:transformationType ∈ {filter, bin, clip, truncate, recode, concatenation, o
 | 4 Worst | fill_na_data_derived | injects data-dependent value → increased sensitivity       |
 
 
+TODO: list of `dp:Transformation` and their associated `dp:transformationArguments`. 
+TODO: see if something already exist.
 
 ###### Examples: 
 **Binning**
@@ -682,6 +701,4 @@ and
 "datatype": "boolean",
 "dp:publicPartitions": ["True", "False"]
 ```
-
-In Lomas, can give get_dummy(with_virtual=True) with virtual columns.
 
