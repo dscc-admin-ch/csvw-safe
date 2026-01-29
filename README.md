@@ -257,8 +257,32 @@ Example for cartesion product of **dp:publicPartitions**:
 
 ### Resulting Validation Rules
 
-SHACL file for enforcing constraints in [constraints_shacl.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/constraints_shacl.ttl).
+SHACL file for enforcing constraints in [metadata_constraints.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/metadata_constraints.ttl).
 
+| Scope                 | Property                                                   | Constraint / Rule                            | Worst-Case Check                                        | Comments                                                        |
+| --------------------- | ---------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- |
+| **Table**             | `dp:maxTableLength`                                        | Must be positive integer                     | N/A                                                     | Upper bound on total rows to prevent overflow in DP aggregation |
+|                       | `dp:tableLength`                                           | Positive integer, ≤ `dp:maxTableLength`      | ✅                                                       | Actual number of rows must not exceed declared maximum          |
+|                       | `dp:maxContributions`                                      | Positive integer, ≤ `dp:maxTableLength`      | ✅                                                       | Max rows per person cannot exceed table max rows                |
+|                       | `csvw:tableSchema`                                         | Must exist                                   | N/A                                                     | Table must declare schema                                       |
+| **Column**            | `dp:privacyId`                                             | Boolean                                      | Must not declare DP bounds (`maxPartitionLength`, etc.) | True if column identifies individuals, cannot be grouped        |
+|                       | `dp:groupable`                                             | Boolean                                      | N/A                                                     | Indicates if column can be used for DP groupings                |
+|                       | `dp:nullableProportion`                                    | Decimal [0,1]                                | N/A                                                     | Fraction of nulls                                               |
+|                       | `dp:publicPartitions`                                      | List                                         | Values must match datatype                              | Declared universe of partition keys                             |
+|                       | `dp:maxPartitionLength`                                    | Positive integer                             | ≤ table `dp:maxTableLength`                             | Max size of a group for this column                             |
+|                       | `dp:maxNumPartitions`                                      | Positive integer                             | ≤ table `dp:maxTableLength`                             | Max number of distinct groups                                   |
+|                       | `dp:maxInfluencedPartitions`                               | Positive integer                             | ≤ table `dp:maxContributions`                           | Max groups a person can contribute to                           |
+|                       | `dp:maxPartitionContribution`                              | Positive integer                             | ≤ table `dp:maxContributions`                           | Max contributions per partition                                 |
+| **Derived Column**    | `csvw:virtual`                                             | Must be true                                 | N/A                                                     | Marks column as virtual, not present in raw CSV                 |
+|                       | `dp:derivedFrom`                                           | ≥1 source column                             | N/A                                                     | Must reference one or more source columns                       |
+|                       | `dp:transformationType`                                    | String                                       | N/A                                                     | Type of preprocessing/transformation                            |
+|                       | `dp:transformationArguments`                               | Optional object                              | N/A                                                     | Parameters of transformation                                    |
+|                       | DP bounds (`maxPartitionLength`, etc.)                     | ≤ source columns & table worst-case          | ✅                                                       | Ensures derived columns do not exceed worst-case DP bounds      |
+| **ColumnGroup**       | `dp:columns`                                               | ≥2 columns                                   | N/A                                                     | Must include multiple columns                                   |
+|                       | DP bounds (`maxPartitionLength`, `maxNumPartitions`, etc.) | ≤ min/product of constituent columns & table | ✅                                                       | Worst-case enforcement across group columns                     |
+|                       | PrivacyId columns                                          | Must not be included                         | ✅                                                       | PrivacyId columns cannot participate in groups                  |
+| **Required Columns**  | `csvw:required`                                            | If true → `dp:nullableProportion = 0`        | ✅                                                       | Enforces non-nullability aligns with CSVW rules                 |
+| **Public Partitions** | `dp:publicPartitions`                                      | All values must match column datatype        | N/A                                                     | Type safety for partition keys                                  |
 
 -------------------------------------------------------
 
@@ -293,6 +317,7 @@ But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has me
 - `dp:maxNumPartitions`: 12
 - `dp:maxInfluencedPartitions`: 1
 - `dp:maxPartitionContribution`: 1
+
 
 ---
 
