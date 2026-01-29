@@ -5,6 +5,25 @@
 @prefix dp:   <https://github.com/dscc-admin-ch/csvw-dp/csvw-dp-ext#> .
 
 # =====================================================
+# Ontology declaration
+# =====================================================
+
+dp:
+    a owl:Ontology ;
+    dct:title "CSVW Differential Privacy Extension Vocabulary" ;
+    dct:description """
+    A vocabulary extending W3C CSV on the Web metadata with explicit
+    differential privacy modeling primitives, including contribution bounds,
+    partition constraints, and derived column semantics.
+    """ ;
+    dct:creator <https://github.com/dscc-admin-ch> ;
+    dct:created "2025-01-01"^^xsd:date ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://github.com/dscc-admin-ch/csvw-dp> .
+
+
+# =====================================================
 # CLASSES
 # =====================================================
 
@@ -18,7 +37,15 @@ dp:ColumnGroup a rdfs:Class ;
     rdfs:comment "Represents a grouping key formed by two or more columns. Useful for multi-column DP aggregation bounds." .
 
 dp:DerivedColumn a rdfs:Class ;
-    rdfs:subClassOf csvw:Column ;
+    rdfs:subClassOf csvw:Column ,
+        [ a owl:Restriction ;
+          owl:onProperty dp:derivedFrom ;
+          owl:minCardinality 1
+        ] ,
+        [ a owl:Restriction ;
+          owl:onProperty csvw:virtual ;
+          owl:hasValue true
+        ] .
     rdfs:label "DerivedColumn" ;
     rdfs:comment "Columns computed from other columns; not physically present in raw CSV (virtual column)." .
 

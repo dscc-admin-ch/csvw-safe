@@ -1,0 +1,123 @@
+{
+  "@context": {
+    "@version": 1.1,
+
+    "csvw": "http://www.w3.org/ns/csvw#",
+    "dp": "https://github.com/dscc-admin-ch/csvw-dp/csvw-dp-ext#",
+
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+
+    "id": "@id",
+    "type": "@type",
+
+    "table": {
+      "@id": "csvw:Table",
+      "@type": "@id"
+    },
+
+    "tableSchema": {
+      "@id": "csvw:tableSchema",
+      "@type": "@id"
+    },
+
+    "columns": {
+      "@id": "csvw:column",
+      "@container": "@list"
+    },
+
+    "name": "csvw:name",
+
+    "datatype": {
+      "@id": "csvw:datatype",
+      "@type": "@id"
+    },
+
+    "format": "csvw:format",
+
+    "minimum": {
+      "@id": "csvw:minimum",
+      "@type": "xsd:decimal"
+    },
+
+    "maximum": {
+      "@id": "csvw:maximum",
+      "@type": "xsd:decimal"
+    },
+
+    "required": {
+      "@id": "csvw:required",
+      "@type": "xsd:boolean"
+    },
+
+    "default": "csvw:default",
+
+    "virtual": {
+      "@id": "csvw:virtual",
+      "@type": "xsd:boolean"
+    },
+
+    "valueUrl": "csvw:valueUrl",
+
+    "dp:maxTableLength": {
+      "@type": "xsd:positiveInteger"
+    },
+
+    "dp:tableLength": {
+      "@type": "xsd:positiveInteger"
+    },
+
+    "dp:maxContributions": {
+      "@type": "xsd:positiveInteger"
+    },
+
+    "dp:privacyId": {
+      "@type": "xsd:boolean"
+    },
+
+    "dp:groupable": {
+      "@type": "xsd:boolean"
+    },
+
+    "dp:nullableProportion": {
+      "@type": "xsd:decimal"
+    },
+
+    "dp:publicPartitions": {
+      "@container": "@list"
+    },
+
+    "dp:maxPartitionLength": {
+      "@type": "xsd:positiveInteger"
+    },
+
+    "dp:maxNumPartitions": {
+      "@type": "xsd:positiveInteger"
+    },
+
+    "dp:maxInfluencedPartitions": {
+      "@type": "xsd:positiveInteger"
+    },
+
+    "dp:maxPartitionContribution": {
+      "@type": "xsd:positiveInteger"
+    },
+
+    "dp:derivedFrom": {
+      "@container": "@list",
+      "@type": "@id"
+    },
+
+    "dp:transformationType": {
+      "@type": "@id"
+    },
+
+    "dp:transformationArguments": {
+      "@container": "@list"
+    },
+
+    "dp:columns": {
+      "@container": "@list",
+      "@type": "@id"
+    }
+  }
+}

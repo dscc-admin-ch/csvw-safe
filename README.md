@@ -257,7 +257,7 @@ Example for cartesion product of **dp:publicPartitions**:
 
 ### Resulting Validation Rules
 
-SHACL file for enforcing constraints in [metadata_constraints.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/metadata_constraints.ttl).
+SHACL file for enforcing constraints in [metadata_constraints.ttl](https://github.com/dscc-admin-ch/csvw-dp/blob/main/csvw-dp-ext-constaints.ttl).
 
 | Scope                 | Property                                                   | Constraint / Rule                            | Worst-Case Check                                        | Comments                                                        |
 | --------------------- | ---------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- |
@@ -726,4 +726,21 @@ and
 "datatype": "boolean",
 "dp:publicPartitions": ["True", "False"]
 ```
+
+
+
+## Summary
+
+
+| **File / Component**            | **Purpose**                        | **Description / Contents**                                                                                                                                               |
+| ------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **README.md**                   | Specification & motivation         | High-level introduction, design goals, conceptual model, examples, and usage guidance.                                                                                   |
+| **csvw-dp-ext.ttl**             | Vocabulary definition (OWL + RDFS) | Defines all classes, properties, and formal semantics for the CSVW Differential Privacy extension, including DP bounds, grouping semantics, and derived column modeling. |
+| **csvw-dp-ext-context.jsonld**  | JSON-LD context                    | Maps compact JSON keys to RDF IRIs, enabling JSON-LD tooling, CSVW interoperability, RDF conversion, and SHACL validation of JSON metadata.                              |
+| **csvw-dp-ext-constraints.ttl**       | Formal validation rules (SHACL)    | Machine-enforceable structural, semantic, and DP safety constraints, including worst-case bounds, column-group consistency rules, and table-level invariants.            |
+| **penguin_metadata.json**       | Example metadata                   | End-to-end example demonstrating how users describe a dataset using CSVW-DP metadata (including DP bounds and derived columns).                                          |
+| **dp_libraries.md**             | Semantics mapping                  | Comparison table mapping CSVW-DP vocabulary terms to concepts in major DP libraries (OpenDP, Google DP, diffprivlib, Tumult, etc.).                                      |
+| **validate.py** TODO                | Metadata validation tool           | Script to validate JSON metadata against the JSON-LD context and SHACL constraints.                                                                                      |
+| **make_metadata_from_data.py**  TO UPDATE | Metadata generation                | Script to infer baseline (non-DP) CSVW metadata from raw datasets.                                                                                                       |
+| **make_dummy_from_metadata.py** TO UPDATE | Dummy data generator           | Script to generate representative dummy datasets from metadata (optionally including virtual / derived columns).      |
 
