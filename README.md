@@ -216,12 +216,14 @@ csvw:Table
 
 | File                          | Purpose                             |
 | ----------------------------- | ----------------------------------- |
-| `README.md`                   | Spec & motivation                   |
+| `README.md`                   | Description, Motivation             |
 | `csvw-dp-ext.ttl`             | Vocabulary definition (OWL + RDFS)  |
 | `csvw-dp-ext-context.jsonld`  | JSON-LD context                     |
 | `csvw-dp-ext-constraints.ttl` | SHACL validation rules              |
 | `penguin_metadata.json`       | Example metadata                    |
 | `dp_libraries.md`             | Mapping to DP libraries             |
-| `validate.py`                 | Metadata validator (TODO)           |
-| `make_metadata_from_data.py`  | Infer baseline CSVW metadata (TODO) |
-| `make_dummy_from_metadata.py` | Dummy data generator (TODO)         |
+| `validate.py`                 | Metadata validator                  |
+| `make_metadata_from_data.py`  | Infer baseline CSVW metadata        |
+| `make_dummy_from_metadata.py` | Dummy data generator                |
+
+`make_metadata_from_data.py` and `make_dummy_from_metadata.py` still need DerivedColumn, GroupColumn logic (maybe).
