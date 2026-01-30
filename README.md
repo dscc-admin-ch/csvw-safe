@@ -160,6 +160,8 @@ csvw:Table
 | `dp:maxInfluencedPartitions`  | `min(dp:maxInfluencedPartitions_i)`  | Min of known columns              | -                                |
 | `dp:maxPartitionContribution` | `min(dp:maxPartitionContribution_i)` | Min of known columns              | -                                |
 
+> **Example:** [README_details.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/README_details.md)
+
 ### 2.2 Column-Level Constraints
 
 | Rule                                             | Meaning                                           |
