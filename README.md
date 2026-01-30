@@ -147,6 +147,21 @@ Design choice: `dp:derivedFrom` should always be a list, even if length = 1, to 
 In Lomas, can give `get_dummy(with_virtual=True)` with virtual columns.
 More on derived columns below (enabled `dp:Transformation`, their associated `dp:transformationArguments` and examples).
 
+### Relationship to Differential Privacy Metrics ($l_0$, $l_1$, $l_\infty$)
+
+Many differential privacy analyses express dataset distance using three standard measures:
+
+- $l_0$ — number of affected partitions (groups)
+- $l_1$ — total number of changed rows
+- $l_\infty$ — maximum number of changed rows within any single partition
+
+CSVW-DP does not expose these mathematical symbols directly. Instead, it provides semantic metadata terms that map naturally onto them:
+| DP metric | Meaning                                                          | CSVW-DP term                  |
+| --------- | ---------------------------------------------------------------- | ----------------------------- |
+| **l₀**    | Number of partitions that can be affected by a single individual | `dp:maxInfluencedPartitions`  |
+| **l∞**    | Maximum contribution within a single partition                   | `dp:maxPartitionContribution` |
+| **l₁**    | Total number of changed rows                                     | *Derived:* `l₀ × l∞`          |
+
 ---
 
 ### Diagram
