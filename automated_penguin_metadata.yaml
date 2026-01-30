@@ -1,0 +1,110 @@
+'@context':
+- http://www.w3.org/ns/csvw
+- dp: http://example.org/ns/csvw-dp-ext#
+url: penguins.csv
+tableSchema:
+  dp:maxContributions: 3
+  dp:maxTableLength: 344
+  dp:tableLength: 344
+  columns:
+  - name: species
+    datatype: string
+    dp:privacyId: false
+    required: true
+    dp:nullableProportion: 0.0
+    dp:publicPartitions:
+    - Adelie
+    - Chinstrap
+    - Gentoo
+    dp:maxNumPartitions: 3
+    dp:maxPartitionLength: 152
+    dp:maxInfluencedPartitions: 1
+    dp:maxPartitionContribution: 3
+  - name: island
+    datatype: string
+    dp:privacyId: false
+    required: true
+    dp:nullableProportion: 0.0
+    dp:publicPartitions:
+    - Biscoe
+    - Dream
+    - Torgersen
+    dp:maxNumPartitions: 3
+    dp:maxPartitionLength: 168
+    dp:maxInfluencedPartitions: 1
+    dp:maxPartitionContribution: 3
+  - name: bill_length_mm
+    datatype: double
+    dp:privacyId: false
+    required: false
+    dp:nullableProportion: 0.01
+    minimum: 32.0
+    maximum: 60.0
+  - name: bill_depth_mm
+    datatype: double
+    dp:privacyId: false
+    required: false
+    dp:nullableProportion: 0.01
+    minimum: 13.0
+    maximum: 22.0
+  - name: flipper_length_mm
+    datatype: double
+    dp:privacyId: false
+    required: false
+    dp:nullableProportion: 0.01
+    minimum: 172.0
+    maximum: 231.0
+  - name: body_mass_g
+    datatype: double
+    dp:privacyId: false
+    required: false
+    dp:nullableProportion: 0.01
+    minimum: 2700.0
+    maximum: 6300.0
+  - name: sex
+    datatype: integer
+    dp:privacyId: false
+    required: true
+    dp:nullableProportion: 0.0
+    dp:publicPartitions:
+    - 0
+    - 1
+    dp:maxNumPartitions: 2
+    dp:maxPartitionLength: 179
+    dp:maxInfluencedPartitions: 1
+    dp:maxPartitionContribution: 3
+  - name: penguin_id
+    datatype: double
+    dp:privacyId: true
+    required: true
+    dp:nullableProportion: 0.0
+    minimum: 0.0
+    maximum: 343.0
+  - name: timestamp
+    datatype: dateTime
+    dp:privacyId: false
+    required: true
+    dp:nullableProportion: 0.0
+    minimum: '2025-01-02 00:00:00'
+    maximum: '2025-12-30 00:00:00'
+  - name: favourite_number
+    datatype: integer
+    dp:privacyId: false
+    required: true
+    dp:nullableProportion: 0.0
+    dp:publicPartitions:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    dp:maxNumPartitions: 11
+    dp:maxPartitionLength: 35
+    dp:maxInfluencedPartitions: 3
+    dp:maxPartitionContribution: 2
