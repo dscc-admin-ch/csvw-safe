@@ -1,123 +1,80 @@
 {
   "@context": {
+
     "@version": 1.1,
 
     "csvw": "http://www.w3.org/ns/csvw#",
-    "dp": "https://github.com/dscc-admin-ch/csvw-dp/csvw-dp-ext#",
+    "dp": "https://w3id.org/csvw-dp#",
 
     "xsd": "http://www.w3.org/2001/XMLSchema#",
 
-    "id": "@id",
-    "type": "@type",
-
-    "table": {
-      "@id": "csvw:Table",
-      "@type": "@id"
+    "maxTableLength": {
+      "@id": "dp:maxTableLength",
+      "@type": "xsd:positiveInteger"
     },
 
-    "tableSchema": {
-      "@id": "csvw:tableSchema",
-      "@type": "@id"
+    "tableLength": {
+      "@id": "dp:tableLength",
+      "@type": "xsd:positiveInteger"
+    },
+
+    "maxContributions": {
+      "@id": "dp:maxContributions",
+      "@type": "xsd:positiveInteger"
+    },
+
+    "privacyId": {
+      "@id": "dp:privacyId",
+      "@type": "xsd:boolean"
+    },
+
+    "nullableProportion": {
+      "@id": "dp:nullableProportion",
+      "@type": "xsd:decimal"
+    },
+
+    "publicPartitions": {
+      "@id": "dp:publicPartitions",
+      "@container": "@list"
+    },
+
+    "maxPartitionLength": {
+      "@id": "dp:maxPartitionLength",
+      "@type": "xsd:positiveInteger"
+    },
+
+    "maxNumPartitions": {
+      "@id": "dp:maxNumPartitions",
+      "@type": "xsd:positiveInteger"
+    },
+
+    "maxInfluencedPartitions": {
+      "@id": "dp:maxInfluencedPartitions",
+      "@type": "xsd:positiveInteger"
+    },
+
+    "maxPartitionContribution": {
+      "@id": "dp:maxPartitionContribution",
+      "@type": "xsd:positiveInteger"
     },
 
     "columns": {
-      "@id": "csvw:column",
+      "@id": "dp:columns",
       "@container": "@list"
     },
 
-    "name": "csvw:name",
-
-    "datatype": {
-      "@id": "csvw:datatype",
-      "@type": "@id"
-    },
-
-    "format": "csvw:format",
-
-    "minimum": {
-      "@id": "csvw:minimum",
-      "@type": "xsd:decimal"
-    },
-
-    "maximum": {
-      "@id": "csvw:maximum",
-      "@type": "xsd:decimal"
-    },
-
-    "required": {
-      "@id": "csvw:required",
-      "@type": "xsd:boolean"
-    },
-
-    "default": "csvw:default",
-
-    "virtual": {
-      "@id": "csvw:virtual",
-      "@type": "xsd:boolean"
-    },
-
-    "valueUrl": "csvw:valueUrl",
-
-    "dp:maxTableLength": {
-      "@type": "xsd:positiveInteger"
-    },
-
-    "dp:tableLength": {
-      "@type": "xsd:positiveInteger"
-    },
-
-    "dp:maxContributions": {
-      "@type": "xsd:positiveInteger"
-    },
-
-    "dp:privacyId": {
-      "@type": "xsd:boolean"
-    },
-
-    "dp:groupable": {
-      "@type": "xsd:boolean"
-    },
-
-    "dp:nullableProportion": {
-      "@type": "xsd:decimal"
-    },
-
-    "dp:publicPartitions": {
+    "derivedFrom": {
+      "@id": "dp:derivedFrom",
       "@container": "@list"
     },
 
-    "dp:maxPartitionLength": {
-      "@type": "xsd:positiveInteger"
+    "transformationType": {
+      "@id": "dp:transformationType"
     },
 
-    "dp:maxNumPartitions": {
-      "@type": "xsd:positiveInteger"
-    },
-
-    "dp:maxInfluencedPartitions": {
-      "@type": "xsd:positiveInteger"
-    },
-
-    "dp:maxPartitionContribution": {
-      "@type": "xsd:positiveInteger"
-    },
-
-    "dp:derivedFrom": {
-      "@container": "@list",
-      "@type": "@id"
-    },
-
-    "dp:transformationType": {
-      "@type": "@id"
-    },
-
-    "dp:transformationArguments": {
+    "transformationArguments": {
+      "@id": "dp:transformationArguments",
       "@container": "@list"
-    },
-
-    "dp:columns": {
-      "@container": "@list",
-      "@type": "@id"
     }
   }
 }
