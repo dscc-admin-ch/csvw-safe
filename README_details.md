@@ -7,17 +7,13 @@ csvw:Table
  ├─ dp:tableLength
  ├─ dp:maxContributions
  │
- ├─ csvw:tableSchema ──────────────→ csvw:TableSchema
- │        |
- │        └─ csvw:column ──────────→ csvw:Column ⊂ dp:Groupable
- │                   |
- │                   ├─ core CSVW schema
- │                   ├─ DP group-by bounds
- │                   └─ derived-column semantics
+ ├─ csvw:tableSchema → csvw:TableSchema
+ │    └─ csvw:column → csvw:Column ⊂ dp:Groupable
+ │         ├─ core CSVW schema
+ │         └─ DP bounds
  │
- └─ dp:ColumnGroup ───────────────→ dp:ColumnGroup ⊂ dp:Groupable
-             |
-             └─ multi-column DP bounds
+ └─ dp:ColumnGroup ⊂ dp:Groupable
+      └─ multi-column DP bounds
 ```
 
 In full:
@@ -39,20 +35,25 @@ csvw:Table
         |                      ├─ default                    : any
         |                      ├─ dp:privacyId                : xsd:boolean
         |                      ├─ dp:nullableProportion       : xsd:decimal
-        |                      ├─ dp:publicPartitions         : rdf:List
+        |                      ├─ dp:publicPartitions         : rdf:List (dp:PartitionDefinition or literal)
+        |                      │     └─ dp:PartitionDefinition
+        |                      │           ├─ dp:partitionValue           : string
+        |                      │           ├─ dp:lowerBound               : xsd:decimal
+        |                      │           ├─ dp:upperBound               : xsd:decimal
+        |                      │           ├─ dp:lowerInclusive           : xsd:boolean (default: true)
+        |                      │           ├─ dp:upperInclusive           : xsd:boolean (default: false)
+        |                      │           ├─ dp:maxPartitionLength       : xsd:positiveInteger
+        |                      │           ├─ dp:maxPartitionContribution : xsd:positiveInteger
+        |                      │           └─ dp:maxInfluencedPartitions  : xsd:positiveInteger
         |                      ├─ dp:maxPartitionLength       : xsd:positiveInteger
         |                      ├─ dp:maxNumPartitions         : xsd:positiveInteger
         |                      ├─ dp:maxInfluencedPartitions  : xsd:positiveInteger
-        |                      ├─ dp:maxPartitionContribution : xsd:positiveInteger
-        |                      ├─ csvw:csvw:virtual           : xsd:boolean
-        |                      ├─ dp:derivedFrom              : csvw:Column
-        |                      ├─ dp:transformationType       : string
-        |                      └─ dp:transformationArguments  : object
+        |                      └─ dp:maxPartitionContribution : xsd:positiveInteger
         |
         +── dp:ColumnGroup (0..n) ───────────────────────────→ dp:ColumnGroup ⊂ dp:Groupable
                    |
                    ├─ dp:columns                  : rdf:List (csvw:Column 1..n)
-                   ├─ dp:publicPartitions         : rdf:List
+                   ├─ dp:publicPartitions         : rdf:List (dp:PartitionDefinition or literal)
                    ├─ dp:maxPartitionLength       : xsd:positiveInteger
                    ├─ dp:maxNumPartitions         : xsd:positiveInteger
                    ├─ dp:maxInfluencedPartitions  : xsd:positiveInteger

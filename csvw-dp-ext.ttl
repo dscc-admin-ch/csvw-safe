@@ -140,14 +140,14 @@ dp:lowerBound a rdf:Property ;
     rdfs:domain dp:PartitionDefinition ;
     rdfs:range xsd:decimal ;
     rdfs:label "lowerBound" ;
-    rdfs:comment "Inclusive lower bound of numeric partition." .
+    rdfs:comment "Inclusive lower bound of numeric partition. Default: true" .
 
 
 dp:upperBound a rdf:Property ;
     rdfs:domain dp:PartitionDefinition ;
     rdfs:range xsd:decimal ;
     rdfs:label "upperBound" ;
-    rdfs:comment "Exclusive or inclusive upper bound (implementation defined)." .
+    rdfs:comment "Exclusive or inclusive upper bound (implementation defined). Default: false" .
 
 
 dp:partitionLabel a rdf:Property ;

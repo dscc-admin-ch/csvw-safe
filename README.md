@@ -5,8 +5,9 @@
 Differential privacy (DP) requires metadata such as:
 
 * Maximum number of rows contributed by a single individual
-* Maximum group (partition) sizes
+* Maximum partition sizes
 * Bounds on the number of partitions a person can influence
+* Maximum number of partitions a person can influence
 * Constraints preventing overflow or numerical instability during aggregation
 
 These assumptions are essential for meaningful DP guarantees, but the core CSVW vocabulary cannot express them.
@@ -45,7 +46,7 @@ CSVW-DP separates concerns into:
 
 > **Reference:** [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708)
 
-**Note:** CSVW’s `csvw:tableSchema` still defines table structure.
+**Note:** CSVW's `csvw:tableSchema` still defines table structure.
 
 ### 1.2 Column-Level Properties
 
@@ -53,6 +54,26 @@ CSVW-DP separates concerns into:
 | ----------------------- | ------------ | ------------------------------------------------ |
 | `dp:privacyId`          | boolean      | True if column identifies individuals/units.     |
 | `dp:nullableProportion` | decimal 0–1  | Fraction of null values (approximate modeling).  |
+| `dp:publicPartitions`   | list(object) | List of `dp:PartitionDefinition` objects. |
+
+**Class `dp:PartitionDefinition`**:
+
+Represents a single DP partition (grouping) for a column.
+- Can be categorical or numeric.
+- Defines per-partition DP limits.
+
+| Property                      | Type             | Meaning                                         |
+| ----------------------------- | ---------------- | ----------------------------------------------- |
+| `dp:partitionValue`           | string           | Value for categorical partition.                |
+| `dp:lowerBound`               | number           | Lower bound for numeric partition.              |
+| `dp:upperBound`               | number           | Upper bound for numeric partition.              |
+| `dp:lowerInclusive`           | boolean          | Is lower bound inclusive? Default true.         |
+| `dp:upperInclusive`           | boolean          | Is upper bound inclusive? Default false.         |
+| `dp:maxPartitionLength`       | positive integer | Maximum number of rows in this partition.       |
+| `dp:maxPartitionContribution` | positive integer | Max contributions per person in this partition. |
+| `dp:maxInfluencedPartitions`  | positive integer | Max partitions a person can contribute to.      |
+
+> Multiple `PartitionDefinition` objects can be declared in `dp:publicPartitions`.
 
 **Notes:**
 
@@ -78,7 +99,7 @@ Represents any entity usable for DP groupings.
 | `dp:maxNumPartitions`         | positive integer | Max distinct group keys               |
 | `dp:maxInfluencedPartitions`  | positive integer | Max groups a person can contribute to |
 | `dp:maxPartitionContribution` | positive integer | Max contributions per partition       |
-| `dp:publicPartitions`         | list(string)     | Declared set of partition keys (publicly known). |
+| `dp:publicPartitions`         | list(object)     | List of `dp:PartitionDefinition` objects describing each partition, optionally with bounds and DP limits. |
 
 > `dp:maxNumPartitions` ≠ `dp:publicPartitions` length; public partitions may be a subset of observed data.
 
@@ -94,7 +115,7 @@ Represents any entity usable for DP groupings.
 | `dp:maxNumPartitions`         | Max distinct groups                   |
 | `dp:maxInfluencedPartitions`  | Max groups a person can contribute to |
 | `dp:maxPartitionContribution` | Max contributions per group           |
-| `dp:publicPartitions`         | Set of partition keys (publicly known). |
+| `dp:publicPartitions`         | List of `dp:PartitionDefinition` objects. |
 
 **Public partitions vs format:**
 
@@ -102,20 +123,8 @@ Represents any entity usable for DP groupings.
 * `dp:publicPartitions` describes the DP grouping universe
 * Missing values (NaN) are assumed publicly known if `required=false` and `dp:publicPartitions` is present
 
-### 1.5 Derived Columns (`dp:DerivedColumn`)
+> Multi-column `dp:publicPartitions` are optional and only used if every constituent column declares partitions.
 
-* Subclass of `csvw:Column`
-* Identified with `csvw:virtual = true`
-* Tracks transformations and DP bounds
-
-| Term                         | Type         | Meaning                      |
-| ---------------------------- | ------------ | ---------------------------- |
-| `csvw:virtual`               | boolean      | True if derived/preprocessed |
-| `dp:derivedFrom`             | list(string) | Source columns               |
-| `dp:transformationType`      | string       | Preprocessing operation      |
-| `dp:transformationArguments` | object       | Transformation parameters    |
-
-> Derived columns allow tighter DP bounds than raw data.
 
 ### 1.6 Relation to DP Metrics
 
@@ -136,8 +145,7 @@ csvw:Table
  ├─ csvw:tableSchema → csvw:TableSchema
  │    └─ csvw:column → csvw:Column ⊂ dp:Groupable
  │         ├─ core CSVW schema
- │         ├─ DP group-by bounds
- │         └─ derived-column semantics
+ │         └─ DP bounds
  │
  └─ dp:ColumnGroup ⊂ dp:Groupable
       └─ multi-column DP bounds
@@ -187,27 +195,6 @@ csvw:Table
 | `dp:maxPartitionContribution` | ≤ `dp:maxContributions` |
 
 > SHACL enforcement: [`metadata_constraints.ttl`](https://github.com/dscc-admin-ch/csvw-dp/blob/main/csvw-dp-ext-constaints.ttl)
-
-### 2.5 Derived Columns & Transformations
-
-* Derived columns tighten DP bounds via transformations: `filter`, `bin`, `clip`, `truncate`, `recode`, `concatenation`, `onehot`
-* Virtual columns declared with `csvw:virtual=true` and `dp:derivedFrom`
-* Transformation arguments define DP effects (max partitions, contributions, etc.)
-
-| Transformation       | DP Effect                                   |
-| -------------------- | ------------------------------------------- |
-| clipping             | ↓ sensitivity (tightens min/max)            |
-| truncation           | ↓ per-person contributions                  |
-| fill_na_constant     | neutral                                     |
-| fill_na_data_derived | ↑ sensitivity                               |
-| filter               | ↓ table length, ↓ contributions             |
-| binning              | ↓ partitions, defines `dp:publicPartitions` |
-| recoding             | ↓ domain size                               |
-| concatenation        | ↑ domain size                               |
-| onehot               | ↑ dimensionality                            |
-
-- truncation/clipping/fill_na_constant → safest
-- concatenation/onehot/fill_na_data_derived → riskiest.
 
 ---
 
