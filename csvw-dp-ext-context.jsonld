@@ -5,7 +5,6 @@
 
     "csvw": "http://www.w3.org/ns/csvw#",
     "dp": "https://w3id.org/csvw-dp#",
-
     "xsd": "http://www.w3.org/2001/XMLSchema#",
 
     "maxTableLength": {
@@ -38,6 +37,24 @@
       "@container": "@list"
     },
 
+    "partitionValue": {
+      "@id": "dp:partitionValue"
+    },
+
+    "partitionLabel": {
+      "@id": "dp:partitionLabel"
+    },
+
+    "lowerBound": {
+      "@id": "dp:lowerBound",
+      "@type": "xsd:decimal"
+    },
+
+    "upperBound": {
+      "@id": "dp:upperBound",
+      "@type": "xsd:decimal"
+    },
+
     "maxPartitionLength": {
       "@id": "dp:maxPartitionLength",
       "@type": "xsd:positiveInteger"
@@ -58,23 +75,13 @@
       "@type": "xsd:positiveInteger"
     },
 
+    "ColumnGroup": "dp:ColumnGroup",
+
     "columns": {
       "@id": "dp:columns",
       "@container": "@list"
     },
 
-    "derivedFrom": {
-      "@id": "dp:derivedFrom",
-      "@container": "@list"
-    },
-
-    "transformationType": {
-      "@id": "dp:transformationType"
-    },
-
-    "transformationArguments": {
-      "@id": "dp:transformationArguments",
-      "@container": "@list"
-    }
+    "PartitionDefinition": "dp:PartitionDefinition"
   }
 }

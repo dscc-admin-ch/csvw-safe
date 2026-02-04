@@ -17,28 +17,54 @@ tableSchema:
       dp:privacyId: false
       required: true
       dp:nullableProportion: 0.0
+
       dp:publicPartitions:
         - Torgersen
         - Biscoe
         - Dream
+
+        # Enable filtered derived column
+        - @type: dp:PartitionDefinition
+          dp:partitionValue: Torgersen
+          dp:maxPartitionLength: 50
+
       dp:maxNumPartitions: 3
       dp:maxPartitionLength: 200
       dp:maxInfluencedPartitions: 1
       dp:maxPartitionContribution: 2
+
 
     - name: species
       datatype: string
       dp:privacyId: false
       required: true
       dp:nullableProportion: 0.0
+    
       dp:publicPartitions:
-        - Adelie
-        - Chinstrap
-        - Gentoo
+    
+        - @type: dp:PartitionDefinition
+          dp:partitionValue: Adelie
+          dp:maxPartitionLength: 160
+          dp:maxPartitionContribution: 2
+          dp:maxInfluencedPartitions: 1
+    
+        - @type: dp:PartitionDefinition
+          dp:partitionValue: Chinstrap
+          dp:maxPartitionLength: 70
+          dp:maxPartitionContribution: 2
+          dp:maxInfluencedPartitions: 1
+    
+        - @type: dp:PartitionDefinition
+          dp:partitionValue: Gentoo
+          dp:maxPartitionLength: 130
+          dp:maxPartitionContribution: 2
+          dp:maxInfluencedPartitions: 1
+    
       dp:maxNumPartitions: 3
       dp:maxPartitionLength: 200
       dp:maxInfluencedPartitions: 1
       dp:maxPartitionContribution: 2
+
 
     - name: bill_length_mm
       datatype: double
@@ -48,6 +74,7 @@ tableSchema:
       required: true
       dp:nullableProportion: 0.0
 
+
     - name: bill_depth_mm
       datatype: double
       dp:privacyId: false
@@ -55,6 +82,7 @@ tableSchema:
       maximum: 23.0
       required: false
       dp:nullableProportion: 0.05
+
 
     - name: flipper_length_mm
       datatype: double
@@ -64,6 +92,7 @@ tableSchema:
       required: false
       dp:nullableProportion: 0.05
 
+
     - name: body_mass_g
       datatype: double
       dp:privacyId: false
@@ -71,6 +100,54 @@ tableSchema:
       maximum: 7000.0
       required: false
       dp:nullableProportion: 0.05
+
+      dp:recommendedBreaks:
+        - 2000
+        - 3000
+        - 4000
+        - 5000
+        - 6000
+        - 7000
+
+      dp:publicPartitions:
+
+        - @type: dp:PartitionDefinition
+          dp:lowerBound: 2000
+          dp:upperBound: 3000
+          dp:lowerInclusive: true
+          dp:upperInclusive: true
+          dp:maxPartitionLength: 100
+          dp:maxPartitionContribution: 1
+
+        - @type: dp:PartitionDefinition
+          dp:lowerBound: 3000
+          dp:upperBound: 4000
+          dp:lowerInclusive: true
+          dp:upperInclusive: true
+          dp:maxPartitionLength: 100
+          dp:maxPartitionContribution: 1
+
+        - @type: dp:PartitionDefinition
+          dp:lowerBound: 5000
+          dp:upperBound: 6000
+          dp:lowerInclusive: true
+          dp:upperInclusive: true
+          dp:maxPartitionLength: 100
+          dp:maxPartitionContribution: 1
+
+        - @type: dp:PartitionDefinition
+          dp:lowerBound: 6000
+          dp:upperBound: 7000
+          dp:lowerInclusive: true
+          dp:upperInclusive: true
+          dp:maxPartitionLength: 100
+          dp:maxPartitionContribution: 1
+
+      dp:maxNumPartitions: 4
+      dp:maxPartitionLength: 100
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 1
+
 
     - name: sex
       datatype: string
@@ -85,45 +162,6 @@ tableSchema:
       dp:maxInfluencedPartitions: 1
       dp:maxPartitionContribution: 2
 
-    - name: filtered__Torgersen__island
-      datatype: string
-      dp:privacyId: false
-      required: true
-      csvw:virtual: true
-      dp:derivedFrom:
-        - island
-      dp:transformationType: filter
-      dp:transformationArguments:
-        - Torgersen
-      dp:nullableProportion: 0.0
-      dp:publicPartitions:
-        - Torgersen
-      dp:maxNumPartitions: 1
-      dp:maxPartitionLength: 50
-      dp:maxInfluencedPartitions: 1
-      dp:maxPartitionContribution: 2
-
-    - name: bin__2000_7000_1000__body_mass_g
-      datatype: string
-      format: "(2000-2999|3000-3999|...|6000-7000|)"
-      csvw:virtual: true
-      dp:derivedFrom:
-        - body_mass_g
-      dp:transformationType: bin
-      dp:transformationArguments:
-        - 2000
-        - 7000
-        - 1000
-      dp:privacyId: false
-      dp:publicPartitions:
-        - "(2000-2999]"
-        - "(3000-3999]"
-        - "(5000-5999]"
-        - "(6000-7000]"
-      dp:maxNumPartitions: 4
-      dp:maxPartitionLength: 100
-      dp:maxInfluencedPartitions: 1
-      dp:maxPartitionContribution: 1
 
   dp:columnGroups:
 
@@ -148,7 +186,7 @@ tableSchema:
     - @type: dp:ColumnGroup
       dp:columns:
         - species
-        - bin__2000_7000_1000__body_mass_g
+        - body_mass_g
       dp:maxNumPartitions: 6
       dp:maxPartitionLength: 50
       dp:maxInfluencedPartitions: 1

@@ -6,343 +6,276 @@
 @prefix dp: <https://w3id.org/csvw-dp#> .
 
 ################################################################
-# CSVW-DP SHACL Validation
-# Validates:
-# 1) Table-level DP constraints
-# 2) Column-level DP constraints
-# 3) Derived column constraints
-# 4) ColumnGroup constraints
-# 5) Worst-case DP bounds
-# 6) Additional sanity checks
-################################################################
-
-################################################################
-# TABLE-LEVEL VALIDATION
+# TABLE LEVEL
 ################################################################
 
 dp:TableShape
     a sh:NodeShape ;
     sh:targetClass csvw:Table ;
-    sh:comment """
-    Ensures CSVW table-level DP properties:
-    - dp:maxTableLength: upper bound on rows
-    - dp:tableLength: actual row count (≤ maxTableLength)
-    - dp:maxContributions: max rows per individual (≤ maxTableLength)
-    """ ;
+
     sh:property [
         sh:path dp:maxTableLength ;
         sh:datatype xsd:positiveInteger ;
         sh:minCount 1 ;
-        sh:description "Upper bound on total rows, used for DP overflow safety." ;
     ] ;
+
     sh:property [
         sh:path dp:tableLength ;
         sh:datatype xsd:positiveInteger ;
-        sh:minCount 1 ;
-        sh:lessThanOrEquals dp:maxTableLength ;
-        sh:description "Number of rows in table, cannot exceed maxTableLength." ;
+        sh:maxCount 1 ;
     ] ;
+
     sh:property [
         sh:path dp:maxContributions ;
         sh:datatype xsd:positiveInteger ;
         sh:minCount 1 ;
-        sh:lessThanOrEquals dp:maxTableLength ;
-        sh:description "Maximum contributions per person, cannot exceed maxTableLength." ;
-    ] ;
-    sh:property [
-        sh:path csvw:tableSchema ;
-        sh:minCount 1 ;
-        sh:nodeKind sh:BlankNodeOrIRI ;
-        sh:description "The table schema must be present." ;
     ] .
 
 ################################################################
-# COLUMN-LEVEL VALIDATION
+# COLUMN LEVEL
 ################################################################
 
 dp:ColumnShape
     a sh:NodeShape ;
     sh:targetClass csvw:Column ;
-    sh:comment """
-    Validates per-column DP properties:
-    - privacyId columns cannot have group bounds
-    - nullableProportion between 0 and 1
-    - maxPartitionLength, maxNumPartitions, maxInfluencedPartitions, maxPartitionContribution ≤ table-level bounds
-    """ ;
-    sh:property [
-        sh:path dp:privacyId ;
-        sh:datatype xsd:boolean ;
-        sh:description "True if the column identifies individuals (cannot be grouped)." ;
-    ] ;
+
     sh:property [
         sh:path dp:nullableProportion ;
         sh:datatype xsd:decimal ;
-        sh:minInclusive 0.0 ;
-        sh:maxInclusive 1.0 ;
-        sh:description "Fraction of nulls, must be between 0 and 1." ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
     ] ;
+
     sh:property [
         sh:path dp:publicPartitions ;
         sh:nodeKind sh:List ;
-        sh:description "Declared set of partition keys, must match column datatype." ;
     ] ;
-    sh:property [
-        sh:path dp:maxPartitionLength ;
-        sh:datatype xsd:positiveInteger ;
-        sh:maxInclusive dp:maxTableLength ;
-        sh:description "Worst-case partition size ≤ table max length." ;
-    ] ;
-    sh:property [
-        sh:path dp:maxNumPartitions ;
-        sh:datatype xsd:positiveInteger ;
-        sh:maxInclusive dp:maxTableLength ;
-        sh:description "Max number of distinct groups ≤ table max length." ;
-    ] ;
-    sh:property [
-        sh:path dp:maxInfluencedPartitions ;
-        sh:datatype xsd:positiveInteger ;
-        sh:maxInclusive dp:maxContributions ;
-        sh:description "Max groups a person can contribute to ≤ table maxContributions." ;
-    ] ;
-    sh:property [
-        sh:path dp:maxPartitionContribution ;
-        sh:datatype xsd:positiveInteger ;
-        sh:maxInclusive dp:maxContributions ;
-        sh:description "Max contributions per partition ≤ table maxContributions." ;
-    ] ;
+
+################################################################
+# privacyId columns cannot define group bounds
+################################################################
+
     sh:sparql [
-        sh:message "Columns with dp:privacyId=true must not declare DP bounds (partition/max contributions)." ;
+        sh:message "privacyId columns cannot define partition bounds" ;
         sh:select """
             SELECT ?this
             WHERE {
               ?this dp:privacyId true .
-              {
-                ?this dp:maxPartitionLength ?mpl .
-              } UNION {
-                ?this dp:maxNumPartitions ?mnp .
-              } UNION {
-                ?this dp:maxInfluencedPartitions ?mip .
-              } UNION {
-                ?this dp:maxPartitionContribution ?mpc .
+              ?this ?p ?v .
+              VALUES ?p {
+                dp:maxPartitionLength
+                dp:maxNumPartitions
+                dp:maxInfluencedPartitions
+                dp:maxPartitionContribution
               }
             }
         """ ;
     ] .
 
-
 ################################################################
-# DERIVED COLUMNS
+# PARTITION DEFINITION VALIDATION
 ################################################################
 
-dp:DerivedColumnShape
+dp:PartitionDefinitionShape
     a sh:NodeShape ;
-    sh:targetClass dp:DerivedColumn ;
-    sh:comment """
-    Derived columns (virtual):
-    - Must have csvw:virtual = true
-    - Must have dp:derivedFrom (≥1 source column)
-    - Must declare transformationType
-    - Can optionally have transformationArguments
-    - DP bounds inherited or reduced from sources, cannot exceed worst-case
-    """ ;
+    sh:targetClass dp:PartitionDefinition ;
+
     sh:property [
-        sh:path csvw:virtual ;
-        sh:hasValue true ;
-        sh:description "Derived columns must be virtual." ;
-    ] ;
-    sh:property [
-        sh:path dp:derivedFrom ;
-        sh:minCount 1 ;
-        sh:nodeKind sh:IRI ;
-        sh:description "Source columns used to compute derived column." ;
-    ] ;
-    sh:property [
-        sh:path dp:transformationType ;
-        sh:minCount 1 ;
+        sh:path dp:partitionLabel ;
         sh:datatype xsd:string ;
-        sh:description "Type of transformation applied." ;
     ] ;
+
     sh:property [
-        sh:path dp:transformationArguments ;
-        sh:nodeKind sh:BlankNodeOrLiteral ;
-        sh:description "Parameters of transformation (optional)." ;
+        sh:path dp:lowerBound ;
+        sh:datatype xsd:decimal ;
     ] ;
+
     sh:property [
-        sh:path dp:maxPartitionLength ;
-        sh:datatype xsd:positiveInteger ;
-        sh:description "Cannot exceed table max length or source maxPartitionLength." ;
+        sh:path dp:upperBound ;
+        sh:datatype xsd:decimal ;
     ] ;
-    sh:property [
-        sh:path dp:maxNumPartitions ;
-        sh:datatype xsd:positiveInteger ;
-        sh:description "Cannot exceed table max length or source maxNumPartitions." ;
+
+################################################################
+# If numeric partition exists → both bounds must exist
+################################################################
+
+    sh:sparql [
+        sh:message "Numeric partitions must define both lowerBound and upperBound" ;
+        sh:select """
+            SELECT ?this
+            WHERE {
+              {
+                ?this dp:lowerBound ?lb .
+                FILTER NOT EXISTS { ?this dp:upperBound ?ub }
+              }
+              UNION
+              {
+                ?this dp:upperBound ?ub .
+                FILTER NOT EXISTS { ?this dp:lowerBound ?lb }
+              }
+            }
+        """ ;
     ] ;
-    sh:property [
-        sh:path dp:maxInfluencedPartitions ;
-        sh:datatype xsd:positiveInteger ;
-        sh:description "Cannot exceed table maxContributions or source maxInfluencedPartitions." ;
-    ] ;
-    sh:property [
-        sh:path dp:maxPartitionContribution ;
-        sh:datatype xsd:positiveInteger ;
-        sh:description "Cannot exceed table maxContributions or source maxPartitionContribution." ;
+
+################################################################
+# lowerBound < upperBound
+################################################################
+
+    sh:sparql [
+        sh:message "lowerBound must be < upperBound" ;
+        sh:select """
+            SELECT ?this ?lb ?ub
+            WHERE {
+              ?this dp:lowerBound ?lb ;
+                    dp:upperBound ?ub .
+              FILTER (?lb >= ?ub)
+            }
+        """ ;
     ] .
 
 ################################################################
-# COLUMN GROUPS (multi-column)
+# GROUPABLE BOUNDS (Columns + ColumnGroups)
+################################################################
+
+dp:GroupableBoundsShape
+    a sh:NodeShape ;
+    sh:targetClass dp:Groupable ;
+
+    sh:property [
+        sh:path dp:maxPartitionLength ;
+        sh:datatype xsd:positiveInteger ;
+    ] ;
+
+    sh:property [
+        sh:path dp:maxNumPartitions ;
+        sh:datatype xsd:positiveInteger ;
+    ] ;
+
+    sh:property [
+        sh:path dp:maxInfluencedPartitions ;
+        sh:datatype xsd:positiveInteger ;
+    ] ;
+
+    sh:property [
+        sh:path dp:maxPartitionContribution ;
+        sh:datatype xsd:positiveInteger ;
+    ] .
+
+################################################################
+# COLUMN GROUP VALIDATION
 ################################################################
 
 dp:ColumnGroupShape
     a sh:NodeShape ;
     sh:targetClass dp:ColumnGroup ;
-    sh:comment """
-    Multi-column groups:
-    - Must include ≥2 columns
-    - Must not include privacyId columns
-    - DP bounds ≤ worst-case across constituent columns
-    """ ;
+
     sh:property [
         sh:path dp:columns ;
         sh:minCount 2 ;
         sh:nodeKind sh:List ;
-        sh:description "At least 2 columns required for a group." ;
     ] ;
-    sh:property [
-        sh:path dp:maxPartitionLength ;
-        sh:datatype xsd:positiveInteger ;
-        sh:description "≤ min(maxPartitionLength of constituent columns, table maxTableLength)." ;
-    ] ;
-    sh:property [
-        sh:path dp:maxNumPartitions ;
-        sh:datatype xsd:positiveInteger ;
-        sh:description "≤ product of maxNumPartitions of constituent columns, or table maxTableLength." ;
-    ] ;
-    sh:property [
-        sh:path dp:maxInfluencedPartitions ;
-        sh:datatype xsd:positiveInteger ;
-        sh:description "≤ min(maxInfluencedPartitions of constituent columns, table maxContributions)." ;
-    ] ;
-    sh:property [
-        sh:path dp:maxPartitionContribution ;
-        sh:datatype xsd:positiveInteger ;
-        sh:description "≤ min(maxPartitionContribution of constituent columns, table maxContributions)." ;
-    ] ;
+
+################################################################
+# Cannot include privacyId column
+################################################################
+
     sh:sparql [
-        sh:message "ColumnGroup must not include columns with dp:privacyId=true" ;
+        sh:message "ColumnGroup cannot include privacyId column" ;
         sh:select """
             SELECT ?this ?col
             WHERE {
-              ?this dp:columns ?col .
+              ?this dp:columns ?list .
+              ?list rdf:rest*/rdf:first ?col .
               ?col dp:privacyId true .
             }
         """ ;
-    sh:sparql [
-        sh:message "ColumnGroup contains a column that does not exist in table schema!" ;
-        sh:select """
-            SELECT ?this ?col
-            WHERE {
-                ?this dp:columns ?col .
-                FILTER NOT EXISTS {
-                    ?tbl csvw:tableSchema ?schema .
-                    ?schema csvw:column ?col .
-                }
-            }
-        """ ;
     ] ;
+
+################################################################
+# COLUMN GROUP WORST CASE BOUNDS
+################################################################
+
     sh:sparql [
-        sh:message "ColumnGroup DP bounds must not exceed worst-case across constituent columns!" ;
+        sh:message "ColumnGroup maxPartitionLength exceeds constituent column bounds" ;
         sh:select """
-            SELECT ?this ?mpl ?col
+            SELECT ?this ?groupVal ?col ?colVal
             WHERE {
-                ?this dp:columns ?col .
-                ?col dp:maxPartitionLength ?colMPL .
-                ?this dp:maxPartitionLength ?mpl .
-                FILTER(?mpl > ?colMPL)
+              ?this dp:maxPartitionLength ?groupVal .
+              ?this dp:columns ?list .
+              ?list rdf:rest*/rdf:first ?col .
+              ?col dp:maxPartitionLength ?colVal .
+              FILTER(?groupVal > ?colVal)
             }
         """ ;
     ] .
 
 ################################################################
-# REQUIRED COLUMNS
+# REQUIRED COLUMN NULL CONSISTENCY
 ################################################################
 
 dp:RequiredColumnShape
     a sh:NodeShape ;
     sh:targetClass csvw:Column ;
+
     sh:sparql [
-        sh:message "Required columns (csvw:required=true) must have dp:nullableProportion=0" ;
+        sh:message "Required columns must have nullableProportion = 0" ;
         sh:select """
-            SELECT ?this ?np
+            SELECT ?this
             WHERE {
-                ?this csvw:required true ;
-                      dp:nullableProportion ?np .
-                FILTER(?np != 0)
+              ?this csvw:required true ;
+                    dp:nullableProportion ?np .
+              FILTER(?np != 0)
             }
         """ ;
     ] .
 
 ################################################################
-# PUBLIC PARTITIONS VALIDATION
-################################################################
-
-dp:PublicPartitionsShape
-    a sh:NodeShape ;
-    sh:targetClass csvw:Column ;
-    sh:property [
-        sh:path dp:publicPartitions ;
-        sh:nodeKind sh:List ;
-        sh:description "All publicPartitions values should match the column datatype." ;
-    ] .
-
-################################################################
-# COMPLEX TABLE-LEVEL DP RULES (Worst-Case Enforcement)
+# TABLE GLOBAL WORST-CASE VALIDATION
 ################################################################
 
 dp:TableConsistencyShape
     a sh:NodeShape ;
     sh:targetClass csvw:Table ;
-    sh:comment """
-    Ensures per-column and per-group DP bounds do not exceed worst-case limits.
-    - maxPartitionLength ≤ table.maxTableLength
-    - maxInfluencedPartitions ≤ table.maxContributions
-    - maxPartitionContribution ≤ table.maxContributions
-    """ ;
+
+################################################################
+# Column bounds vs table bounds
+################################################################
+
     sh:sparql [
-        sh:message "DP bounds exceed worst-case table limits!" ;
+        sh:message "Column maxPartitionLength exceeds table maxTableLength" ;
         sh:select """
             SELECT ?col ?val ?max
             WHERE {
-                ?this csvw:tableSchema ?schema .
-                ?schema csvw:column ?col .
-                ?col dp:maxPartitionLength ?val .
-                ?this dp:maxTableLength ?max .
-                FILTER(?val > ?max)
+              ?this csvw:tableSchema/csvw:column ?col .
+              ?col dp:maxPartitionLength ?val .
+              ?this dp:maxTableLength ?max .
+              FILTER(?val > ?max)
             }
         """ ;
     ] ;
+
     sh:sparql [
-        sh:message "DP maxInfluencedPartitions exceeds table maxContributions!" ;
+        sh:message "Column maxInfluencedPartitions exceeds table maxContributions" ;
         sh:select """
             SELECT ?col ?val ?max
             WHERE {
-                ?this csvw:tableSchema ?schema .
-                ?schema csvw:column ?col .
-                ?col dp:maxInfluencedPartitions ?val .
-                ?this dp:maxContributions ?max .
-                FILTER(?val > ?max)
+              ?this csvw:tableSchema/csvw:column ?col .
+              ?col dp:maxInfluencedPartitions ?val .
+              ?this dp:maxContributions ?max .
+              FILTER(?val > ?max)
             }
         """ ;
     ] ;
+
     sh:sparql [
-        sh:message "DP maxPartitionContribution exceeds table maxContributions!" ;
+        sh:message "Column maxPartitionContribution exceeds table maxContributions" ;
         sh:select """
             SELECT ?col ?val ?max
             WHERE {
-                ?this csvw:tableSchema ?schema .
-                ?schema csvw:column ?col .
-                ?col dp:maxPartitionContribution ?val .
-                ?this dp:maxContributions ?max .
-                FILTER(?val > ?max)
+              ?this csvw:tableSchema/csvw:column ?col .
+              ?col dp:maxPartitionContribution ?val .
+              ?this dp:maxContributions ?max .
+              FILTER(?val > ?max)
             }
         """ ;
     ] .

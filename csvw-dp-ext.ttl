@@ -15,31 +15,23 @@
 
 dp:
     a owl:Ontology ;
-
-    # --- Identity & versioning ---
     dct:title "CSVW Differential Privacy Extension Vocabulary" ;
-    owl:versionInfo "0.1.0" ;
-    owl:versionIRI <https://w3id.org/csvw-dp/0.1.0> ;
+    owl:versionInfo "0.2.0" ;
+    owl:versionIRI <https://w3id.org/csvw-dp/0.2.0> ;
 
-    # --- Description ---
     dct:description """
     A vocabulary extending W3C CSV on the Web metadata with explicit
     differential privacy modeling primitives, including contribution bounds,
-    partition constraints, and derived column semantics.
+    partition constraints, and public partition specifications for both
+    categorical and continuous columns.
     """ ;
 
-    # --- Authorship & governance ---
     dct:creator <https://github.com/dscc-admin-ch> ;
     dct:publisher <https://github.com/dscc-admin-ch> ;
-    dct:created "2026-01-30"^^xsd:date ;
+    dct:created "2026-02-04"^^xsd:date ;
 
-    # --- Licensing ---
     dct:license <https://creativecommons.org/licenses/by/4.0/> ;
-
-    # --- Technical context ---
     owl:imports <http://www.w3.org/ns/csvw> ;
-
-    # --- Documentation ---
     rdfs:seeAlso <https://github.com/dscc-admin-ch/csvw-dp> .
 
 
@@ -49,25 +41,33 @@ dp:
 
 dp:Groupable a rdfs:Class ;
     rdfs:label "Groupable" ;
-    rdfs:comment "Abstract class for entities that can be used to form groups (partitions) for differential privacy analysis." .
+    rdfs:comment """
+    Abstract class for entities that can define partitions used in
+    differential privacy aggregation. Includes single columns and
+    multi-column groups.
+    """ .
+
 
 dp:ColumnGroup a rdfs:Class ;
     rdfs:subClassOf dp:Groupable ;
     rdfs:label "ColumnGroup" ;
-    rdfs:comment "Represents a grouping key formed by two or more columns. Useful for multi-column DP aggregation bounds." .
+    rdfs:comment """
+    Represents a grouping key formed by two or more columns.
+    """ .
 
-dp:DerivedColumn a rdfs:Class ;
-    rdfs:subClassOf csvw:Column ,
-        [ a owl:Restriction ;
-          owl:onProperty dp:derivedFrom ;
-          owl:minCardinality 1
-        ] ,
-        [ a owl:Restriction ;
-          owl:onProperty csvw:virtual ;
-          owl:hasValue true
-        ] .
-    rdfs:label "DerivedColumn" ;
-    rdfs:comment "Columns computed from other columns; not physically present in raw CSV (virtual column)." .
+
+dp:PartitionDefinition a rdfs:Class ;
+    rdfs:label "Partition definition" ;
+    rdfs:comment """
+    Describes one public partition key. Can represent:
+
+    • A categorical value
+    • A numeric interval
+    • A multi-column key combination
+
+    Allows attaching optional per-partition DP bounds.
+    """ .
+
 
 # =====================================================
 # TABLE-LEVEL PROPERTIES
@@ -77,107 +77,124 @@ dp:maxTableLength a rdf:Property ;
     rdfs:domain csvw:Table ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxTableLength" ;
-    rdfs:comment "Upper bound on total rows to avoid overflow or numerical instability during aggregation." .
+    rdfs:comment "Upper bound on total rows." .
+
 
 dp:tableLength a rdf:Property ;
     rdfs:domain csvw:Table ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "tableLength" ;
-    rdfs:comment "Number of rows in table, if known." .
+    rdfs:comment "Observed number of rows, if known." .
+
 
 dp:maxContributions a rdf:Property ;
     rdfs:domain csvw:Table ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxContributions" ;
-    rdfs:comment "Maximum number of rows contributed by a single individual." .
+    rdfs:comment "Maximum number of rows contributed by one individual." .
+
 
 # =====================================================
-# COLUMN-LEVEL PROPERTIES
+# COLUMN PROPERTIES
 # =====================================================
 
 dp:privacyId a rdf:Property ;
     rdfs:domain csvw:Column ;
     rdfs:range xsd:boolean ;
     rdfs:label "privacyId" ;
-    rdfs:comment "True if the column identifies individuals/units for differential privacy." .
+    rdfs:comment "True if column identifies privacy unit." .
+
 
 dp:nullableProportion a rdf:Property ;
     rdfs:domain csvw:Column ;
     rdfs:range xsd:decimal ;
     rdfs:label "nullableProportion" ;
-    rdfs:comment "Fraction of values that are null (0.0–1.0), used for approximate modeling." .
+    rdfs:comment "Approximate fraction of null values." .
+
 
 dp:publicPartitions a rdf:Property ;
-    rdfs:domain csvw:Column ;
+    rdfs:domain dp:Groupable ;
     rdfs:range rdf:List ;
     rdfs:label "publicPartitions" ;
-    rdfs:comment "Declared set of partition keys when grouping values are publicly known. Can include missing (NaN) values." .
+    rdfs:comment """
+    Declared set of allowed public partition keys.
+
+    Each entry may be:
+    • Literal value (categorical partition)
+    • dp:PartitionDefinition object (structured partition)
+    """ .
+
 
 # =====================================================
-# DP AGGREGATION BOUNDS (COLUMNS AND GROUPS)
+# PARTITION STRUCTURE
+# =====================================================
+
+dp:partitionValue a rdf:Property ;
+    rdfs:domain dp:PartitionDefinition ;
+    rdfs:range rdfs:Literal ;
+    rdfs:label "partitionValue" ;
+    rdfs:comment "Categorical partition value." .
+
+
+dp:lowerBound a rdf:Property ;
+    rdfs:domain dp:PartitionDefinition ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "lowerBound" ;
+    rdfs:comment "Inclusive lower bound of numeric partition." .
+
+
+dp:upperBound a rdf:Property ;
+    rdfs:domain dp:PartitionDefinition ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "upperBound" ;
+    rdfs:comment "Exclusive or inclusive upper bound (implementation defined)." .
+
+
+dp:partitionLabel a rdf:Property ;
+    rdfs:domain dp:PartitionDefinition ;
+    rdfs:range xsd:string ;
+    rdfs:label "partitionLabel" ;
+    rdfs:comment "Human-readable label." .
+
+
+# =====================================================
+# DP AGGREGATION BOUNDS
 # =====================================================
 
 dp:maxPartitionLength a rdf:Property ;
     rdfs:domain dp:Groupable ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxPartitionLength" ;
-    rdfs:comment "Maximum size of any group when grouping by the column(s)." .
+    rdfs:comment "Maximum number of rows inside any partition." .
+
 
 dp:maxNumPartitions a rdf:Property ;
     rdfs:domain dp:Groupable ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxNumPartitions" ;
-    rdfs:comment "Maximum number of distinct groups (partition keys). May differ from length of dp:publicPartitions." .
+    rdfs:comment "Maximum number of distinct partitions." .
+
 
 dp:maxInfluencedPartitions a rdf:Property ;
     rdfs:domain dp:Groupable ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxInfluencedPartitions" ;
-    rdfs:comment "Maximum number of groups a person may contribute to. Maps to the l0 DP metric." .
+    rdfs:comment "Maximum partitions a person may influence (l0 bound)." .
+
 
 dp:maxPartitionContribution a rdf:Property ;
     rdfs:domain dp:Groupable ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxPartitionContribution" ;
-    rdfs:comment "Maximum number of contributions inside one partition. Maps to the l_inf DP metric." .
+    rdfs:comment "Maximum contributions within a partition (l_inf bound)." .
+
+
+# =====================================================
+# COLUMN GROUP STRUCTURE
+# =====================================================
 
 dp:columns a rdf:Property ;
     rdfs:domain dp:ColumnGroup ;
     rdfs:range rdf:List ;
     rdfs:label "columns" ;
-    rdfs:comment "List of columns that collectively define a multi-column group. Must contain at least 2 columns." .
-
-# =====================================================
-# DERIVED COLUMN PROPERTIES
-# =====================================================
-
-csvw:virtual a rdf:Property ;
-    rdfs:domain csvw:Column ;
-    rdfs:range xsd:boolean ;
-    rdfs:label "virtual" ;
-    rdfs:comment "True if column is derived/preprocessed and not physically present in the CSV file." .
-
-dp:derivedFrom a rdf:Property ;
-    rdfs:domain dp:DerivedColumn ;
-    rdfs:range rdf:List ;
-    rdfs:label "derivedFrom" ;
-    rdfs:comment "Source column(s) used to compute this column. Always a list, even if length = 1." .
-
-dp:transformationType a rdf:Property ;
-    rdfs:domain dp:DerivedColumn ;
-    rdfs:range xsd:string ;
-    rdfs:label "transformationType" ;
-    rdfs:comment "Identifier of the preprocessing operation, e.g., normalize, bucketize, oneHotEncode." .
-
-dp:transformationArguments a rdf:Property ;
-    rdfs:domain dp:DerivedColumn ;
-    rdfs:range rdf:List ;
-    rdfs:label "transformationArguments" ;
-    rdfs:comment "Parameters of the transformation, expressed as a list of strings or values." .
-
-# =====================================================
-# Transformation Catalog (placeholder)
-# =====================================================
-dp:TransformationType a rdfs:Class ;
-    rdfs:label "TransformationType" ;
-    rdfs:comment "Placeholder for controlled vocabulary of transformations (normalize, bin, clip, truncate, onehot, etc.)" .
+    rdfs:comment "Columns forming the grouping key." .
