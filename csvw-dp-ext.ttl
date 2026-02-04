@@ -101,12 +101,6 @@ dp:privacyId a rdf:Property ;
     rdfs:label "privacyId" ;
     rdfs:comment "True if the column identifies individuals/units for differential privacy." .
 
-dp:groupable a rdf:Property ;
-    rdfs:domain csvw:Column ;
-    rdfs:range xsd:boolean ;
-    rdfs:label "groupable" ;
-    rdfs:comment "True if the column can be used for grouping. Compatible with dp:Groupable class." .
-
 dp:nullableProportion a rdf:Property ;
     rdfs:domain csvw:Column ;
     rdfs:range xsd:decimal ;
@@ -139,13 +133,13 @@ dp:maxInfluencedPartitions a rdf:Property ;
     rdfs:domain dp:Groupable ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxInfluencedPartitions" ;
-    rdfs:comment "Maximum number of groups a person may contribute to." .
+    rdfs:comment "Maximum number of groups a person may contribute to. Maps to the l0 DP metric." .
 
 dp:maxPartitionContribution a rdf:Property ;
     rdfs:domain dp:Groupable ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxPartitionContribution" ;
-    rdfs:comment "Maximum number of contributions inside one partition." .
+    rdfs:comment "Maximum number of contributions inside one partition. Maps to the l_inf DP metric." .
 
 dp:columns a rdf:Property ;
     rdfs:domain dp:ColumnGroup ;
@@ -182,47 +176,8 @@ dp:transformationArguments a rdf:Property ;
     rdfs:comment "Parameters of the transformation, expressed as a list of strings or values." .
 
 # =====================================================
-# EXAMPLE USAGE: PENGUIN DATASET (simplified)
+# Transformation Catalog (placeholder)
 # =====================================================
-
-# Table metadata
-<https://example.org/penguins> a csvw:Table ;
-    dp:maxTableLength 5000 ;
-    dp:maxContributions 1 ;
-    csvw:tableSchema [
-        a csvw:TableSchema ;
-        csvw:column [
-            a csvw:Column ;
-            csvw:name "species" ;
-            csvw:datatype "string" ;
-            dp:groupable true ;
-            dp:maxPartitionLength 200 ;
-            dp:maxNumPartitions 3 ;
-        ] ;
-        csvw:column [
-            a csvw:Column ;
-            csvw:name "sex" ;
-            csvw:datatype "string" ;
-            csvw:virtual false ;
-            dp:nullableProportion 0.05 ;
-            dp:publicPartitions ("MALE" "FEMALE") ;
-            dp:groupable true ;
-            dp:maxPartitionLength 100 ;
-            dp:maxNumPartitions 2 ;
-        ] ;
-        csvw:column [
-            a dp:DerivedColumn ;
-            csvw:name "body_mass_kg" ;
-            csvw:virtual true ;
-            dp:derivedFrom ("body_mass_g") ;
-            dp:transformationType "divide_by_1000" ;
-            dp:transformationArguments ("1000") ;
-            dp:nullableProportion 0.0 ;
-        ]
-    ] ;
-    dp:ColumnGroup [
-        a dp:ColumnGroup ;
-        dp:columns ("species" "sex") ;
-        dp:maxPartitionLength 50 ;
-        dp:maxNumPartitions 6 ;
-    ] .
+dp:TransformationType a rdfs:Class ;
+    rdfs:label "TransformationType" ;
+    rdfs:comment "Placeholder for controlled vocabulary of transformations (normalize, bin, clip, truncate, onehot, etc.)" .

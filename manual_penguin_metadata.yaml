@@ -1,0 +1,181 @@
+@context:
+  - http://www.w3.org/ns/csvw
+  - dp: https://w3id.org/csvw-dp#
+
+url: penguins.csv
+
+tableSchema:
+
+  dp:maxContributions: 2
+  dp:maxTableLength: 344
+  dp:tableLength: 344
+
+  columns:
+
+    - name: island
+      datatype: string
+      dp:privacyId: false
+      required: true
+      dp:nullableProportion: 0.0
+      dp:publicPartitions:
+        - Torgersen
+        - Biscoe
+        - Dream
+      dp:maxNumPartitions: 3
+      dp:maxPartitionLength: 200
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 2
+
+    - name: species
+      datatype: string
+      dp:privacyId: false
+      required: true
+      dp:nullableProportion: 0.0
+      dp:publicPartitions:
+        - Adelie
+        - Chinstrap
+        - Gentoo
+      dp:maxNumPartitions: 3
+      dp:maxPartitionLength: 200
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 2
+
+    - name: bill_length_mm
+      datatype: double
+      dp:privacyId: false
+      minimum: 30.0
+      maximum: 65.0
+      required: true
+      dp:nullableProportion: 0.0
+
+    - name: bill_depth_mm
+      datatype: double
+      dp:privacyId: false
+      minimum: 13.0
+      maximum: 23.0
+      required: false
+      dp:nullableProportion: 0.05
+
+    - name: flipper_length_mm
+      datatype: double
+      dp:privacyId: false
+      minimum: 150.0
+      maximum: 250.0
+      required: false
+      dp:nullableProportion: 0.05
+
+    - name: body_mass_g
+      datatype: double
+      dp:privacyId: false
+      minimum: 2000.0
+      maximum: 7000.0
+      required: false
+      dp:nullableProportion: 0.05
+
+    - name: sex
+      datatype: string
+      dp:privacyId: false
+      required: false
+      dp:nullableProportion: 0.2
+      dp:publicPartitions:
+        - MALE
+        - FEMALE
+      dp:maxNumPartitions: 2
+      dp:maxPartitionLength: 300
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 2
+
+    - name: filtered__Torgersen__island
+      datatype: string
+      dp:privacyId: false
+      required: true
+      csvw:virtual: true
+      dp:derivedFrom:
+        - island
+      dp:transformationType: filter
+      dp:transformationArguments:
+        - Torgersen
+      dp:nullableProportion: 0.0
+      dp:publicPartitions:
+        - Torgersen
+      dp:maxNumPartitions: 1
+      dp:maxPartitionLength: 50
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 2
+
+    - name: bin__2000_7000_1000__body_mass_g
+      datatype: string
+      format: "(2000-2999|3000-3999|...|6000-7000|)"
+      csvw:virtual: true
+      dp:derivedFrom:
+        - body_mass_g
+      dp:transformationType: bin
+      dp:transformationArguments:
+        - 2000
+        - 7000
+        - 1000
+      dp:privacyId: false
+      dp:publicPartitions:
+        - "(2000-2999]"
+        - "(3000-3999]"
+        - "(5000-5999]"
+        - "(6000-7000]"
+      dp:maxNumPartitions: 4
+      dp:maxPartitionLength: 100
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 1
+
+  dp:columnGroups:
+
+    - @type: dp:ColumnGroup
+      dp:columns:
+        - sex
+        - island
+      dp:maxNumPartitions: 6
+      dp:maxPartitionLength: 100
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 2
+
+    - @type: dp:ColumnGroup
+      dp:columns:
+        - species
+        - sex
+      dp:maxNumPartitions: 6
+      dp:maxPartitionLength: 100
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 2
+
+    - @type: dp:ColumnGroup
+      dp:columns:
+        - species
+        - bin__2000_7000_1000__body_mass_g
+      dp:maxNumPartitions: 6
+      dp:maxPartitionLength: 50
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 1
+
+    - @type: dp:ColumnGroup
+      dp:columns:
+        - species
+        - island
+      dp:publicPartitions:
+        - "Torgersen, Adelie"
+        - "Biscoe, Adelie"
+        - "Biscoe, Chinstrap"
+        - "Dream, Adelie"
+        - "Dream, Chinstrap"
+        - "Dream, Gentoo"
+      dp:maxNumPartitions: 6
+      dp:maxPartitionLength: 100
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 2
+
+    - @type: dp:ColumnGroup
+      dp:columns:
+        - species
+        - island
+        - sex
+      dp:maxNumPartitions: 18
+      dp:maxPartitionLength: 50
+      dp:maxInfluencedPartitions: 1
+      dp:maxPartitionContribution: 2

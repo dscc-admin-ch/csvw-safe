@@ -47,7 +47,7 @@ dp:TableShape
         sh:datatype xsd:positiveInteger ;
         sh:minCount 1 ;
         sh:lessThanOrEquals dp:maxTableLength ;
-        sh:description "Maximum contributions per person, ≤ maxTableLength." ;
+        sh:description "Maximum contributions per person, cannot exceed maxTableLength." ;
     ] ;
     sh:property [
         sh:path csvw:tableSchema ;
@@ -66,7 +66,6 @@ dp:ColumnShape
     sh:comment """
     Validates per-column DP properties:
     - privacyId columns cannot have group bounds
-    - groupable columns are booleans
     - nullableProportion between 0 and 1
     - maxPartitionLength, maxNumPartitions, maxInfluencedPartitions, maxPartitionContribution ≤ table-level bounds
     """ ;
@@ -74,11 +73,6 @@ dp:ColumnShape
         sh:path dp:privacyId ;
         sh:datatype xsd:boolean ;
         sh:description "True if the column identifies individuals (cannot be grouped)." ;
-    ] ;
-    sh:property [
-        sh:path dp:groupable ;
-        sh:datatype xsd:boolean ;
-        sh:description "True if the column can be used for grouping." ;
     ] ;
     sh:property [
         sh:path dp:nullableProportion ;
@@ -134,6 +128,7 @@ dp:ColumnShape
             }
         """ ;
     ] .
+
 
 ################################################################
 # DERIVED COLUMNS
@@ -239,6 +234,30 @@ dp:ColumnGroupShape
             WHERE {
               ?this dp:columns ?col .
               ?col dp:privacyId true .
+            }
+        """ ;
+    sh:sparql [
+        sh:message "ColumnGroup contains a column that does not exist in table schema!" ;
+        sh:select """
+            SELECT ?this ?col
+            WHERE {
+                ?this dp:columns ?col .
+                FILTER NOT EXISTS {
+                    ?tbl csvw:tableSchema ?schema .
+                    ?schema csvw:column ?col .
+                }
+            }
+        """ ;
+    ] ;
+    sh:sparql [
+        sh:message "ColumnGroup DP bounds must not exceed worst-case across constituent columns!" ;
+        sh:select """
+            SELECT ?this ?mpl ?col
+            WHERE {
+                ?this dp:columns ?col .
+                ?col dp:maxPartitionLength ?colMPL .
+                ?this dp:maxPartitionLength ?mpl .
+                FILTER(?mpl > ?colMPL)
             }
         """ ;
     ] .

@@ -68,7 +68,7 @@ def generate_csvw_dp_metadata(
 ):
     CSVW_DP_CONTEXT = [
         "http://www.w3.org/ns/csvw",
-        {"dp": "https://w3id.org/csvw-dp#"}
+        "https://w3id.org/csvw-dp#"
     ]
     meta = {
         "@context": CSVW_DP_CONTEXT,

@@ -221,7 +221,7 @@ csvw:Table
 | `csvw-dp-ext-constraints.ttl` | SHACL validation rules              |
 | `penguin_metadata.json`       | Example metadata                    |
 | `dp_libraries.md`             | Mapping to DP libraries             |
-| `validate.py`                 | Metadata validator                  |
+| `validate_metadata.py`        | Metadata validator                  |
 | `make_metadata_from_data.py`  | Infer baseline CSVW metadata        |
 | `make_dummy_from_metadata.py` | Dummy data generator                |
 
