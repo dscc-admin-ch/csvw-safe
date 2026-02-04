@@ -92,6 +92,29 @@ tableSchema:
       required: false
       dp:nullableProportion: 0.05
 
+      dp:recommendedBreaks:
+        - 150.0
+        - 200.0
+        - 250.0
+
+      dp:publicPartitions:
+
+        - @type: dp:PartitionDefinition
+          dp:lowerBound: 150.0
+          dp:upperBound: 200.0
+          dp:maxPartitionLength: 100
+          dp:maxPartitionContribution: 1
+
+        - @type: dp:PartitionDefinition
+          dp:lowerBound: 150.0
+          dp:upperBound: 200.0
+          dp:maxPartitionContribution: 1
+
+        - @type: dp:PartitionDefinition
+          dp:lowerBound: 200.0
+          dp:upperBound: 250.0
+          dp:maxPartitionLength: 100
+
 
     - name: body_mass_g
       datatype: double
