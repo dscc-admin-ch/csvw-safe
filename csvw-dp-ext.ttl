@@ -1,8 +1,13 @@
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
 @prefix csvw: <http://www.w3.org/ns/csvw#> .
-@prefix dp:   <https://github.com/dscc-admin-ch/csvw-dp/csvw-dp-ext#> .
+
+@base <https://w3id.org/csvw-dp> .
+@prefix dp: <https://w3id.org/csvw-dp#> .
+
 
 # =====================================================
 # Ontology declaration
@@ -10,16 +15,31 @@
 
 dp:
     a owl:Ontology ;
+
+    # --- Identity & versioning ---
     dct:title "CSVW Differential Privacy Extension Vocabulary" ;
+    owl:versionInfo "0.1.0" ;
+    owl:versionIRI <https://w3id.org/csvw-dp/0.1.0> ;
+
+    # --- Description ---
     dct:description """
     A vocabulary extending W3C CSV on the Web metadata with explicit
     differential privacy modeling primitives, including contribution bounds,
     partition constraints, and derived column semantics.
     """ ;
+
+    # --- Authorship & governance ---
     dct:creator <https://github.com/dscc-admin-ch> ;
-    dct:created "2025-01-01"^^xsd:date ;
+    dct:publisher <https://github.com/dscc-admin-ch> ;
+    dct:created "2026-01-30"^^xsd:date ;
+
+    # --- Licensing ---
     dct:license <https://creativecommons.org/licenses/by/4.0/> ;
-    owl:versionInfo "0.1.0" ;
+
+    # --- Technical context ---
+    owl:imports <http://www.w3.org/ns/csvw> ;
+
+    # --- Documentation ---
     rdfs:seeAlso <https://github.com/dscc-admin-ch/csvw-dp> .
 
 

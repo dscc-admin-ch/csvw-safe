@@ -52,14 +52,11 @@ CSVW-DP separates concerns into:
 | Term                    | Type         | Meaning                                          |
 | ----------------------- | ------------ | ------------------------------------------------ |
 | `dp:privacyId`          | boolean      | True if column identifies individuals/units.     |
-| `dp:groupable`          | boolean      | True if column can be used for grouping.         |
 | `dp:nullableProportion` | decimal 0–1  | Fraction of null values (approximate modeling).  |
-| `dp:publicPartitions`   | list(string) | Declared set of partition keys (publicly known). |
 
 **Notes:**
 
 * `dp:nullableProportion` is optional; coarse bounds are sufficient.
-* `dp:groupable` boolean: does not clash with class `dp:Groupable`.
 * Existing CSVW terms are reused where applicable: `datatype`, `format`, `minimum`, `maximum`, `required`, `default`.
 
 ### 1.3 Groupable Columns
@@ -81,6 +78,7 @@ Represents any entity usable for DP groupings.
 | `dp:maxNumPartitions`         | positive integer | Max distinct group keys               |
 | `dp:maxInfluencedPartitions`  | positive integer | Max groups a person can contribute to |
 | `dp:maxPartitionContribution` | positive integer | Max contributions per partition       |
+| `dp:publicPartitions`         | list(string)     | Declared set of partition keys (publicly known). |
 
 > `dp:maxNumPartitions` ≠ `dp:publicPartitions` length; public partitions may be a subset of observed data.
 
@@ -96,6 +94,7 @@ Represents any entity usable for DP groupings.
 | `dp:maxNumPartitions`         | Max distinct groups                   |
 | `dp:maxInfluencedPartitions`  | Max groups a person can contribute to |
 | `dp:maxPartitionContribution` | Max contributions per group           |
+| `dp:publicPartitions`         | Set of partition keys (publicly known). |
 
 **Public partitions vs format:**
 

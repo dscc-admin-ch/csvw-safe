@@ -3,7 +3,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix csvw: <http://www.w3.org/ns/csvw#> .
-@prefix dp: <https://github.com/dscc-admin-ch/csvw-dp/csvw-dp-ext#> .
+@prefix dp: <https://w3id.org/csvw-dp#> .
 
 ################################################################
 # CSVW-DP SHACL Validation
