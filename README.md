@@ -344,22 +344,21 @@ Continuous
 
 ```
 csvw:Table ⊂ dp:DPBounded
- ├─ dp:maxPartitionLength
- ├─ dp:partitionLength
- ├─ dp:maxPartitionContribution
+ ├─ dp:DPBounds
  │
  ├─ csvw:tableSchema → csvw:TableSchema
  │    └─ csvw:Column ⊂ dp:GroupingKey ⊂ dp:DPBounded
  │         ├─ CSVW schema (datatype, required, default, etc.)
  │         ├─ dp:publicPartitions (DP-relevant)
- │         │    └─ optional dp:partitionBindings (structural)
- │         └─ DP bounds
+ │         │    └─ dp:DPBounds
+ │         └─ dp:DPBounds
  │
  └─ dp:ColumnGroup ⊂ dp:GroupingKey ⊂ dp:DPBounded
       ├─ dp:columns → rdf:List(csvw:Column)
       ├─ dp:publicPartitions (DP-relevant)
-      │    └─ optional dp:partitionBindings (structural)
-      └─ DP bounds
+      │    └─ dp:partitionBindings (structural)
+      │         └─ dp:DPBounds
+      └─ dp:DPBounds
 ```
 
 > **Full View:** [README_details.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/README_details.md)

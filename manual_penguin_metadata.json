@@ -220,6 +220,38 @@
           }
         ]
       },
+        {
+        "@type": "dp:ColumnGroup",
+        "dp:columns": ["sex", "flipper_length_mm"],
+        "dp:publicPartitions": [
+          {
+            "@type": "dp:PartitionKey",
+            "dp:partitionBindings": {
+                "sex" : "MALE", 
+                "flipper_length_mm": {
+                    "dp:lowerBound": 150.0,
+                    "dp:upperBound": 200.0
+                }
+            },
+            "dp:maxPartitionLength": 50,
+            "dp:maxInfluencedPartitions": 1,
+            "dp:maxPartitionContribution": 2
+          },
+          {
+            "@type": "dp:PartitionKey",
+            "dp:partitionBindings": {
+                "sex" : "FEMALE", 
+                "flipper_length_mm": {
+                    "dp:lowerBound": 150.0,
+                    "dp:upperBound": 200.0
+                }
+            },
+            "dp:maxPartitionLength": 50,
+            "dp:maxInfluencedPartitions": 1,
+            "dp:maxPartitionContribution": 2
+          }
+        ]
+    },
       {
         "@type": "dp:ColumnGroup",
         "dp:columns": ["species", "sex"],

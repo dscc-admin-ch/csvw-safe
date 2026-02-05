@@ -1,74 +1,71 @@
 # CSVW Differential Privacy Extension Vocabulary
 
 ### 1.7 Full Visual Overview
-```
-csvw:Table
- ├─ dp:maxTableLength
- ├─ dp:tableLength
- ├─ dp:maxContributions
- │
- ├─ csvw:tableSchema → csvw:TableSchema
- │    └─ csvw:Column ⊂ dp:GroupingKey ⊂ dp:DPBounded
- │         ├─ CSVW schema
- │         ├─ dp:publicPartitions
- │         │    └─ optional dp:partitionBindings
- │         └─ DP bounds
- │
- └─ dp:ColumnGroup ⊂ dp:GroupingKey ⊂ dp:DPBounded
-      ├─ dp:columns
-      ├─ dp:publicPartitions
-      │    └─ optional dp:partitionBindings
-      └─ DP bounds
-```
 
 In full:
 ```
 csvw:Table
- ├─ dp:maxTableLength
- ├─ dp:tableLength
- ├─ dp:maxContributions
- │
- ├─ csvw:tableSchema → csvw:TableSchema
- │    └─ csvw:Column ⊂ dp:GroupingKey ⊂ dp:DPBounded
- │         ├─ CSVW schema
- │         │    ├─ datatype / format
- │         │    ├─ required / default
- │         │    └─ minimum / maximum
- │         │
- │         ├─ dp:privacyId
- │         ├─ dp:nullableProportion
- │         ├─ dp:publicPartitions
- │         │    └─ rdf:List of:
- │         │         ├─ literal values (categorical)
- │         │         └─ dp:PartitionKey ⊂ dp:DPBounded
- │         │              ├─ dp:partitionValue
- │         │              ├─ dp:lowerBound (inclusive)
- │         │              ├─ dp:upperBound (exclusive)
- │         │              ├─ dp:partitionLabel
- │         │              └─ optional DP bounds
- │         │
- │         └─ DP bounds on grouping key
- │              ├─ dp:maxPartitionLength
- │              ├─ dp:maxNumPartitions
- │              ├─ dp:maxInfluencedPartitions
- │              └─ dp:maxPartitionContribution
- │
- └─ dp:ColumnGroup ⊂ dp:GroupingKey ⊂ dp:DPBounded
-      ├─ dp:columns → rdf:List(csvw:Column)
-      ├─ dp:publicPartitions (optional)
-      │    └─ rdf:List of:
-      │         └─ dp:PartitionKey ⊂ dp:DPBounded
-      │              ├─ dp:partitionBindings  # mapping of columns → values
-      │              ├─ dp:partitionValue
-      │              ├─ dp:lowerBound (inclusive)
-      │              ├─ dp:upperBound (exclusive)
-      │              └─ optional DP bounds
-      │
-      └─ DP bounds on grouping key
-           ├─ dp:maxPartitionLength
-           ├─ dp:maxNumPartitions
-           ├─ dp:maxInfluencedPartitions
-           └─ dp:maxPartitionContribution
+  ⊂ dp:DPBounded
+  │
+  ├─ dp:DP bounds
+  │    ├─ dp:maxPartitionLength
+  │    ├─ dp:maxPartitionContribution
+  │    ├─ dp:maxInfluencedPartitions (= 1)
+  │    └─ dp:partitionLength
+  │
+  ├─ csvw:tableSchema → csvw:TableSchema
+  │      │
+  │      └─ csvw:column → csvw:Column
+  │             │
+  │             │  csvw:Column
+  │             │    ⊂ dp:GroupingKey
+  │             │      ⊂ dp:DPBounded
+  │             │
+  │             ├─ CSVW schema metadata
+  │             │    ├─ datatype
+  │             │    ├─ required
+  │             │    └─ minimum / maximum
+  │             │
+  │             ├─ dp:DP bounds
+  │             │    ├─ dp:maxPartitionLength
+  │             │    ├─ dp:maxPartitionContribution
+  │             │    ├─ dp:maxInfluencedPartitions
+  │             │    └─ dp:maxNumPartitions
+  │             │
+  │             └─ dp:publicPartitions   (DP-relevant)
+  │                   │
+  │                   └─ dp:PartitionKey
+  │                         ⊂ dp:DPBounded
+  │                         │
+  │                         ├─ partition definition
+  │                         │    ├─ dp:partitionValue
+  │                         │    └─ OR dp:lowerBound / dp:upperBound
+  │                         │
+  │                         └─ dp:DP bounds
+  │                              ├─ dp:maxPartitionLength
+  │                              └─ dp:maxPartitionContribution
+  │
+  └─ dp:ColumnGroup
+        ⊂ dp:GroupingKey
+          ⊂ dp:DPBounded
+            │
+            ├─ dp:columns → rdf:List(csvw:Column)
+            │
+            ├─ dp:DP bounds
+            │    ├─ dp:maxPartitionLength
+            │    ├─ dp:maxPartitionContribution
+            │    ├─ dp:maxInfluencedPartitions
+            │    └─ dp:maxNumPartitions
+            │
+            └─ dp:publicPartitions     (DP-relevant)
+                  │
+                  └─ dp:PartitionKey
+                        │
+                        ├─ dp:partitionBindings   (structural)
+                        │    ├─ column → literal
+                        │    └─ column → interval
+                        │
+                        └─ dp:DP bounds
 ```
 
 Diagram
