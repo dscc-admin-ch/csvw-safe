@@ -3,10 +3,10 @@
     "http://www.w3.org/ns/csvw",
     "https://w3id.org/csvw-dp-context.jsonld"
   ],
-  "url": "lomas.csv",
-  "dp:maxContributions": 2,
-  "dp:maxTableLength": 344,
-  "dp:tableLength": 344,
+  "@type": "csvw:Table",
+  "dp:maxPartitionContribution": 2,
+  "dp:partitionLength": 344,
+  "dp:maxPartitionLength": 344,
   "tableSchema": {
     "columns": [
       {
@@ -20,8 +20,7 @@
             "@type": "dp:PartitionKey",
             "dp:partitionValue": "Torgersen",
             "dp:maxPartitionLength": 50,
-            "dp:maxInfluencedPartitions": 1,
-            "dp:maxPartitionContribution": 2
+            "dp:maxPartitionContribution": 1
           },
           {
             "@type": "dp:PartitionKey",
@@ -48,22 +47,19 @@
             "@type": "dp:PartitionKey",
             "dp:partitionValue": "Adelie",
             "dp:maxPartitionLength": 160,
-            "dp:maxInfluencedPartitions": 1,
-            "dp:maxPartitionContribution": 2
+            "dp:maxPartitionContribution": 1
           },
           {
             "@type": "dp:PartitionKey",
             "dp:partitionValue": "Chinstrap",
             "dp:maxPartitionLength": 70,
-            "dp:maxInfluencedPartitions": 1,
-            "dp:maxPartitionContribution": 2
+            "dp:maxPartitionContribution": 1
           },
           {
             "@type": "dp:PartitionKey",
             "dp:partitionValue": "Gentoo",
             "dp:maxPartitionLength": 130,
-            "dp:maxInfluencedPartitions": 1,
-            "dp:maxPartitionContribution": 2
+            "dp:maxPartitionContribution": 1
           }
         ],
         "dp:maxPartitionLength": 200,
@@ -169,11 +165,7 @@
             "dp:maxPartitionLength": 100,
             "dp:maxPartitionContribution": 1
           }
-        ],
-        "dp:maxNumPartitions": 5,
-        "dp:maxPartitionLength": 100,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 1
+        ]
       },
       {
         "name": "sex",
@@ -184,15 +176,17 @@
         "dp:publicPartitions": [
           {
             "@type": "dp:PartitionKey",
-            "dp:partitionValue": "MALE"
+            "dp:partitionValue": "MALE",
+            "dp:maxPartitionLength": 200
           },
           {
             "@type": "dp:PartitionKey",
-            "dp:partitionValue": "FEMALE"
+            "dp:partitionValue": "FEMALE",
+            "dp:maxPartitionLength": 200
           }
         ],
         "dp:maxNumPartitions": 2,
-        "dp:maxPartitionLength": 300,
+        "dp:maxPartitionLength": 400,
         "dp:maxInfluencedPartitions": 1,
         "dp:maxPartitionContribution": 2
       }
@@ -208,11 +202,21 @@
         "dp:publicPartitions": [
           {
             "@type": "dp:PartitionKey",
-            "dp:partitionValue": ["MALE", "Torgersen"]
+            "dp:partitionBinding": {
+                "sex" : "MALE", 
+                "island": "Torgersen"
+            },
+            "dp:maxPartitionLength": 20,
+            "dp:maxPartitionContribution": 1
           },
           {
             "@type": "dp:PartitionKey",
-            "dp:partitionValue": ["FEMALE", "Biscoe"]
+            "dp:partitionBinding": {
+                "sex" : "FEMALE", 
+                "island": "Torgersen"
+            },
+            "dp:maxPartitionLength": 20,
+            "dp:maxPartitionContribution": 1
           }
         ]
       },

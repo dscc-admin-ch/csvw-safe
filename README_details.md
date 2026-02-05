@@ -125,3 +125,32 @@ But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has me
 - `dp:maxPartitionContribution`: 1
 
 
+## 3. Class diagram
+```
+                   ┌─────────────────┐
+                   │   csvw:Table    │
+                   │ ⬆ dp:DPBounded  │
+                   └────────┬────────┘
+                            │ dp:maxPartitionLength = dp:maxTableLength
+                            │ dp:maxPartitionContribution / dp:maxInfluencedPartitions = dp:maxContributions
+                            │ dp:partitionLength = dp:tableLength
+                            ▼
+                   ┌───────────────┐
+                   │ dp:DPBounded  │
+                   │ maxPartitionLength / partitionLength
+                   │ maxPartitionContribution
+                   │ maxInfluencedPartitions
+                   └────────┬──────┘
+                            │
+         ┌──────────────────┴──────────────────┐
+         │                                     │
+ ┌───────▼─────────┐                    ┌─────▼──────────┐
+ │ dp:GroupingKey  │                    │ dp:PartitionKey│
+ │ (Column/Group)  │                    │ single partition│
+ └───────┬─────────┘                    └────────────────┘
+         │
+ ┌───────▼─────────┐
+ │ dp:ColumnGroup  │
+ └─────────────────┘
+```
+

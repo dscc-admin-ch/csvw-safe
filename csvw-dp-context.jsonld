@@ -6,26 +6,96 @@
     "dp": "https://w3id.org/csvw-dp#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
 
-    "maxTableLength": {
-      "@id": "dp:maxTableLength",
+    /* =====================================================
+       Core CSVW terms
+       ===================================================== */
+
+    "Table": "csvw:Table",
+    "TableSchema": "csvw:TableSchema",
+    "Column": "csvw:Column",
+
+    "tableSchema": {
+      "@id": "csvw:tableSchema",
+      "@type": "@id"
+    },
+
+    "columns": {
+      "@id": "csvw:column",
+      "@type": "@id",
+      "@container": "@list"
+    },
+
+    "name": "csvw:name",
+    "datatype": {
+      "@id": "csvw:datatype",
+      "@type": "@id"
+    },
+
+    /* =====================================================
+       DP core classes
+       ===================================================== */
+
+    "DPBounded": "dp:DPBounded",
+    "GroupingKey": "dp:GroupingKey",
+    "ColumnGroup": "dp:ColumnGroup",
+    "PartitionKey": "dp:PartitionKey",
+
+    /* =====================================================
+       DP bounds (generic, reusable)
+       ===================================================== */
+
+    "maxPartitionLength": {
+      "@id": "dp:maxPartitionLength",
       "@type": "xsd:positiveInteger"
     },
-    "tableLength": {
-      "@id": "dp:tableLength",
+
+    "partitionLength": {
+      "@id": "dp:partitionLength",
       "@type": "xsd:positiveInteger"
     },
-    "maxContributions": {
-      "@id": "dp:maxContributions",
+
+    "maxPartitionContribution": {
+      "@id": "dp:maxPartitionContribution",
       "@type": "xsd:positiveInteger"
     },
+
+    "maxInfluencedPartitions": {
+      "@id": "dp:maxInfluencedPartitions",
+      "@type": "xsd:positiveInteger"
+    },
+
+    "maxNumPartitions": {
+      "@id": "dp:maxNumPartitions",
+      "@type": "xsd:positiveInteger"
+    },
+
+    /* =====================================================
+       Column-level DP metadata
+       ===================================================== */
 
     "privacyId": {
       "@id": "dp:privacyId",
       "@type": "xsd:boolean"
     },
+
     "nullableProportion": {
       "@id": "dp:nullableProportion",
       "@type": "xsd:decimal"
+    },
+
+    /* =====================================================
+       Grouping & partitions
+       ===================================================== */
+
+    "columnGroup": {
+      "@id": "dp:ColumnGroup",
+      "@type": "@id"
+    },
+
+    "columnsInGroup": {
+      "@id": "dp:columns",
+      "@type": "@id",
+      "@container": "@list"
     },
 
     "publicPartitions": {
@@ -33,56 +103,27 @@
       "@container": "@list"
     },
 
-    "partitionValue": {
-      "@id": "dp:partitionValue"
-    },
-    "partitionLabel": {
-      "@id": "dp:partitionLabel"
-    },
-    "partitionBindings": {
-      "@id": "dp:partitionBindings"
-    },
+    /* =====================================================
+       PartitionKey structure
+       ===================================================== */
+
+    "partitionValue": "dp:partitionValue",
 
     "lowerBound": {
       "@id": "dp:lowerBound",
       "@type": "xsd:decimal"
     },
+
     "upperBound": {
       "@id": "dp:upperBound",
       "@type": "xsd:decimal"
     },
-    "lowerInclusive": {
-      "@id": "dp:lowerInclusive",
-      "@type": "xsd:boolean"
-    },
-    "upperInclusive": {
-      "@id": "dp:upperInclusive",
-      "@type": "xsd:boolean"
-    },
 
-    "maxPartitionLength": {
-      "@id": "dp:maxPartitionLength",
-      "@type": "xsd:positiveInteger"
-    },
-    "maxNumPartitions": {
-      "@id": "dp:maxNumPartitions",
-      "@type": "xsd:positiveInteger"
-    },
-    "maxInfluencedPartitions": {
-      "@id": "dp:maxInfluencedPartitions",
-      "@type": "xsd:positiveInteger"
-    },
-    "maxPartitionContribution": {
-      "@id": "dp:maxPartitionContribution",
-      "@type": "xsd:positiveInteger"
-    },
+    "partitionLabel": "dp:partitionLabel",
 
-    "columns": {
-      "@id": "dp:columns",
-      "@container": "@list"
-    },
-
-    "PartitionKey": "dp:PartitionKey",
-    "ColumnGroup": "dp:ColumnGroup"
+    "partitionBindings": {
+      "@id": "dp:partitionBindings",
+      "@type": "@id"
+    }
   }
 }

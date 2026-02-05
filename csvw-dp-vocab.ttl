@@ -16,8 +16,8 @@
 dp:
     a owl:Ontology ;
     dct:title "CSVW Differential Privacy Extension Vocabulary" ;
-    owl:versionInfo "0.2.0" ;
-    owl:versionIRI <https://w3id.org/csvw-dp/0.2.0> ;
+    owl:versionInfo "0.3.0" ;
+    owl:versionIRI <https://w3id.org/csvw-dp/0.3.0> ;
     dct:description """
     A vocabulary extending W3C CSV on the Web metadata with explicit
     differential privacy modeling primitives, including contribution bounds,
@@ -39,8 +39,8 @@ dp:
 dp:DPBounded a rdfs:Class ;
     rdfs:label "DP-bounded entity" ;
     rdfs:comment """
-    An entity to which differential privacy contribution or size
-    bounds may be attached.
+    Abstract class for any entity to which differential privacy
+    contribution or size bounds may be attached.
     """ .
 
 
@@ -72,33 +72,27 @@ dp:PartitionKey a rdfs:Class ;
     • A numeric interval
     • A composite key value
 
-    May carry per-partition DP bounds.
+    May carry per-partition DP bounds that refine or override
+    bounds declared on the enclosing grouping key.
     """ .
 
 
 # =====================================================
-# TABLE-LEVEL PROPERTIES
+# CSVW INTEGRATION
 # =====================================================
 
-dp:maxTableLength a rdf:Property ;
-    rdfs:domain csvw:Table ;
-    rdfs:range xsd:positiveInteger ;
-    rdfs:label "maxTableLength" ;
-    rdfs:comment "Upper bound on total number of rows." .
+csvw:Table
+    rdfs:subClassOf dp:DPBounded ;
+    rdfs:comment """
+    A CSVW table treated as a single DP partition.
+    """ .
 
 
-dp:tableLength a rdf:Property ;
-    rdfs:domain csvw:Table ;
-    rdfs:range xsd:positiveInteger ;
-    rdfs:label "tableLength" ;
-    rdfs:comment "Observed number of rows, if known." .
-
-
-dp:maxContributions a rdf:Property ;
-    rdfs:domain csvw:Table ;
-    rdfs:range xsd:positiveInteger ;
-    rdfs:label "maxContributions" ;
-    rdfs:comment "Maximum number of rows contributed by a single individual." .
+csvw:Column
+    rdfs:subClassOf dp:GroupingKey ;
+    rdfs:comment """
+    A CSVW column that may serve as a grouping key for DP aggregation.
+    """ .
 
 
 # =====================================================
@@ -120,7 +114,7 @@ dp:nullableProportion a rdf:Property ;
 
 
 # =====================================================
-# PUBLIC PARTITIONS
+# PUBLIC PARTITIONS (DP-relevant)
 # =====================================================
 
 dp:publicPartitions a rdf:Property ;
@@ -128,16 +122,15 @@ dp:publicPartitions a rdf:Property ;
     rdfs:range rdf:List ;
     rdfs:label "publicPartitions" ;
     rdfs:comment """
-    Declared set of publicly known partitions for a grouping key.
+    Declared universe of publicly known partitions for a grouping key.
 
-    Each entry may be:
-    • A literal value (simple categorical partition)
-    • A dp:PartitionKey object (structured partition)
+    Declaring public partitions avoids data-dependent release
+    and may affect privacy accounting.
     """ .
 
 
 # =====================================================
-# PARTITION KEY STRUCTURE
+# PARTITION KEY STRUCTURE (structural)
 # =====================================================
 
 dp:partitionValue a rdf:Property ;
@@ -173,12 +166,12 @@ dp:partitionBindings a rdf:Property ;
     rdfs:range rdf:Resource ;
     rdfs:label "partitionBindings" ;
     rdfs:comment """
-    Declares fixed values of grouping-key columns
-    for which this partition applies.
+    Structural metadata mapping grouping-key columns to values
+    defining this partition.
 
-    Keys MUST be columns listed in the enclosing
-    dp:GroupingKey.
+    Does not affect DP bounds directly.
     """ .
+
 
 # =====================================================
 # DP AGGREGATION BOUNDS
@@ -189,6 +182,13 @@ dp:maxPartitionLength a rdf:Property ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxPartitionLength" ;
     rdfs:comment "Maximum number of rows within the scope of this entity." .
+
+
+dp:partitionLength a rdf:Property ;
+    rdfs:domain dp:DPBounded ;
+    rdfs:range xsd:positiveInteger ;
+    rdfs:label "partitionLength" ;
+    rdfs:comment "Observed number of rows within the scope of this entity, if known." .
 
 
 dp:maxInfluencedPartitions a rdf:Property ;
