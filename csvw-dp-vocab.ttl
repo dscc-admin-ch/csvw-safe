@@ -18,54 +18,61 @@ dp:
     dct:title "CSVW Differential Privacy Extension Vocabulary" ;
     owl:versionInfo "0.2.0" ;
     owl:versionIRI <https://w3id.org/csvw-dp/0.2.0> ;
-
     dct:description """
     A vocabulary extending W3C CSV on the Web metadata with explicit
     differential privacy modeling primitives, including contribution bounds,
-    partition constraints, and public partition specifications for both
+    grouping constraints, and public partition specifications for both
     categorical and continuous columns.
     """ ;
-
     dct:creator <https://github.com/dscc-admin-ch> ;
     dct:publisher <https://github.com/dscc-admin-ch> ;
     dct:created "2026-02-04"^^xsd:date ;
-
     dct:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:imports <http://www.w3.org/ns/csvw> ;
     rdfs:seeAlso <https://github.com/dscc-admin-ch/csvw-dp> .
 
 
 # =====================================================
-# CLASSES
+# CORE CLASSES
 # =====================================================
 
-dp:Groupable a rdfs:Class ;
-    rdfs:label "Groupable" ;
+dp:DPBounded a rdfs:Class ;
+    rdfs:label "DP-bounded entity" ;
     rdfs:comment """
-    Abstract class for entities that can define partitions used in
-    differential privacy aggregation. Includes single columns and
-    multi-column groups.
+    An entity to which differential privacy contribution or size
+    bounds may be attached.
+    """ .
+
+
+dp:GroupingKey a rdfs:Class ;
+    rdfs:subClassOf dp:DPBounded ;
+    rdfs:label "Grouping key" ;
+    rdfs:comment """
+    An entity that defines a group-by key space for DP aggregation.
+    Includes single columns and composite (multi-column) keys.
     """ .
 
 
 dp:ColumnGroup a rdfs:Class ;
-    rdfs:subClassOf dp:Groupable ;
-    rdfs:label "ColumnGroup" ;
+    rdfs:subClassOf dp:GroupingKey ;
+    rdfs:label "Column group" ;
     rdfs:comment """
-    Represents a grouping key formed by two or more columns.
+    A grouping key formed by two or more columns.
     """ .
 
 
-dp:PartitionDefinition a rdfs:Class ;
-    rdfs:label "Partition definition" ;
+dp:PartitionKey a rdfs:Class ;
+    rdfs:subClassOf dp:DPBounded ;
+    rdfs:label "Partition key" ;
     rdfs:comment """
-    Describes one public partition key. Can represent:
+    Represents one publicly declared partition within a grouping key.
 
+    Can describe:
     • A categorical value
     • A numeric interval
-    • A multi-column key combination
+    • A composite key value
 
-    Allows attaching optional per-partition DP bounds.
+    May carry per-partition DP bounds.
     """ .
 
 
@@ -77,7 +84,7 @@ dp:maxTableLength a rdf:Property ;
     rdfs:domain csvw:Table ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxTableLength" ;
-    rdfs:comment "Upper bound on total rows." .
+    rdfs:comment "Upper bound on total number of rows." .
 
 
 dp:tableLength a rdf:Property ;
@@ -91,18 +98,18 @@ dp:maxContributions a rdf:Property ;
     rdfs:domain csvw:Table ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxContributions" ;
-    rdfs:comment "Maximum number of rows contributed by one individual." .
+    rdfs:comment "Maximum number of rows contributed by a single individual." .
 
 
 # =====================================================
-# COLUMN PROPERTIES
+# COLUMN-LEVEL PROPERTIES
 # =====================================================
 
 dp:privacyId a rdf:Property ;
     rdfs:domain csvw:Column ;
     rdfs:range xsd:boolean ;
     rdfs:label "privacyId" ;
-    rdfs:comment "True if column identifies privacy unit." .
+    rdfs:comment "True if the column identifies the privacy unit." .
 
 
 dp:nullableProportion a rdf:Property ;
@@ -112,81 +119,97 @@ dp:nullableProportion a rdf:Property ;
     rdfs:comment "Approximate fraction of null values." .
 
 
+# =====================================================
+# PUBLIC PARTITIONS
+# =====================================================
+
 dp:publicPartitions a rdf:Property ;
-    rdfs:domain dp:Groupable ;
+    rdfs:domain dp:GroupingKey ;
     rdfs:range rdf:List ;
     rdfs:label "publicPartitions" ;
     rdfs:comment """
-    Declared set of allowed public partition keys.
+    Declared set of publicly known partitions for a grouping key.
 
     Each entry may be:
-    • Literal value (categorical partition)
-    • dp:PartitionDefinition object (structured partition)
+    • A literal value (simple categorical partition)
+    • A dp:PartitionKey object (structured partition)
     """ .
 
 
 # =====================================================
-# PARTITION STRUCTURE
+# PARTITION KEY STRUCTURE
 # =====================================================
 
 dp:partitionValue a rdf:Property ;
-    rdfs:domain dp:PartitionDefinition ;
+    rdfs:domain dp:PartitionKey ;
     rdfs:range rdfs:Literal ;
     rdfs:label "partitionValue" ;
     rdfs:comment "Categorical partition value." .
 
 
 dp:lowerBound a rdf:Property ;
-    rdfs:domain dp:PartitionDefinition ;
+    rdfs:domain dp:PartitionKey ;
     rdfs:range xsd:decimal ;
     rdfs:label "lowerBound" ;
-    rdfs:comment "Inclusive lower bound of numeric partition. Default: true" .
+    rdfs:comment "Lower bound of numeric partition (inclusive by default)." .
 
 
 dp:upperBound a rdf:Property ;
-    rdfs:domain dp:PartitionDefinition ;
+    rdfs:domain dp:PartitionKey ;
     rdfs:range xsd:decimal ;
     rdfs:label "upperBound" ;
-    rdfs:comment "Exclusive or inclusive upper bound (implementation defined). Default: false" .
+    rdfs:comment "Upper bound of numeric partition (exclusive by default)." .
 
 
 dp:partitionLabel a rdf:Property ;
-    rdfs:domain dp:PartitionDefinition ;
+    rdfs:domain dp:PartitionKey ;
     rdfs:range xsd:string ;
     rdfs:label "partitionLabel" ;
-    rdfs:comment "Human-readable label." .
+    rdfs:comment "Human-readable label for the partition." .
 
+
+dp:partitionBindings a rdf:Property ;
+    rdfs:domain dp:PartitionKey ;
+    rdfs:range rdf:Resource ;
+    rdfs:label "partitionBindings" ;
+    rdfs:comment """
+    Declares fixed values of grouping-key columns
+    for which this partition applies.
+
+    Keys MUST be columns listed in the enclosing
+    dp:GroupingKey.
+    """ .
 
 # =====================================================
 # DP AGGREGATION BOUNDS
 # =====================================================
 
 dp:maxPartitionLength a rdf:Property ;
-    rdfs:domain dp:Groupable ;
+    rdfs:domain dp:DPBounded ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxPartitionLength" ;
-    rdfs:comment "Maximum number of rows inside any partition." .
-
-
-dp:maxNumPartitions a rdf:Property ;
-    rdfs:domain dp:Groupable ;
-    rdfs:range xsd:positiveInteger ;
-    rdfs:label "maxNumPartitions" ;
-    rdfs:comment "Maximum number of distinct partitions." .
+    rdfs:comment "Maximum number of rows within the scope of this entity." .
 
 
 dp:maxInfluencedPartitions a rdf:Property ;
-    rdfs:domain dp:Groupable ;
+    rdfs:domain dp:DPBounded ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxInfluencedPartitions" ;
-    rdfs:comment "Maximum partitions a person may influence (l0 bound)." .
+    rdfs:comment "Maximum number of partitions a single individual may influence (l₀ bound)." .
 
 
 dp:maxPartitionContribution a rdf:Property ;
-    rdfs:domain dp:Groupable ;
+    rdfs:domain dp:DPBounded ;
     rdfs:range xsd:positiveInteger ;
     rdfs:label "maxPartitionContribution" ;
-    rdfs:comment "Maximum contributions within a partition (l_inf bound)." .
+    rdfs:comment "Maximum contributions per individual within one partition (l∞ bound)." .
+
+
+dp:maxNumPartitions a rdf:Property ;
+    rdfs:domain dp:GroupingKey ;
+    rdfs:range xsd:positiveInteger ;
+    rdfs:label "maxNumPartitions" ;
+    rdfs:comment "Maximum number of distinct partitions defined by the grouping key." .
 
 
 # =====================================================
@@ -197,4 +220,4 @@ dp:columns a rdf:Property ;
     rdfs:domain dp:ColumnGroup ;
     rdfs:range rdf:List ;
     rdfs:label "columns" ;
-    rdfs:comment "Columns forming the grouping key." .
+    rdfs:comment "Columns forming the composite grouping key." .

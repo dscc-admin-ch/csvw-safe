@@ -10,12 +10,10 @@
       "@id": "dp:maxTableLength",
       "@type": "xsd:positiveInteger"
     },
-
     "tableLength": {
       "@id": "dp:tableLength",
       "@type": "xsd:positiveInteger"
     },
-
     "maxContributions": {
       "@id": "dp:maxContributions",
       "@type": "xsd:positiveInteger"
@@ -25,7 +23,6 @@
       "@id": "dp:privacyId",
       "@type": "xsd:boolean"
     },
-
     "nullableProportion": {
       "@id": "dp:nullableProportion",
       "@type": "xsd:decimal"
@@ -39,62 +36,53 @@
     "partitionValue": {
       "@id": "dp:partitionValue"
     },
-
     "partitionLabel": {
       "@id": "dp:partitionLabel"
+    },
+    "partitionBindings": {
+      "@id": "dp:partitionBindings"
     },
 
     "lowerBound": {
       "@id": "dp:lowerBound",
-      "@type": "xsd:decimal",
-      "@default": true
+      "@type": "xsd:decimal"
     },
-
     "upperBound": {
       "@id": "dp:upperBound",
-      "@type": "xsd:decimal",
-      "@default": false
+      "@type": "xsd:decimal"
     },
-
     "lowerInclusive": {
       "@id": "dp:lowerInclusive",
-      "@type": "xsd:boolean",
-      "@default": true
+      "@type": "xsd:boolean"
     },
-
     "upperInclusive": {
       "@id": "dp:upperInclusive",
-      "@type": "xsd:boolean",
-      "@default": false
+      "@type": "xsd:boolean"
     },
 
     "maxPartitionLength": {
       "@id": "dp:maxPartitionLength",
       "@type": "xsd:positiveInteger"
     },
-
     "maxNumPartitions": {
       "@id": "dp:maxNumPartitions",
       "@type": "xsd:positiveInteger"
     },
-
     "maxInfluencedPartitions": {
       "@id": "dp:maxInfluencedPartitions",
       "@type": "xsd:positiveInteger"
     },
-
     "maxPartitionContribution": {
       "@id": "dp:maxPartitionContribution",
       "@type": "xsd:positiveInteger"
     },
-
-    "ColumnGroup": "dp:ColumnGroup",
 
     "columns": {
       "@id": "dp:columns",
       "@container": "@list"
     },
 
-    "PartitionDefinition": "dp:PartitionDefinition"
+    "PartitionKey": "dp:PartitionKey",
+    "ColumnGroup": "dp:ColumnGroup"
   }
 }
