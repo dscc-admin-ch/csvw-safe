@@ -161,15 +161,13 @@ dp:partitionLabel a rdf:Property ;
     rdfs:comment "Human-readable label for the partition." .
 
 
-dp:partitionBindings a rdf:Property ;
+dp:components a rdf:Property ;
     rdfs:domain dp:PartitionKey ;
     rdfs:range rdf:Resource ;
-    rdfs:label "partitionBindings" ;
+    rdfs:label "components" ;
     rdfs:comment """
-    Structural metadata mapping grouping-key columns to values
-    defining this partition.
-
-    Does not affect DP bounds directly.
+    Defines a composite partition as a mapping from grouping-key columns
+    to per-column PartitionKeys.
     """ .
 
 

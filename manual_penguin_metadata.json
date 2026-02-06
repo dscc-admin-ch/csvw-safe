@@ -190,7 +190,8 @@
         "dp:maxInfluencedPartitions": 1,
         "dp:maxPartitionContribution": 2
       }
-    ],
+    ], 
+  }, 
     "dp:columnGroups": [
       {
         "@type": "dp:ColumnGroup",
@@ -202,36 +203,55 @@
         "dp:publicPartitions": [
           {
             "@type": "dp:PartitionKey",
-            "dp:partitionBinding": {
-                "sex" : "MALE", 
-                "island": "Torgersen"
+            "dp:components": {
+              "sex": {
+                "@type": "dp:PartitionKey",
+                "dp:partitionValue": "MALE"
+              },
+              "island": {
+                "@type": "dp:PartitionKey",
+                "dp:partitionValue": "Torgersen"
+              }
             },
             "dp:maxPartitionLength": 20,
             "dp:maxPartitionContribution": 1
           },
           {
             "@type": "dp:PartitionKey",
-            "dp:partitionBinding": {
-                "sex" : "FEMALE", 
-                "island": "Torgersen"
+            "dp:components": {
+              "sex": {
+                "@type": "dp:PartitionKey",
+                "dp:partitionValue": "FEMALE"
+              },
+              "island": {
+                "@type": "dp:PartitionKey",
+                "dp:partitionValue": "Torgersen"
+              }
             },
             "dp:maxPartitionLength": 20,
             "dp:maxPartitionContribution": 1
           }
         ]
       },
-        {
+    
+      {
         "@type": "dp:ColumnGroup",
         "dp:columns": ["sex", "flipper_length_mm"],
         "dp:publicPartitions": [
           {
             "@type": "dp:PartitionKey",
-            "dp:partitionBindings": {
-                "sex" : "MALE", 
-                "flipper_length_mm": {
-                    "dp:lowerBound": 150.0,
-                    "dp:upperBound": 200.0
-                }
+            "dp:components": {
+              "sex": {
+                "@type": "dp:PartitionKey",
+                "dp:partitionValue": "MALE"
+              },
+              "flipper_length_mm": {
+                "@type": "dp:PartitionKey",
+                "dp:lowerBound": 150.0,
+                "dp:upperBound": 200.0,
+                "dp:lowerInclusive": true,
+                "dp:upperInclusive": false
+              }
             },
             "dp:maxPartitionLength": 50,
             "dp:maxInfluencedPartitions": 1,
@@ -239,19 +259,26 @@
           },
           {
             "@type": "dp:PartitionKey",
-            "dp:partitionBindings": {
-                "sex" : "FEMALE", 
-                "flipper_length_mm": {
-                    "dp:lowerBound": 150.0,
-                    "dp:upperBound": 200.0
-                }
+            "dp:components": {
+              "sex": {
+                "@type": "dp:PartitionKey",
+                "dp:partitionValue": "FEMALE"
+              },
+              "flipper_length_mm": {
+                "@type": "dp:PartitionKey",
+                "dp:lowerBound": 150.0,
+                "dp:upperBound": 200.0,
+                "dp:lowerInclusive": true,
+                "dp:upperInclusive": false
+              }
             },
             "dp:maxPartitionLength": 50,
             "dp:maxInfluencedPartitions": 1,
             "dp:maxPartitionContribution": 2
           }
         ]
-    },
+      },
+    
       {
         "@type": "dp:ColumnGroup",
         "dp:columns": ["species", "sex"],
@@ -260,6 +287,7 @@
         "dp:maxInfluencedPartitions": 1,
         "dp:maxPartitionContribution": 2
       },
+    
       {
         "@type": "dp:ColumnGroup",
         "dp:columns": ["species", "body_mass_g"],
@@ -268,6 +296,7 @@
         "dp:maxInfluencedPartitions": 1,
         "dp:maxPartitionContribution": 1
       },
+    
       {
         "@type": "dp:ColumnGroup",
         "dp:columns": ["species", "island"],
@@ -276,6 +305,7 @@
         "dp:maxInfluencedPartitions": 1,
         "dp:maxPartitionContribution": 2
       },
+    
       {
         "@type": "dp:ColumnGroup",
         "dp:columns": ["species", "island", "sex"],
@@ -285,5 +315,4 @@
         "dp:maxPartitionContribution": 2
       }
     ]
-  }
 }

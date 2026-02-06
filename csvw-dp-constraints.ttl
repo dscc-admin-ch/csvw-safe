@@ -1,273 +1,178 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix csvw: <http://www.w3.org/ns/csvw#> .
 @prefix dp: <https://w3id.org/csvw-dp#> .
+@prefix csvw: <http://www.w3.org/ns/csvw#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-################################################################
-# DP-BOUNDED (generic, reusable)
-################################################################
+#################################################################
+# SHACL shapes for CSVW-DP constraints
+#################################################################
 
+# ===============================================================
+# 1. Base shape for all DP-bounded entities
+# ===============================================================
 dp:DPBoundedShape
-    a sh:NodeShape ;
-    sh:targetClass dp:DPBounded ;
+  a sh:NodeShape ;
+  sh:targetClass dp:DPBounded ;
+  sh:property [
+    sh:path dp:maxPartitionLength ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxPartitionContribution ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxInfluencedPartitions ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 1 ;
+  ] ;
+  sh:property [
+    sh:path dp:partitionLength ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+    sh:optional true ;
+  ] ;
+  sh:property [
+    sh:path dp:maxNumPartitions ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 1 ;
+    sh:optional true ;
+  ] .
 
-    sh:property [
-        sh:path dp:maxPartitionLength ;
-        sh:datatype xsd:positiveInteger ;
-    ] ;
-
-    sh:property [
-        sh:path dp:partitionLength ;
-        sh:datatype xsd:positiveInteger ;
-        sh:maxCount 1 ;
-    ] ;
-
-    sh:property [
-        sh:path dp:maxPartitionContribution ;
-        sh:datatype xsd:positiveInteger ;
-    ] ;
-
-    sh:property [
-        sh:path dp:maxInfluencedPartitions ;
-        sh:datatype xsd:positiveInteger ;
-    ] .
-
-################################################################
-# TABLE LEVEL
-################################################################
-
-dp:TableShape
-    a sh:NodeShape ;
-    sh:targetClass csvw:Table ;
-
-    sh:property [
-        sh:path dp:maxPartitionLength ;
-        sh:datatype xsd:positiveInteger ;
-        sh:minCount 1 ;
-    ] .
-
-################################################################
-# COLUMN LEVEL
-################################################################
-
+# ===============================================================
+# 2. Column-level constraints
+# ===============================================================
 dp:ColumnShape
-    a sh:NodeShape ;
-    sh:targetClass csvw:Column ;
+  a sh:NodeShape ;
+  sh:targetClass csvw:Column ;
+  sh:property [
+    sh:path dp:privacyId ;
+    sh:datatype xsd:boolean ;
+  ] ;
+  sh:property [
+    sh:path dp:nullableProportion ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+    sh:maxInclusive 1 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxPartitionLength ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxPartitionContribution ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxInfluencedPartitions ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 1 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxNumPartitions ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 1 ;
+    sh:optional true ;
+  ] .
 
-    sh:property [
-        sh:path dp:nullableProportion ;
-        sh:datatype xsd:decimal ;
-        sh:minInclusive 0 ;
-        sh:maxInclusive 1 ;
-    ] ;
-
-    sh:property [
-        sh:path dp:publicPartitions ;
-        sh:nodeKind sh:List ;
-    ] ;
-
-################################################################
-# privacyId columns cannot define grouping bounds
-################################################################
-
-    sh:sparql [
-        sh:message "privacyId columns cannot define DP grouping bounds" ;
-        sh:select """
-            SELECT ?this
-            WHERE {
-              ?this dp:privacyId true .
-              ?this ?p ?v .
-              VALUES ?p {
-                dp:maxPartitionLength
-                dp:maxNumPartitions
-                dp:maxInfluencedPartitions
-                dp:maxPartitionContribution
-              }
-            }
-        """ ;
-    ] .
-
-################################################################
-# PARTITION KEY VALIDATION
-################################################################
-
-dp:PartitionKeyShape
-    a sh:NodeShape ;
-    sh:targetClass dp:PartitionKey ;
-
-    sh:property [
-        sh:path dp:partitionLabel ;
-        sh:datatype xsd:string ;
-    ] ;
-
-    sh:property [
-        sh:path dp:partitionValue ;
-    ] ;
-
-    sh:property [
-        sh:path dp:lowerBound ;
-        sh:datatype xsd:decimal ;
-    ] ;
-
-    sh:property [
-        sh:path dp:upperBound ;
-        sh:datatype xsd:decimal ;
-    ] .
-
-################################################################
-# Numeric partition ⇒ both bounds required
-################################################################
-
-dp:PartitionNumericBoundsShape
-    a sh:NodeShape ;
-    sh:targetClass dp:PartitionKey ;
-
-    sh:sparql [
-        sh:message "Numeric partitions must define both lowerBound and upperBound" ;
-        sh:select """
-            SELECT ?this
-            WHERE {
-              {
-                ?this dp:lowerBound ?lb .
-                FILTER NOT EXISTS { ?this dp:upperBound ?ub }
-              }
-              UNION
-              {
-                ?this dp:upperBound ?ub .
-                FILTER NOT EXISTS { ?this dp:lowerBound ?lb }
-              }
-            }
-        """ ;
-    ] ;
-
-################################################################
-# lowerBound < upperBound
-################################################################
-
-dp:PartitionBoundOrderShape
-    a sh:NodeShape ;
-    sh:targetClass dp:PartitionKey ;
-
-    sh:sparql [
-        sh:message "lowerBound must be < upperBound" ;
-        sh:select """
-            SELECT ?this ?lb ?ub
-            WHERE {
-              ?this dp:lowerBound ?lb ;
-                    dp:upperBound ?ub .
-              FILTER (?lb >= ?ub)
-            }
-        """ ;
-    ] .
-
-################################################################
-# GROUPING KEYS (Columns + ColumnGroups)
-################################################################
-
-dp:GroupingKeyShape
-    a sh:NodeShape ;
-    sh:targetClass dp:GroupingKey ;
-
-    sh:property [
-        sh:path dp:maxNumPartitions ;
-        sh:datatype xsd:positiveInteger ;
-    ] .
-
-################################################################
-# COLUMN GROUP STRUCTURE
-################################################################
-
+# ===============================================================
+# 3. Multi-column group constraints
+# ===============================================================
 dp:ColumnGroupShape
-    a sh:NodeShape ;
-    sh:targetClass dp:ColumnGroup ;
+  a sh:NodeShape ;
+  sh:targetClass dp:ColumnGroup ;
+  sh:property [
+    sh:path dp:columns ;
+    sh:minCount 2 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxPartitionLength ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxPartitionContribution ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 0 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxInfluencedPartitions ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 1 ;
+  ] ;
+  sh:property [
+    sh:path dp:maxNumPartitions ;
+    sh:datatype xsd:decimal ;
+    sh:minInclusive 1 ;
+  ] ;
+  sh:property [
+    sh:path dp:publicPartitions ;
+    sh:nodeKind sh:IRIOrBlankNode ;
+    sh:class dp:PartitionKeyShape ;
+  ] .
 
-    sh:property [
-        sh:path dp:columns ;
-        sh:minCount 2 ;
-        sh:nodeKind sh:List ;
-    ] ;
+# ===============================================================
+# 4. Partition-level constraints
+# ===============================================================
+dp:PartitionKeyShape
+  a sh:NodeShape ;
+  sh:targetClass dp:PartitionKey ;
+  sh:property [
+    sh:path dp:partitionValue ;
+    sh:datatype xsd:string ;
+    sh:optional true ;
+  ] ;
+  sh:property [
+    sh:path dp:lowerBound ;
+    sh:datatype xsd:decimal ;
+    sh:optional true ;
+  ] ;
+  sh:property [
+    sh:path dp:upperBound ;
+    sh:datatype xsd:decimal ;
+    sh:optional true ;
+  ] ;
+  sh:property [
+    sh:path dp:lowerInclusive ;
+    sh:datatype xsd:boolean ;
+    sh:optional true ;
+  ] ;
+  sh:property [
+    sh:path dp:upperInclusive ;
+    sh:datatype xsd:boolean ;
+    sh:optional true ;
+  ] ;
+  sh:property [
+    sh:path dp:partitionLabel ;
+    sh:datatype xsd:string ;
+    sh:optional true ;
+  ] ;
+  sh:property [
+    sh:path dp:components ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:class dp:PartitionKeyShape ;
+    sh:optional true ;
+  ] ;
+  # Ensure that numeric partitions have bounds
+  sh:or (
+    [ sh:property [ sh:path dp:partitionValue ; sh:minCount 1 ] ]
+    [ sh:and (
+        [ sh:property [ sh:path dp:lowerBound ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path dp:upperBound ; sh:minCount 1 ] ]
+      )]
+  ) .
 
-################################################################
-# ColumnGroup cannot include privacyId columns
-################################################################
-
-    sh:sparql [
-        sh:message "ColumnGroup cannot include privacyId column" ;
-        sh:select """
-            SELECT ?this ?col
-            WHERE {
-              ?this dp:columns ?list .
-              ?list rdf:rest*/rdf:first ?col .
-              ?col dp:privacyId true .
-            }
-        """ ;
-    ] .
-
-################################################################
-# WORST-CASE COLUMN GROUP BOUNDS
-################################################################
-
-dp:ColumnGroupWorstCaseShape
-    a sh:NodeShape ;
-    sh:targetClass dp:ColumnGroup ;
-
-    sh:sparql [
-        sh:message "ColumnGroup maxPartitionLength exceeds constituent column bounds" ;
-        sh:select """
-            SELECT ?this ?groupVal ?col ?colVal
-            WHERE {
-              ?this dp:maxPartitionLength ?groupVal .
-              ?this dp:columns ?list .
-              ?list rdf:rest*/rdf:first ?col .
-              ?col dp:maxPartitionLength ?colVal .
-              FILTER(?groupVal > ?colVal)
-            }
-        """ ;
-    ] .
-
-################################################################
-# REQUIRED COLUMN NULL CONSISTENCY
-################################################################
-
-dp:RequiredColumnShape
-    a sh:NodeShape ;
-    sh:targetClass csvw:Column ;
-
-    sh:sparql [
-        sh:message "Required columns must have nullableProportion = 0" ;
-        sh:select """
-            SELECT ?this
-            WHERE {
-              ?this csvw:required true ;
-                    dp:nullableProportion ?np .
-              FILTER(?np != 0)
-            }
-        """ ;
-    ] .
-
-################################################################
-# TABLE-LEVEL WORST-CASE VALIDATION
-################################################################
-
-dp:TableConsistencyShape
-    a sh:NodeShape ;
-    sh:targetClass csvw:Table ;
-
-################################################################
-# Column bounds vs table bounds
-################################################################
-
-    sh:sparql [
-        sh:message "Column maxPartitionLength exceeds table maxPartitionLength" ;
-        sh:select """
-            SELECT ?col ?val ?max
-            WHERE {
-              ?this csvw:tableSchema/csvw:column ?col .
-              ?col dp:maxPartitionLength ?val .
-              ?this dp:maxPartitionLength ?max .
-              FILTER(?val > ?max)
-            }
-        """ ;
-    ] .
+# ===============================================================
+# 5. Recursive check for components
+# ===============================================================
+dp:ComponentsShape
+  a sh:NodeShape ;
+  sh:property [
+    sh:path dp:components ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:class dp:PartitionKeyShape ;
+  ] .

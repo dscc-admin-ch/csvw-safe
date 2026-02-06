@@ -55,36 +55,12 @@ The minimum required fields to to fully parameterize worst case sensitivity for 
 | Class              | Subclass of      | Purpose / Notes                                                                                                                                       |
 | ------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `dp:DPBounded`     | –                | Abstract class: anything with DP bounds (`dp:maxPartitionLength`, `dp:maxPartitionContribution`, `dp:maxInfluencedPartitions`, `dp:partitionLength`). |
-| `csvw:Table`       | `dp:DPBounded`   | Represents a CSV table. Table-level DP properties (`dp:maxTableLength`, `dp:maxContributions`) are attached here.                                     |
+| `csvw:Table`       | `dp:DPBounded`   | Represents a CSV table. Table-level DP properties.                                     |
 | `csvw:TableSchema` | –                | Defines table structure: columns, primary keys, foreign keys, etc.                                                                                    |
 | `dp:GroupingKey`   | `dp:DPBounded`   | Abstract class defining a key space for DP aggregation (single column or multi-column).                                                               |
 | `csvw:Column`      | `dp:GroupingKey` | Column-level grouping key. Only columns used as grouping keys are DP-bounded.                                                                         |
 | `dp:ColumnGroup`   | `dp:GroupingKey` | Multi-column grouping key; lists constituent `csvw:Column`s; can declare public partitions and DP bounds.                                             |
-| `dp:PartitionKey`  | `dp:DPBounded`   | Represents one allowed partition. Can be categorical, numeric, or multi-column. May reference structural metadata (`dp:partitionBindings`).           |
-
-
-#### DP vs Structural Metadata
-
-CSVW-DP distinguishes between:
-
-**DP-relevant metadata**
-Metadata that affects the privacy guarantees or accounting.
-
-**Structural metadata**
-Metadata that only describes how grouping keys and partitions are constructed.
-
-This distinction is semantic only; both may appear on the same object.
-
-| Property                      | Category        | Reason                                                    |
-| ----------------------------- | --------------- | --------------------------------------------------------- |
-| `dp:maxPartitionLength`       | DP              | Bounds sensitivity                                        |
-| `dp:maxPartitionContribution` | DP              | l∞ bound                                                  |
-| `dp:maxInfluencedPartitions`  | DP              | l₀ bound                                                  |
-| `dp:partitionLength`          | DP              | Observed sensitivity                                      |
-| `dp:maxNumPartitions`         | DP              | Limits group explosion                                    |
-| `dp:publicPartitions`         | **DP-relevant** | Declares grouping universe; avoids data-dependent release |
-| `dp:partitionBindings`        | **Structural**  | Describes which column values define a partition          |
-
+| `dp:PartitionKey`  | `dp:DPBounded`   | Represents one allowed partition. Can be categorical, numeric, or multi-column. May reference structural metadata (`dp:components`).           |
 
 
 ### 1.2 Column-Level Properties
@@ -109,24 +85,25 @@ Applied to `dp:ColumnGroup` only:
 
 
 
-
 ### 1.4 Differential Privacy Bounds
 
 Properties of `dp:DPBounded` and their applicability
 
 | Property                      | Meaning                                   | Applicability                                      |
 | ----------------------------- | ----------------------------------------- | -------------------------------------------------- |
-| `dp:maxPartitionLength`       | Maximum number of rows in scope           | All DP-bounded entities                            |
-| `dp:maxPartitionContribution` | Maximum rows per person per partition     | All DP-bounded entities                            |
-| `dp:maxInfluencedPartitions`  | Maximum partitions a person can influence | Columns, ColumnGroups, Partitions (tables fixed to 1) |
-| `dp:partitionLength`          | Observed number of rows (if known)        | All DP-bounded entities                            |
-| `dp:maxNumPartitions`         | Maximum distinct groups                   | Columns, ColumnGroups                              |
+| `dp:maxPartitionLength`       | Maximum number of rows in scope           | All dp:DPBounded entities                            |
+| `dp:maxPartitionContribution` | Maximum rows per person per partition     | All dp:DPBounded entities                            |
+| `dp:maxInfluencedPartitions`  | Maximum partitions a person can influence | All dp:GroupingKey entities (1 for table and partitions) |
+| `dp:partitionLength`          | Observed number of rows (if known)        | All dp:DPBounded entities                            |
+| `dp:maxNumPartitions`         | Maximum distinct groups                   | All dp:GroupingKey entities (1 for table and partitions) |
 
+`dp:maxNumPartitions` is a structural upper bound on the size of the grouping universe.
+It does not directly affect sensitivity unless combined with `dp:maxInfluencedPartitions`.
 
 #### 1.4.1 Table-Level Mapping 
 
 `csvw:Table` is `dp:DPBounded`: the table is treated as a single large partition.
-`dp:partitionLength` is a compulsory field at the table level.
+`dp:partitionLength` must be provided at the table level.
 `dp:maxInfluencedPartitions = 1` (one large partition).
 
 > **Reference:** [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708)
@@ -136,6 +113,7 @@ Properties of `dp:DPBounded` and their applicability
     "dp:maxPartitionLength": 500,
     "dp:partitionLength": 500,
     "dp:maxPartitionContribution": 2,
+    "dp:maxNumPartitions": 3
 }
 ```
 
@@ -145,10 +123,10 @@ Columns used as grouping keys inherit all `dp:DPBounded` properties.
 {
     "@type": "csvw:Column",
     "name": "island",
-    "dp:maxNumPartitions": 3,
     "dp:maxPartitionLength": 100,
     "dp:maxInfluencedPartitions": 1,
     "dp:maxPartitionContribution": 2,
+    "dp:maxNumPartitions": 3
 }
 ```
 
@@ -158,10 +136,10 @@ Multiple Columns used as grouping keys inherit all `dp:DPBounded` properties.
 {
     "@type": "dp:ColumnGroup",
     "dp:columns": ["sex", "island"],
-    "dp:maxNumPartitions": 6,
     "dp:maxPartitionLength": 100,
     "dp:maxInfluencedPartitions": 1,
     "dp:maxPartitionContribution": 2,
+    "dp:maxNumPartitions": 6
 }
 ```
 
@@ -175,39 +153,70 @@ A `dp:PartitionKey` inherits DP bounds from its parent `dp:GroupingKey` unless e
     "dp:partitionValue": "Torgersen",
     "dp:maxPartitionLength": 50,
     "dp:maxInfluencedPartitions": 1,
-    "dp:maxPartitionContribution": 2
+    "dp:maxPartitionContribution": 2,
+    "dp:maxNumPartitions": 1
 },
 ```
 
 
-
 ### 1.5 Grouping Keys and Public Partitions
 
-Grouping keys (single columns or column groups) may declare `dp:publicPartitions`.
-In `dp:ColumnGroup`, partition keys may include optional `dp:partitionBindings` to enumerate explicit combinations for multi-column groups.
+Grouping keys (single columns or column groups) may declare two kinds of metadata:
 
-| Concept                | Meaning                                             |
-| ---------------------- | --------------------------------------------------- |
-| `dp:GroupingKey`       | Something you can group by (column or column group) |
-| `dp:PartitionKey`      | One allowed group value for a grouping key          |
-| `dp:publicPartitions`  | The explicit universe of allowed groups             |
-| `dp:partitionBindings` | Optional mapping from grouping columns → values     |
+**DP-relevant metadata**
+Metadata that affects privacy guarantees or accounting:
+- contribution bounds
+- partition size bounds
+- influenced-partition bounds
 
-Even if DP bounds are satisfied, exposing `dp:publicPartitions` may contribute to the privacy loss if the data is sensitive.
-`dp:partitionBindings` is purely structural; it enumerates the combinations of column values that define a partition. It does not affect DP bounds directly.
+**Structural metadata**
+Metadata that describes how partitions are constructed, but does not directly affect DP bounds:
+- `dp:maxNumPartitions` — maximum number of distinct groups
+- `dp:publicPartitions` — the explicit universe of allowed partitions
+- `dp:components` — the internal structure of a composite partition
 
-The `dp:PartitionKey` has the following structure 
+Declaring public partitions may itself reveal information if the partition values are not already public.
+If partition values are declared as metadata, they are assumed to be public and do not consume privacy budget.
+As with all DP-related metadata, values should only be declared when safe.
 
-| Property                      | Type             | Meaning                                                                                                                                            |
-| ----------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dp:partitionValue`           | literal          | Categorical partition value (optional if numeric)                                                                                                  |
-| `dp:lowerBound`               | decimal          | Lower bound for numeric partitions (inclusive by default)                                                                                          |
-| `dp:upperBound`               | decimal          | Upper bound for numeric partitions (exclusive by default)                                                                                          |
-| `dp:lowerInclusive`           | boolean          | Whether `lowerBound` is inclusive (default: true)                                                                                                  |
-| `dp:upperInclusive`           | boolean          | Whether `upperBound` is inclusive (default: false)                                                                                                 |
-| `dp:partitionLabel`           | string           | Optional human-readable label                                                                                                                      |
-| `dp:partitionBindings`        | object / map     | Optional mapping from grouping columns to values (subset of Cartesian product). Useful for multi-column groups. |
+#### Core Concept
+| Concept               | Meaning                                             |
+| --------------------- | --------------------------------------------------- |
+| `dp:GroupingKey`      | Something you can group by (column or column group) |
+| `dp:PartitionKey`     | One allowed group value for a grouping key          |
+| `dp:publicPartitions` | Explicit universe of allowed partitions             |
+| `dp:maxNumPartitions` | Maximum number of allowed partitions                |
+| `dp:components`       | Structural decomposition of a composite partition   |
 
+
+
+
+#### `dp:PartitionKey` Structure 
+
+A `dp:PartitionKey` describes a constraint over a value space.
+
+| Property               | Type                    | Meaning                                                    |
+| ---------------------- | ----------------------- | ---------------------------------------------------------- |
+| `dp:partitionValue`    | literal                 | Categorical partition value                                |
+| `dp:lowerBound`        | decimal                 | Lower bound for numeric partitions                         |
+| `dp:upperBound`        | decimal                 | Upper bound for numeric partitions                         |
+| `dp:lowerInclusive`    | boolean                 | Whether `lowerBound` is inclusive (default: true)          |
+| `dp:upperInclusive`    | boolean                 | Whether `upperBound` is inclusive (default: false)         |
+| `dp:partitionLabel`    | string                  | Optional human-readable label                              |
+| `dp:components` | map → `dp:PartitionKey` | Mapping from grouping columns to per-column partition keys |
+
+
+`dp:PartitionKey` is a recursive structure describing a constraint over a value space.
+For single-column grouping keys, a partition is defined either by a categorical value (`dp:partitionValue`) or by a numeric interval (`dp:lowerBound` / `dp:upperBound`).
+For multi-column grouping keys, a partition is defined by `dp:components`, which maps each grouping column to its own `dp:PartitionKey`.
+This recursive structure allows categorical and continuous dimensions to be combined uniformly.
+
+In `dp:PartitionKey`/`dp:components`, each key is a column identifier.
+These identifiers MUST refer to columns declared in:
+- the enclosing `dp:ColumnGroup`/`dp:columns`, and
+- the dataset’s column schema.
+
+The datatype and semantics of the referenced column constrain which fields of `dp:PartitionKey` are valid (e.g. categorical vs numeric).
 
 #### 1.6.1 Column Level
 Categorical
@@ -266,69 +275,93 @@ Continuous
 
 #### 1.6.2 Multi-Column Level
 
-Here, `dp:partitionBindings` is used to enumerate explicit combinations (subset of Cartesian product).
+Here, `dp:components` is used to enumerate explicit combinations (subset of Cartesian product).
 Categorical
 ```
 {
-    "@type": "dp:ColumnGroup",
-    "dp:columns": ["sex", "island"],
-    "dp:publicPartitions": [
-      {
-        "@type": "dp:PartitionKey",
-        "dp:partitionBindings": {
-            "sex" : "MALE", 
-            "island": "Torgersen"
+  "@type": "dp:ColumnGroup",
+  "dp:columns": ["sex", "island"],
+  "dp:publicPartitions": [
+    {
+      "@type": "dp:PartitionKey",
+      "dp:components": {
+        "sex": {
+          "@type": "dp:PartitionKey",
+          "dp:partitionValue": "MALE"
         },
-        "dp:maxPartitionLength": 50,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
+        "island": {
+          "@type": "dp:PartitionKey",
+          "dp:partitionValue": "Torgersen"
+        }
       },
-      {
-        "@type": "dp:PartitionKey",
-        "dp:partitionBindings": {
-            "sex" : "FEMALE", 
-            "island": "Torgersen"
+      "dp:maxPartitionLength": 50,
+      "dp:maxInfluencedPartitions": 1,
+      "dp:maxPartitionContribution": 2
+    },
+    {
+      "@type": "dp:PartitionKey",
+      "dp:components": {
+        "sex": {
+          "@type": "dp:PartitionKey",
+          "dp:partitionValue": "FEMALE"
         },
-        "dp:maxPartitionLength": 50,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
-      }
-    ]
+        "island": {
+          "@type": "dp:PartitionKey",
+          "dp:partitionValue": "Torgersen"
+        }
+      },
+      "dp:maxPartitionLength": 50,
+      "dp:maxInfluencedPartitions": 1,
+      "dp:maxPartitionContribution": 2
+    }
+  ]
 }
 ```
-Continuous
+Categorical x Continuous
 ```
 {
-    "@type": "dp:ColumnGroup",
-    "dp:columns": ["sex", "flipper_length_mm"],
-    "dp:publicPartitions": [
-      {
-        "@type": "dp:PartitionKey",
-        "dp:partitionBindings": {
-            "sex" : "MALE", 
-            "flipper_length_mm": {
-                "dp:lowerBound": 150.0,
-                "dp:upperBound": 200.0
-            }
+  "@type": "dp:ColumnGroup",
+  "dp:columns": ["sex", "flipper_length_mm"],
+  "dp:publicPartitions": [
+    {
+      "@type": "dp:PartitionKey",
+      "dp:components": {
+        "sex": {
+          "@type": "dp:PartitionKey",
+          "dp:partitionValue": "MALE"
         },
-        "dp:maxPartitionLength": 50,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
+        "flipper_length_mm": {
+          "@type": "dp:PartitionKey",
+          "dp:lowerBound": 150.0,
+          "dp:upperBound": 200.0,
+          "dp:lowerInclusive": true,
+          "dp:upperInclusive": false
+        }
       },
-      {
-        "@type": "dp:PartitionKey",
-        "dp:partitionBindings": {
-            "sex" : "FEMALE", 
-            "flipper_length_mm": {
-                "dp:lowerBound": 150.0,
-                "dp:upperBound": 200.0
-            }
+      "dp:maxPartitionLength": 50,
+      "dp:maxInfluencedPartitions": 1,
+      "dp:maxPartitionContribution": 2
+    },
+    {
+      "@type": "dp:PartitionKey",
+      "dp:components": {
+        "sex": {
+          "@type": "dp:PartitionKey",
+          "dp:partitionValue": "FEMALE"
         },
-        "dp:maxPartitionLength": 50,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
-      }
-    ]
+        "flipper_length_mm": {
+          "@type": "dp:PartitionKey",
+          "dp:lowerBound": 150.0,
+          "dp:upperBound": 200.0,
+          "dp:lowerInclusive": true,
+          "dp:upperInclusive": false
+        }
+      },
+      "dp:maxPartitionLength": 50,
+      "dp:maxInfluencedPartitions": 1,
+      "dp:maxPartitionContribution": 2
+    }
+  ]
 }
 ```
 
@@ -356,7 +389,7 @@ csvw:Table ⊂ dp:DPBounded
  └─ dp:ColumnGroup ⊂ dp:GroupingKey ⊂ dp:DPBounded
       ├─ dp:columns → rdf:List(csvw:Column)
       ├─ dp:publicPartitions (DP-relevant)
-      │    └─ dp:partitionBindings (structural)
+      │    └─ dp:components (structural)
       │         └─ dp:DPBounds
       └─ dp:DPBounds
 ```
@@ -367,49 +400,86 @@ csvw:Table ⊂ dp:DPBounded
 
 ## 2. Constraints
 
-### 2.1 Worst-Case Bounds for Multi-Column Grouping
+CSVW-DP enforces constraints to ensure both semantic correctness and DP validity. Constraints apply at table, column, multi-column group, and partition levels.
 
-| Property                      | Worst-case derivation          |
-| ----------------------------- | ------------------------------ |
-| `dp:maxPartitionLength`       | `min` of constituent bounds    |
-| `dp:maxNumPartitions`         | ≤ product of per-column maxima |
-| `dp:maxInfluencedPartitions`  | `min` of known bounds          |
-| `dp:maxPartitionContribution` | `min` of known bounds          |
-| `dp:publicPartitions`         | Cartesian product              |
+All constraints assume the recursive `dp:PartitionKey` / `dp:components` model.
 
-Public partitions are only allowed if all grouped columns declare them (before: cartesian product?).
+### 2.1 Multi-Column Grouping Worst-Case Bounds
 
-> **Example:** [README_details.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/README_details.md)
+For `dp:ColumnGroup` entities:
+
+| Property                      | Worst-case derivation / Rule                                                                          |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `dp:maxPartitionLength`       | ≤ `min(dp:maxPartitionLength)` of constituent columns/partitions                                      |
+| `dp:maxNumPartitions`         | ≤ product of per-column `dp:maxNumPartitions`                                                         |
+| `dp:maxInfluencedPartitions`  | ≤ `min(dp:maxInfluencedPartitions)` of constituent columns                                            |
+| `dp:maxPartitionContribution` | ≤ `min(dp:maxPartitionContribution)` of constituent columns                                           |
+| `dp:publicPartitions`         | Must match the **subset of Cartesian product** of per-column partitions, expressed as `dp:components` |
+
+Notes:
+- Declaring dp:publicPartitions is only allowed if all columns in the group declare `dp:publicPartitions`.
+- dp:components in each partition key must reference columns in dp:columns, and the referenced columns must exist in the table schema.
+
 
 ### 2.2 Column-Level Constraints
 
-| Rule                                   | Meaning                             |
-| -------------------------------------- | ----------------------------------- |
-| `required=true → nullableProportion=0` | Required columns cannot be nullable |
-| `privacyId=true` forbids DP bounds     | Identifiers cannot be aggregated    |
-| Partition values must match datatype   | Type safety                         |
+Applied to `csvw:Column` used as a grouping key:
 
+| Rule                                          | Meaning / Enforcement                                         |
+| --------------------------------------------- | ------------------------------------------------------------- |
+| `required = true → dp:nullableProportion = 0` | Columns marked required cannot be nullable                    |
+| `dp:privacyId = true`                         | Column must **not participate in DP aggregation** (no bounds) |
+| `dp:publicPartitions` values                  | Must match column datatype (`string`, `number`, etc.)         |
+| `dp:lowerBound ≤ dp:upperBound` (numeric)     | Numeric partitions must have consistent bounds                |
+| `dp:lowerInclusive`, `dp:upperInclusive`      | Boolean flags must be present for numeric partitions          |
+
+Note: Optional columns may declare null fractions; this can affect `dp:maxPartitionLength` calculations.
 
 ### 2.3 Multi-Column Group Constraints
 
-| Rule                                                              | Meaning                          |
-| ----------------------------------------------------------------- | -------------------------------- |
-| No `dp:privacyId` columns in group                                | Privacy ID cannot participate    |
-| If any column lacks `dp:publicPartitions`, group must not declare | Prevent unsafe assumptions       |
-| If any column lacks `dp:maxNumPartitions`, group must not declare | Avoid underestimating partitions |
+Applied to `dp:ColumnGroup`:
 
-### 2.4 Table-Level Consistency Rules
+| Rule                                               | Meaning / Enforcement                                             |
+| -------------------------------------------------- | ----------------------------------------------------------------- |
+| No `dp:privacyId` column in group                  | Privacy identifiers cannot participate in grouped DP computations |
+| If any column lacks `dp:publicPartitions`          | The group **must not declare** `dp:publicPartitions`              |
+| If any column lacks `dp:maxNumPartitions`          | The group **must not declare** `dp:maxNumPartitions`              |
+| `dp:components` keys must match `dp:columns`       | Structural consistency                                            |
+| `dp:components` partition values must respect type | Each per-column `dp:PartitionKey` must obey column datatype       |
+| Overrides of DP bounds in `dp:components`          | Allowed but must be ≤ group-level DP bounds                       |
 
-On any partition, column, columngroup, cannot have more rows than initial table.
+Notes:
+- The recursion of `dp:PartitionKey` ensures both categorical and numeric dimensions are validated consistently.
+- Each `dp:PartitionKey` in `dp:components` inherits bounds from the parent unless explicitly overridden.
 
-| Property                      | Constraint              |
-| ----------------------------- | ----------------------- |
-| `dp:tableLength`              | = `dp:maxTableLength`   |
-| `dp:maxPartitionLength`       | ≤ `dp:maxTableLength`   |
-| `dp:maxInfluencedPartitions`  | ≤ `dp:maxContributions` |
-| `dp:maxPartitionContribution` | ≤ `dp:maxContributions` |
+### 2.4 Table-Level Constraints
 
-> SHACL enforcement: [`metadata_constraints.ttl`](https://github.com/dscc-admin-ch/csvw-dp/blob/main/csvw-dp-constaints.ttl)
+Applied to `csvw:Table`:
+
+| Property                        | Constraint / Rule                                          |
+| ------------------------------- | ---------------------------------------------------------- |
+| `dp:partitionLength` (if known) | Must equal `dp:maxPartitionLength` at the table level      |
+| `dp:maxPartitionLength`         | ≤ `dp:maxPartitionLength` of any enclosing or parent level |
+| `dp:maxInfluencedPartitions`    | ≤ cumulative constraints from grouping keys and partitions |
+| `dp:maxPartitionContribution`   | ≤ maximum allowed contribution at parent or table level    |
+| `dp:maxNumPartitions`           | Table-level structural bound (if declared)                 |
+
+
+### 2.5 Partition-Level Constraints
+
+Applied to `dp:PartitionKey`:
+
+| Rule                                                                                             | Meaning / Enforcement                                                        |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `dp:maxNumPartitions = 1`                                                                        | Each partition is a single group; structural only                            |
+| `dp:components` keys must match parent columns                                                   | Structural consistency                                                       |
+| Categorical partitions must declare `dp:partitionValue`                                          | Numeric partitions must declare `dp:lowerBound`/`dp:upperBound`              |
+| Numeric partitions bounds must be consistent                                                     | `lowerBound ≤ upperBound`; `lowerInclusive`/`upperInclusive` must be boolean |
+| DP bounds (`dp:maxPartitionLength`, `dp:maxInfluencedPartitions`, `dp:maxPartitionContribution`) | Must be ≤ bounds declared at parent grouping key level                       |
+
+
+
+> SHACL enforcement for all levels: [`metadata_constraints.ttl`](https://github.com/dscc-admin-ch/csvw-dp/blob/main/csvw-dp-constaints.ttl)
 
 ---
 

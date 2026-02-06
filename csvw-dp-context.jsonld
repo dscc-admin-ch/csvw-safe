@@ -121,8 +121,8 @@
 
     "partitionLabel": "dp:partitionLabel",
 
-    "partitionBindings": {
-      "@id": "dp:partitionBindings",
+    "components": {
+      "@id": "dp:components",
       "@type": "@id"
     }
   }
