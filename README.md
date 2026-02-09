@@ -24,7 +24,7 @@ See
 - [guidelines and notes](https://github.com/dscc-admin-ch/csvw-dp/blob/main/guidelines.md).
 - Example metadata: [Penguin dataset YAML](https://github.com/dscc-admin-ch/csvw-dp/blob/main/penguin_metadata.yaml).
 
-CSVW-DP separates concerns into:
+This README.md has two parts:
 
 1. **Vocabulary** – What the data and grouping represents
 2. **Constraints** – What bounds and assumptions are allowed
@@ -70,6 +70,8 @@ Applied to `csvw:Column` only:
 | ----------------------- | ------------ | ------------------------------------------------ |
 | `dp:privacyId`          | boolean      | True if column identifies individuals/units.     |
 | `dp:nullableProportion` | decimal 0–1  | Fraction of null values (approximate modeling).  |
+| `dp:fixedWrt`           | csvw:columns | Column the value is fixed with respect to.       |
+
 
 Standard CSVW terms properties (`datatype`, `format`, `minimum`, `maximum`, `required`, `default`) are re-used as is.
 `dp:nullableProportion` is optional and mostly for modeling. (TODO: see how to handle).
