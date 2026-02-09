@@ -371,7 +371,7 @@ Categorical x Continuous
 | ---------- | ------------------------------------- | ----------------------------- |
 | $l_0$      | Affected partitions per person        | `dp:maxInfluencedPartitions`  |
 | $l_\infty$ | Max contribution within one partition | `dp:maxPartitionContribution` |
-| $l_1$      | Total changed rows                    | Derived: `l₀ × l∞`            |
+| $l_1$      | Total changed rows                    | Derived: $l_1=l_0 * l_\infty$ |
 
 ### 1.8 Visual Overview
 
@@ -404,21 +404,17 @@ CSVW-DP enforces constraints to ensure both semantic correctness and DP validity
 
 All constraints assume the recursive `dp:PartitionKey` / `dp:components` model.
 
-### 2.1 Multi-Column Grouping Worst-Case Bounds
+### 2.1 Table-Level Constraints
 
-For `dp:ColumnGroup` entities:
+Applied to `csvw:Table`:
 
-| Property                      | Worst-case derivation / Rule                                                                          |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `dp:maxPartitionLength`       | ≤ `min(dp:maxPartitionLength)` of constituent columns/partitions                                      |
-| `dp:maxNumPartitions`         | ≤ product of per-column `dp:maxNumPartitions`                                                         |
-| `dp:maxInfluencedPartitions`  | ≤ `min(dp:maxInfluencedPartitions)` of constituent columns                                            |
-| `dp:maxPartitionContribution` | ≤ `min(dp:maxPartitionContribution)` of constituent columns                                           |
-| `dp:publicPartitions`         | Must match the **subset of Cartesian product** of per-column partitions, expressed as `dp:components` |
-
-Notes:
-- Declaring dp:publicPartitions is only allowed if all columns in the group declare `dp:publicPartitions`.
-- dp:components in each partition key must reference columns in dp:columns, and the referenced columns must exist in the table schema.
+| Property                        | Constraint / Rule                                          |
+| ------------------------------- | ---------------------------------------------------------- |
+| `dp:partitionLength` (if known) | Must equal `dp:maxPartitionLength` at the table level      |
+| `dp:maxPartitionLength`         | ≤ `dp:maxPartitionLength` of any enclosing or parent level |
+| `dp:maxInfluencedPartitions`    | ≤ cumulative constraints from grouping keys and partitions |
+| `dp:maxPartitionContribution`   | ≤ maximum allowed contribution at parent or table level    |
+| `dp:maxNumPartitions`           | Table-level structural bound (if declared)                 |
 
 
 ### 2.2 Column-Level Constraints
@@ -435,9 +431,22 @@ Applied to `csvw:Column` used as a grouping key:
 
 Note: Optional columns may declare null fractions; this can affect `dp:maxPartitionLength` calculations.
 
-### 2.3 Multi-Column Group Constraints
 
-Applied to `dp:ColumnGroup`:
+### 2.3 Multi-Column Grouping Worst-Case Bounds
+
+For `dp:ColumnGroup` entities:
+
+| Property                      | Worst-case derivation / Rule                                                                          |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `dp:maxPartitionLength`       | ≤ `min(dp:maxPartitionLength)` of constituent columns/partitions                                      |
+| `dp:maxNumPartitions`         | ≤ product of per-column `dp:maxNumPartitions`                                                         |
+| `dp:maxInfluencedPartitions`  | ≤ `min(dp:maxInfluencedPartitions)` of constituent columns                                            |
+| `dp:maxPartitionContribution` | ≤ `min(dp:maxPartitionContribution)` of constituent columns                                           |
+| `dp:publicPartitions`         | Must match the **subset of Cartesian product** of per-column partitions, expressed as `dp:components` |
+
+Notes:
+- Declaring dp:publicPartitions is only allowed if all columns in the group declare `dp:publicPartitions`.
+- dp:components in each partition key must reference columns in dp:columns, and the referenced columns must exist in the table schema.
 
 | Rule                                               | Meaning / Enforcement                                             |
 | -------------------------------------------------- | ----------------------------------------------------------------- |
@@ -452,20 +461,8 @@ Notes:
 - The recursion of `dp:PartitionKey` ensures both categorical and numeric dimensions are validated consistently.
 - Each `dp:PartitionKey` in `dp:components` inherits bounds from the parent unless explicitly overridden.
 
-### 2.4 Table-Level Constraints
 
-Applied to `csvw:Table`:
-
-| Property                        | Constraint / Rule                                          |
-| ------------------------------- | ---------------------------------------------------------- |
-| `dp:partitionLength` (if known) | Must equal `dp:maxPartitionLength` at the table level      |
-| `dp:maxPartitionLength`         | ≤ `dp:maxPartitionLength` of any enclosing or parent level |
-| `dp:maxInfluencedPartitions`    | ≤ cumulative constraints from grouping keys and partitions |
-| `dp:maxPartitionContribution`   | ≤ maximum allowed contribution at parent or table level    |
-| `dp:maxNumPartitions`           | Table-level structural bound (if declared)                 |
-
-
-### 2.5 Partition-Level Constraints
+### 2.4 Partition-Level Constraints
 
 Applied to `dp:PartitionKey`:
 
@@ -479,7 +476,7 @@ Applied to `dp:PartitionKey`:
 
 
 
-> SHACL enforcement for all levels: [`metadata_constraints.ttl`](https://github.com/dscc-admin-ch/csvw-dp/blob/main/csvw-dp-constaints.ttl)
+> SHACL enforcement for all levels: [`csvw-dp-constaints.ttl`](https://github.com/dscc-admin-ch/csvw-dp/blob/main/csvw-dp-constaints.ttl)
 
 ---
 

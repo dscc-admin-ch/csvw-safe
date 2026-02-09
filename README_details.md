@@ -105,14 +105,14 @@ For example, with two columns: `year` and `month`. It is publicly know that data
     - `dp:maxPartitionLength`: 31 (max days in months)
     - `dp:maxNumPartitions`: 12
     - `dp:maxInfluencedPartitions`: 2 (2 different month in 2 years)
-    - `dp:maxPartitionContribution`: 2 (same month in the 2 years)
+    - `dp:maxPartitionContribution`: 1
 
 In the worst case rules, ColumnGroup [`year`, `month`] has metadata:
 - `dp:publicPartitions`: cartesian product of all years and months: all months of 2026 and all months of 2027.
 - `dp:maxPartitionLength`: min(366, 31) = 31
 - `dp:maxNumPartitions`: 2 * 12 = 24
 - `dp:maxInfluencedPartitions`: min(2, 2) = 2
-- `dp:maxPartitionContribution`: min(1, 2) = 1
+- `dp:maxPartitionContribution`: min(1, 1) = 1
 
 But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has metadata:
 - `dp:publicPartitions`: [06, 07, 08, 09, 10, 11, 12] of 2026 and [01, 02, 03, 04, 05] of 2027.
