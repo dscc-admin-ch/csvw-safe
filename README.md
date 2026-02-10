@@ -1,33 +1,91 @@
-# CSVW Differential Privacy Extension (CSVW-DP) Vocabulary
+# CSVW Safe Modeling Extension (CSVW-SAFE) Vocabulary
 
 ## Overview
 
-Differential privacy (DP) requires metadata such as:
+Many datasets cannot be directly shared due to privacy, legal, or governance constraints.
+However, it is often possible—and highly valuable—to share **safe, public assumptions** about their structure.
 
-* Maximum number of rows contributed by a single individual
-* Maximum size of any aggregation partition
-* Bounds on how many partitions a person can influence
-* Maximum number of partitions a person can influence
+These assumptions may include:
+
+* Structural information (schema, keys, allowed partitions)
+* Statistical characteristics (null proportions, value domains, approximate cardinalities)
+* Logical constraints between columns
+* Bounds on how individuals may contribute to the dataset
+
+Such metadata enables:
+
+* Automatic computation of worst-case sensitivity for Differential Privacy (DP)
+* Generation of structurally valid dummy or synthetic datasets
+* Safe data discovery without direct access to the underlying data
+
+The core [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/) vocabulary describes tabular structure but cannot express these additional safe modeling assumptions.
+
+**CSVW-SAFE** extends CSVW with a declarative, machine-readable vocabulary for describing **public, non-sensitive constraints and assumptions** about tabular datasets.
+
+This extension allows:
+
+* Declaring safe structural and statistical properties of columns and groups
+* Expressing logical relationships between columns
+* Defining partition universes and grouping semantics
+* Attaching contribution bounds required for Differential Privacy
+* Generating dummy datasets consistent with known structure
+* Interoperating with existing CSVW tooling and DP libraries
+
+See:
+
+* [Guidelines and notes](https://github.com/dscc-admin-ch/csvw-dp/blob/main/guidelines.md)
+* Example metadata: [Penguin dataset YAML](https://github.com/dscc-admin-ch/csvw-dp/blob/main/penguin_metadata.yaml)
+
+This document has two parts:
+
+1. **Vocabulary** – What the dataset structure and safe assumptions represent
+2. **Constraints** – What bounds and modeling rules are allowed
+
+
+## Motivation
+
+In many real-world environments, analysts and engineers must work with datasets that cannot be accessed directly.
+To enable safe analysis workflows, it is necessary to describe:
+
+* The structure of the dataset
+* Publicly known domains and partitioning schemes
+* Logical constraints between columns
+* Approximate statistical properties
+* Bounds on individual contributions
+
+These assumptions serve multiple purposes:
+
+### Differential Privacy
+
+Differential privacy requires explicit metadata such as:
+
+* Maximum number of rows contributed by an individual
+* Maximum number of partitions influenced
 * Bounds on per-partition contributions
-* Constraints preventing overflow or numerical instability during aggregation
+* Limits preventing numerical instability
 
-These assumptions are essential for meaningful DP guarantees, but the core CSVW vocabulary cannot express them.
+CSVW-SAFE enables these assumptions to be declared in a consistent, machine-readable form, allowing automatic sensitivity computation.
 
-**CSVW-DP** extends the [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/) vocabulary with a declarative, semantic, DP-aware data modeling system, allowing to:
+### Synthetic and Dummy Data Generation
 
-* Explicitly declare contribution bounds at table, column, partition and multi-column levels
-* Model both categorical and continuous grouping keys
-* Attach DP constraints to single columns and multi-column groupings
-* Interoperate with existing CSVW tooling and DP libraries
+By describing domains, null fractions, allowed combinations, and structural constraints, CSVW-SAFE allows generation of:
 
-See 
-- [guidelines and notes](https://github.com/dscc-admin-ch/csvw-dp/blob/main/guidelines.md).
-- Example metadata: [Penguin dataset YAML](https://github.com/dscc-admin-ch/csvw-dp/blob/main/penguin_metadata.yaml).
+* Structure-valid dummy datasets
+* Test datasets consistent with known schema
+* Safe synthetic data that does not reveal private values
 
-This README.md has two parts:
+### Safe Data Discovery
 
-1. **Vocabulary** – What the data and grouping represents
-2. **Constraints** – What bounds and assumptions are allowed
+Even without accessing the original dataset, users can:
+
+* Understand available variables
+* Explore grouping semantics
+* Anticipate valid joins and partitions
+* Assess feasibility of analyses
+
+All declared metadata is assumed to be safe to disclose and must not reveal sensitive information.
+
+CSVW-SAFE therefore acts as a **contract describing what is publicly known about a dataset without exposing the data itself.**
 
 ---
 
