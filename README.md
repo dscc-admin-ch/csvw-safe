@@ -112,6 +112,7 @@ CSVW-SAFE aligns with common DP libraries and enables worst-case sensitivity com
 | `csvw-safe:ColumnGroup`  | `csvw-safe:GroupingKey` | Multi-column grouping key                  |
 | `csvw-safe:PartitionKey` | `csvw-safe:DPBounded`   | One allowed partition                      |
 
+![Overview](images/dp_bounds.png)
 
 
 ### 3.2 Differential Privacy Properties
@@ -487,13 +488,13 @@ csvw:Table ⊂ csvw-safe:DPBounded
       └─ csvw-safe:DPBounds
 ```
 
-> **Full View:** [README_details.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/README_details.md)
+> **Full View:** [README_details.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/README_details.md)
 
 ---
 
 ## 2. Constraints
 
-CSVW-DP enforces constraints to ensure both semantic correctness and DP validity. Constraints apply at table, column, multi-column group, and partition levels.
+CSVW-SAFE enforces constraints to ensure both semantic correctness and DP validity. Constraints apply at table, column, multi-column group, and partition levels.
 
 All constraints assume the recursive `csvw-safe:PartitionKey` / `csvw-safe:components` model.
 
@@ -573,7 +574,7 @@ Applied to `csvw-safe:PartitionKey`:
 | `csvw-safe:publicLength` (if declared)                                                              | Must be ≤ `csvw-safe:maxLength`                        |
 
 
-> SHACL enforcement for all levels: [`csvw-dp-constaints.ttl`](https://github.com/dscc-admin-ch/csvw-dp/blob/main/csvw-dp-constaints.ttl)
+> SHACL enforcement for all levels: [`csvw-safe-constaints.ttl`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constaints.ttl)
 
 ---
 
@@ -582,9 +583,9 @@ Applied to `csvw-safe:PartitionKey`:
 | File                          | Purpose                             |
 | ----------------------------- | ----------------------------------- |
 | `README.md`                   | Description, Motivation             |
-| `csvw-dp-vocab.ttl`           | Vocabulary definition (OWL + RDFS)  |
-| `csvw-dp-context.jsonld`      | JSON-LD context                     |
-| `csvw-dp-constraints.ttl`     | SHACL validation rules              |
+| `csvw-safe-vocab.ttl`           | Vocabulary definition (OWL + RDFS)  |
+| `csvw-safe-context.jsonld`      | JSON-LD context                     |
+| `csvw-safe-constraints.ttl`     | SHACL validation rules              |
 | `penguin_metadata.json`       | Example metadata                    |
 | `dp_libraries.md`             | Mapping to DP libraries             |
 | `validate_metadata.py`        | Metadata validator                  |
