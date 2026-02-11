@@ -1,9 +1,11 @@
 # CSVW Safe Modeling Extension (CSVW-SAFE) Vocabulary
 
+THIS IS WORK IN PROGRESS!!!!!!! Files are not consistend with each other yet.
+
 ## Overview
 
 Many datasets cannot be directly shared due to privacy, legal, or governance constraints.
-However, it is often possible—and highly valuable—to share **safe, public assumptions** about their structure.
+However, it is often possible, and highly valuable, to share safe, public assumptions about their structure.
 
 These assumptions may include:
 
@@ -15,12 +17,13 @@ These assumptions may include:
 Such metadata enables:
 
 * Automatic computation of worst-case sensitivity for Differential Privacy (DP)
-* Generation of structurally valid dummy or synthetic datasets
+* Generation of structurally valid dummy datasets
 * Safe data discovery without direct access to the underlying data
+* Interoperability with DP libraries
 
 The core [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/) vocabulary describes tabular structure but cannot express these additional safe modeling assumptions.
 
-**CSVW-SAFE** extends CSVW with a declarative, machine-readable vocabulary for describing **public, non-sensitive constraints and assumptions** about tabular datasets.
+**CSVW-SAFE** extends CSVW with a declarative, machine-readable vocabulary for describing public, non-sensitive constraints and assumptions about tabular datasets.
 
 This extension allows:
 
@@ -31,427 +34,457 @@ This extension allows:
 * Generating dummy datasets consistent with known structure
 * Interoperating with existing CSVW tooling and DP libraries
 
+
+### Specification Structure
+
+This document is organized into:
+
+1. Structural Modeling Extensions
+2. Differential Privacy Extensions
+3. Grouping Keys and Partitions
+4. DP Metric Mapping
+5. Constraints
+
 See:
 
-* [Guidelines and notes](https://github.com/dscc-admin-ch/csvw-dp/blob/main/guidelines.md)
-* Example metadata: [Penguin dataset YAML](https://github.com/dscc-admin-ch/csvw-dp/blob/main/penguin_metadata.yaml)
-
-This document has two parts:
-
-1. **Vocabulary** – What the dataset structure and safe assumptions represent
-2. **Constraints** – What bounds and modeling rules are allowed
-
-
-## Motivation
-
-In many real-world environments, analysts and engineers must work with datasets that cannot be accessed directly.
-To enable safe analysis workflows, it is necessary to describe:
-
-* The structure of the dataset
-* Publicly known domains and partitioning schemes
-* Logical constraints between columns
-* Approximate statistical properties
-* Bounds on individual contributions
-
-These assumptions serve multiple purposes:
-
-### Differential Privacy
-
-Differential privacy requires explicit metadata such as:
-
-* Maximum number of rows contributed by an individual
-* Maximum number of partitions influenced
-* Bounds on per-partition contributions
-* Limits preventing numerical instability
-
-CSVW-SAFE enables these assumptions to be declared in a consistent, machine-readable form, allowing automatic sensitivity computation.
-
-### Synthetic and Dummy Data Generation
-
-By describing domains, null fractions, allowed combinations, and structural constraints, CSVW-SAFE allows generation of:
-
-* Structure-valid dummy datasets
-* Test datasets consistent with known schema
-* Safe synthetic data that does not reveal private values
-
-### Safe Data Discovery
-
-Even without accessing the original dataset, users can:
-
-* Understand available variables
-* Explore grouping semantics
-* Anticipate valid joins and partitions
-* Assess feasibility of analyses
-
-All declared metadata is assumed to be safe to disclose and must not reveal sensitive information.
-
-CSVW-SAFE therefore acts as a **contract describing what is publicly known about a dataset without exposing the data itself.**
+* [Guidelines and notes](https://github.com/dscc-admin-ch/csvw-safe/blob/main/guidelines.md)
+* [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/dp_libraries.md)
+* Example metadata: [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json)
 
 ---
 
-## 1. Vocabulary
 
-### Namespace & Definitions
+## 1. Namespaces and Definitions
 
-* **Default namespace:** `https://w3id.org/csvw-dp#`
-* **Vocabulary definitions:** `csvw-dp-vocab.ttl`
-* **JSON-LD context:** `csvw-dp-context.jsonld`
-
-
-Motivation: This vocabulary is designed to align with the requirements of common DP libraries.
-See [dp_libraries.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/dp_libraries.md) for an overview of the main DP libraries and the parameters they use.
-
-The minimum required fields to to fully parameterize worst case sensitivity for DP on a CSVW table:
-- `dp:partitionLength` at the table level,
-- `dp:maxPartitionContribution` at the table level,
-- bounds (min, max) of continuous columns.
+* **Default namespace:** `https://w3id.org/csvw-safe#`
+* **Vocabulary definitions:** `csvw-safe-vocab.ttl`
+* **JSON-LD context:** `csvw-safe-context.jsonld`
 
 
+## 2. Structural Modeling Extensions
 
-### 1.1 Core Classes
+Structural metadata supports:
 
-| Class              | Subclass of      | Purpose / Notes                                                                                                                                       |
-| ------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dp:DPBounded`     | –                | Abstract class: anything with DP bounds (`dp:maxPartitionLength`, `dp:maxPartitionContribution`, `dp:maxInfluencedPartitions`, `dp:partitionLength`). |
-| `csvw:Table`       | `dp:DPBounded`   | Represents a CSV table. Table-level DP properties.                                     |
-| `csvw:TableSchema` | –                | Defines table structure: columns, primary keys, foreign keys, etc.                                                                                    |
-| `dp:GroupingKey`   | `dp:DPBounded`   | Abstract class defining a key space for DP aggregation (single column or multi-column).                                                               |
-| `csvw:Column`      | `dp:GroupingKey` | Column-level grouping key. Only columns used as grouping keys are DP-bounded.                                                                         |
-| `dp:ColumnGroup`   | `dp:GroupingKey` | Multi-column grouping key; lists constituent `csvw:Column`s; can declare public partitions and DP bounds.                                             |
-| `dp:PartitionKey`  | `dp:DPBounded`   | Represents one allowed partition. Can be categorical, numeric, or multi-column. May reference structural metadata (`dp:components`).           |
+- Dummy dataset generation
+- Public schema discovery
+- Modeling assumptions independent of DP
 
+All standard CSVW column properties (`datatype`, `format`, `minimum`, `maximum`, `required`, `default`) are re-used as is.
 
-### 1.2 Column-Level Properties
+### 2.1 Column-Level Structural Properties
+
 Applied to `csvw:Column` only:
 
-| Term                    | Type         | Meaning                                          |
-| ----------------------- | ------------ | ------------------------------------------------ |
-| `dp:privacyId`          | boolean      | True if column identifies individuals/units.     |
-| `dp:nullableProportion` | decimal 0–1  | Fraction of null values (approximate modeling).  |
-| `dp:fixedWrt`           | csvw:columns | Column the value is fixed with respect to.       |
+| Term                           | Type                                  | Meaning                                             |
+| ------------------------------ | ------------------------------------- | --------------------------------------------------- |
+| `csvw-safe:privacyId`          | boolean                               | True if column identifies individuals/units         |
+| `csvw-safe:nullableProportion` | decimal (0–1)                         | Approximate fraction of null values                 |
+| `csvw-safe:dependsOn`          | column reference                      | Declares dependency on another column               |
+| `csvw-safe:how`                | enum (`bigger`, `smaller`, `mapping`) | Type of dependency                                  |
+| `csvw-safe:mapping`            | object                                | Required if `how = mapping`                         |
+| `csvw-safe:maxNumPartitions`   | integer                               | Structural upper bound on number of distinct groups |
+| `csvw-safe:publicPartitions`   | array of `csvw-safe:PartitionKey`     | Public key                                          |
+
+**Dependency Rules**
+- dependsOn and how MUST be provided together.
+- If how = mapping, then mapping MUST be provided.
+
+**Notes**
+- nullableProportion improves modeling beyond csvw:required.
+- maxNumPartitions describes grouping universe size but does not affect sensitivity unless combined with DP bounds.
 
 
-Standard CSVW terms properties (`datatype`, `format`, `minimum`, `maximum`, `required`, `default`) are re-used as is.
-`dp:nullableProportion` is optional and mostly for modeling. (TODO: see how to handle).
+
+## 3. Differential Privacy Extensions
+
+CSVW-SAFE aligns with common DP libraries and enables worst-case sensitivity computation.
+
+### 3.1 Core Classes
+
+`csvw-safe:DPBounded`
+
+| Class                    | Subclass Of             | Purpose                                    |
+| ------------------------ | ----------------------- | ------------------------------------------ |
+| `csvw-safe:DPBounded`    | –                       | Abstract class for entities with DP bounds |
+| `csvw:Table`             | `csvw-safe:DPBounded`   | Table-level DP properties                  |
+| `csvw-safe:GroupingKey`  | `csvw-safe:DPBounded`   | Abstract grouping space                    |
+| `csvw:Column`            | `csvw-safe:GroupingKey` | Single-column grouping key                 |
+| `csvw-safe:ColumnGroup`  | `csvw-safe:GroupingKey` | Multi-column grouping key                  |
+| `csvw-safe:PartitionKey` | `csvw-safe:DPBounded`   | One allowed partition                      |
 
 
 
-### 1.3 Multi Column Properties
-Applied to `dp:ColumnGroup` only:
+### 3.2 Differential Privacy Properties
 
-| Property               | Meaning                                                |
-| ---------------------- | ------------------------------------------------------ |
-| `dp:columns`           | Constituent columns                                    |
+The following properties apply to entities that are subclasses of `csvw-safe:DPBounded`.
 
+These properties express worst-case contribution and partition bounds required for Differential Privacy (DP) sensitivity analysis.
 
+They MAY be declared on:
+- `csvw:Table`
+- `csvw:Column` (when used as grouping key)
+- `csvw-safe:ColumnGroup`
+- `csvw-safe:PartitionKey`
 
-### 1.4 Differential Privacy Bounds
+#### 3.2.1 DP Properties
 
-Properties of `dp:DPBounded` and their applicability
+| Property                            | Meaning                                                              | Applicability                                       |
+| ----------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
+| `csvw-safe:maxLength`               | Maximum number of rows in a partition                                | Table, Column (grouping), ColumnGroup, PartitionKey |
+| `csvw-safe:maxContribution`         | Maximum rows contributed by one individual within a single partition | Table, Column (grouping), ColumnGroup, PartitionKey |
+| `csvw-safe:maxInfluencedPartitions` | Maximum number of distinct partitions an individual may affect       | Column (grouping), ColumnGroup                      |
+| `csvw-safe:publicLength`            | Actual number of rows (if publicly known)                            | Table, PartitionKey                                 |
 
-| Property                      | Meaning                                   | Applicability                                      |
-| ----------------------------- | ----------------------------------------- | -------------------------------------------------- |
-| `dp:maxPartitionLength`       | Maximum number of rows in scope           | All dp:DPBounded entities                            |
-| `dp:maxPartitionContribution` | Maximum rows per person per partition     | All dp:DPBounded entities                            |
-| `dp:maxInfluencedPartitions`  | Maximum partitions a person can influence | All dp:GroupingKey entities (1 for table and partitions) |
-| `dp:partitionLength`          | Observed number of rows (if known)        | All dp:DPBounded entities                            |
-| `dp:maxNumPartitions`         | Maximum distinct groups                   | All dp:GroupingKey entities (1 for table and partitions) |
+#### 3.2.2 Scope Semantics
 
-`dp:maxNumPartitions` is a structural upper bound on the size of the grouping universe.
-It does not directly affect sensitivity unless combined with `dp:maxInfluencedPartitions`.
+The interpretation of each property depends on the level at which it is declared.
 
-#### 1.4.1 Table-Level Mapping 
+##### Table Level (csvw:Table)
 
-`csvw:Table` is `dp:DPBounded`: the table is treated as a single large partition.
-`dp:partitionLength` must be provided at the table level.
-`dp:maxInfluencedPartitions = 1` (one large partition).
+The table is treated as a single global partition.
+- csvw-safe:maxLength refers to the total dataset size (upper bound).
+- csvw-safe:maxContribution refers to the maximum rows contributed by one individual in the entire dataset.
+- csvw-safe:maxInfluencedPartitions is implicitly 1.
+- csvw-safe:publicLength may declare the exact dataset size if publicly known.
+
+##### Column / ColumnGroup Level (Grouping Keys)
+
+When declared on a grouping key:
+- csvw-safe:maxLength defines a global upper bound applying to all partitions induced by that grouping.
+- csvw-safe:maxContribution defines the maximum per-partition contribution of one individual.
+- csvw-safe:maxInfluencedPartitions defines how many distinct partitions an individual may affect.
+
+These values are used to compute worst-case sensitivity for grouped aggregations.
+
+##### PartitionKey Level
+
+When declared on a specific csvw-safe:PartitionKey:
+- csvw-safe:maxLength applies only to that partition.
+- csvw-safe:maxContribution applies only to that partition.
+- csvw-safe:publicLength may declare the exact size of that partition.
+
+Partition-level bounds MUST be less than or equal to the bounds declared at the parent grouping level.
+
+#### 3.2.3 Mapping to Differential Privacy Metrics
+
+The properties map to standard DP sensitivity metrics as follows:
+
+| DP Metric  | Meaning                               | CSVW-SAFE Term                |
+| ---------- | ------------------------------------- | ----------------------------- |
+| $l_0$      | Affected partitions per person        | `csvw-safe:maxInfluencedPartitions` |
+| $l_\infty$ | Max contribution within one partition | `csvw-safe:maxContribution`   |
+| $l_1$      | Total changed rows                    | Derived: $l_1=l_0 * l_\infty$ |
+
+For non-grouped (table-level) queries, $l_0 = 1$ and $l_1 = csvw-safe:maxContribution$.
+
+##### 3.2.4 Minimum Metadata for Worst-Case Sensitivity
+
+To fully parameterize worst-case DP sensitivity:
+- Table-level
+    - `csvw-safe:maxLength`
+    - `csvw-safe:maxContribution`
+- Continuous columns
+    - `minimum`
+    - `maximum`
+
+Declaring bounds at grouping or partition level is optional but recommended.
+Providing tighter bounds reduces worst-case sensitivity and thus allows lower noise addition under a fixed privacy budget.
+
+##### 3.2.5 Examples
+
+###### 3.2.5.1 Table-Level Mapping 
+
+`csvw:Table` is `csvw-safe:DPBounded`: the table is treated as a single large partition.
+`csvw-safe:maxLength` must be provided at the table level.
+`csvw-safe:maxInfluencedPartitions = 1` (one large partition).
 
 > **Reference:** [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708)
 ```
 {
     "@type": "csvw:Table",
-    "dp:maxPartitionLength": 500,
-    "dp:partitionLength": 500,
-    "dp:maxPartitionContribution": 2,
-    "dp:maxNumPartitions": 3
+    "csvw-safe:maxLength": 500,
+    "csvw-safe:publicLength": 500,
+    "csvw-safe:maxContribution": 2,
 }
 ```
 
-#### 1.4.2 Column Level
-Columns used as grouping keys inherit all `dp:DPBounded` properties.
+###### 3.2.5.2 Column Level
+Columns used as grouping keys inherit all `csvw-safe:DPBounded` properties.
 ```
 {
     "@type": "csvw:Column",
     "name": "island",
-    "dp:maxPartitionLength": 100,
-    "dp:maxInfluencedPartitions": 1,
-    "dp:maxPartitionContribution": 2,
-    "dp:maxNumPartitions": 3
+    "csvw-safe:maxLength": 100,
+    "csvw-safe:maxInfluencedPartitions": 1,
+    "csvw-safe:maxContribution": 2,
 }
 ```
 
-#### 1.4.3 Multi-Column Level
-Multiple Columns used as grouping keys inherit all `dp:DPBounded` properties.
+###### 3.2.5.3 Multi-Column Level
+Multiple Columns used as grouping keys inherit all `csvw-safe:DPBounded` properties.
 ```
 {
-    "@type": "dp:ColumnGroup",
-    "dp:columns": ["sex", "island"],
-    "dp:maxPartitionLength": 100,
-    "dp:maxInfluencedPartitions": 1,
-    "dp:maxPartitionContribution": 2,
-    "dp:maxNumPartitions": 6
+    "@type": "csvw-safe:ColumnGroup",
+    "csvw-safe:columns": ["sex", "island"],
+    "csvw-safe:maxLength": 100,
+    "csvw-safe:maxInfluencedPartitions": 1,
+    "csvw-safe:maxContribution": 2,
 }
 ```
 
 
-#### 1.4.4 Partition Level
-Partitions inherit all `dp:DPBounded` properties except `dp:maxNumPartitions`, which is always 1.
-A `dp:PartitionKey` inherits DP bounds from its parent `dp:GroupingKey` unless explicitly overridden.
+###### 3.2.5.4 Partition Level
+Partitions inherit all `csvw-safe:DPBounded` properties except `csvw-safe:maxNumPartitions`, which is always 1.
+A `csvw-safe:PartitionKey` inherits DP bounds from its parent `csvw-safe:GroupingKey` unless explicitly overridden.
 ```
 {
-    "@type": "dp:PartitionKey",
-    "dp:partitionValue": "Torgersen",
-    "dp:maxPartitionLength": 50,
-    "dp:maxInfluencedPartitions": 1,
-    "dp:maxPartitionContribution": 2,
-    "dp:maxNumPartitions": 1
+    "@type": "csvw-safe:PartitionKey",
+    "csvw-safe:partitionValue": "Torgersen",
+    "csvw-safe:maxLength": 50,
+    "csvw-safe:maxContribution": 2,
+    "csvw-safe:publicLength": 50,
 },
 ```
 
 
-### 1.5 Grouping Keys and Public Partitions
+## 4. Grouping Keys
 
-Grouping keys (single columns or column groups) may declare two kinds of metadata:
+A grouping key defines a space over which aggregation or partitioning may occur.
+Grouping keys can be:
+- A single column
+- A combination of multiple columns
 
-**DP-relevant metadata**
-Metadata that affects privacy guarantees or accounting:
-- contribution bounds
-- partition size bounds
-- influenced-partition bounds
+#### 4.1 Grouping Keys
+The following core classes define the grouping model:
+| Class                    | Subclass Of             | Purpose                                     |
+| ------------------------ | ----------------------- | ------------------------------------------- |
+| `csvw-safe:GroupingKey`  | `csvw-safe:DPBounded`   | Abstract grouping space                     |
+| `csvw:Column`            | `csvw-safe:GroupingKey` | Single-column grouping key                  |
+| `csvw-safe:ColumnGroup`  | `csvw-safe:GroupingKey` | Multi-column grouping key                   |
+| `csvw-safe:PartitionKey` | `csvw-safe:DPBounded`   | One allowed partition within a grouping key |
 
-**Structural metadata**
-Metadata that describes how partitions are constructed, but does not directly affect DP bounds:
-- `dp:maxNumPartitions` — maximum number of distinct groups
-- `dp:publicPartitions` — the explicit universe of allowed partitions
-- `dp:components` — the internal structure of a composite partition
+#### 4.2 Multi-Column Grouping
 
-Declaring public partitions may itself reveal information if the partition values are not already public.
-If partition values are declared as metadata, they are assumed to be public and do not consume privacy budget.
-As with all DP-related metadata, values should only be declared when safe.
+`csvw-safe:ColumnGroup` represents a grouping key composed of multiple columns
 
-#### Core Concept
-| Concept               | Meaning                                             |
-| --------------------- | --------------------------------------------------- |
-| `dp:GroupingKey`      | Something you can group by (column or column group) |
-| `dp:PartitionKey`     | One allowed group value for a grouping key          |
-| `dp:publicPartitions` | Explicit universe of allowed partitions             |
-| `dp:maxNumPartitions` | Maximum number of allowed partitions                |
-| `dp:components`       | Structural decomposition of a composite partition   |
+| Property            | Meaning                             |
+| ------------------- | ----------------------------------- |
+| `csvw-safe:columns` | Ordered list of constituent columns |
 
 
+If a csvw-safe:ColumnGroup is declared, all referenced columns:
+- MUST exist in the table schema
+- MUST be listed explicitly in csvw-safe:columns
+- MUST NOT include columns marked as identifiers (e.g., privacyId = true)
+
+A `ColumnGroup` defines a joint grouping space. It does not automatically enumerate all combinations; explicit partitions may optionally restrict this space (see Public Partitions below).
 
 
-#### `dp:PartitionKey` Structure 
+## 5. Public Partitions
 
-A `dp:PartitionKey` describes a constraint over a value space.
+### 5.1 Disclosure Considerations
 
-| Property               | Type                    | Meaning                                                    |
-| ---------------------- | ----------------------- | ---------------------------------------------------------- |
-| `dp:partitionValue`    | literal                 | Categorical partition value                                |
-| `dp:lowerBound`        | decimal                 | Lower bound for numeric partitions                         |
-| `dp:upperBound`        | decimal                 | Upper bound for numeric partitions                         |
-| `dp:lowerInclusive`    | boolean                 | Whether `lowerBound` is inclusive (default: true)          |
-| `dp:upperInclusive`    | boolean                 | Whether `upperBound` is inclusive (default: false)         |
-| `dp:partitionLabel`    | string                  | Optional human-readable label                              |
-| `dp:components` | map → `dp:PartitionKey` | Mapping from grouping columns to per-column partition keys |
+Declaring explicit partitions may itself reveal information.
+
+If partition values are declared in metadata, they are assumed to be:
+- Public
+- Safe to disclose
+- Not consuming privacy budget
+
+Metadata authors MUST only declare partitions that are safe to expose.
+
+### 5.2 csvw-safe:publicPartitions
+
+`csvw-safe:publicPartitions` defines the explicit universe of allowed partitions for a grouping key.
+
+It is an array of `csvw-safe:PartitionKey` objects.
+
+Declaring `publicPartitions` restricts the grouping universe to the declared partitions only.
+
+If `publicPartitions` is not declared, the grouping space is implicitly defined by the column domains.
+
+### 5.3 PartitionKey Structure
+
+A `csvw-safe:publicPartitions` defines a constraint over a value space.
+
+It may represent:
+- A categorical value
+- A numeric interval
+- A composite multi-column constraint
+
+| Property                   | Type                           | Meaning                                           |
+| -------------------------- | ------------------------------ | ------------------------------------------------- |
+| `csvw-safe:partitionValue` | literal                        | Categorical partition value                       |
+| `csvw-safe:lowerBound`     | decimal                        | Lower bound (numeric partition)                   |
+| `csvw-safe:upperBound`     | decimal                        | Upper bound (numeric partition)                   |
+| `csvw-safe:lowerInclusive` | boolean                        | Whether lower bound is inclusive (default: true)  |
+| `csvw-safe:upperInclusive` | boolean                        | Whether upper bound is inclusive (default: false) |
+| `csvw-safe:partitionLabel` | string                         | Optional human-readable label                     |
+| `csvw-safe:components`     | map → `csvw-safe:PartitionKey` | Per-column constraints (multi-column only)        |
 
 
-`dp:PartitionKey` is a recursive structure describing a constraint over a value space.
-For single-column grouping keys, a partition is defined either by a categorical value (`dp:partitionValue`) or by a numeric interval (`dp:lowerBound` / `dp:upperBound`).
-For multi-column grouping keys, a partition is defined by `dp:components`, which maps each grouping column to its own `dp:PartitionKey`.
-This recursive structure allows categorical and continuous dimensions to be combined uniformly.
+### 5.4 Recursive Semantics
 
-In `dp:PartitionKey`/`dp:components`, each key is a column identifier.
-These identifiers MUST refer to columns declared in:
-- the enclosing `dp:ColumnGroup`/`dp:columns`, and
-- the dataset’s column schema.
+csvw-safe:PartitionKey is recursive.
 
-The datatype and semantics of the referenced column constrain which fields of `dp:PartitionKey` are valid (e.g. categorical vs numeric).
+#### Single-column grouping
 
-#### 1.6.1 Column Level
-Categorical
+A partition MUST define either:
+
+- partitionValue (categorical), or
+- lowerBound / upperBound (numeric interval)
+
+The allowed fields depend on the column datatype.
+
+
+#### Multi-column grouping
+
+For `csvw-safe:ColumnGroup`, each partition MUST define: `csvw-safe:components`.
+
+This is a mapping: `columnName → PartitionKey`
+
+Each referenced column:
+- MUST appear in the parent csvw-safe:columns
+- MUST exist in the table schema
+- MUST respect its datatype
+
+This recursive structure allows:
+- categorical × categorical
+- categorical × continuous
+- continuous × continuous
+to be modeled uniformly.
+
+The datatype and semantics of the referenced column constrain which fields of `csvw-safe:PartitionKey` are valid (e.g. categorical vs numeric).
+
+### 5.5 Examples
+
+#### 5.5.1 Single Column – Categorical
 ```
 {
   "name": "sex",
   "datatype": "string",
-  "required": false,
-  "dp:privacyId": false,
-  "dp:nullableProportion": 0.2,
-  "dp:publicPartitions": [{
-        "@type": "dp:PartitionKey", 
-        "dp:partitionValue": "MALE",
-        "dp:maxPartitionLength": 50,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
-    },{
-        "@type": "dp:PartitionKey", 
-        "dp:partitionValue": "FEMALE",
-        "dp:maxPartitionLength": 50,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
-    }]
+  "csvw-safe:publicPartitions": [
+    {
+      "@type": "csvw-safe:PartitionKey",
+      "csvw-safe:partitionValue": "MALE"
+    },
+    {
+      "@type": "csvw-safe:PartitionKey",
+      "csvw-safe:partitionValue": "FEMALE"
+    }
+  ]
 }
 ```
 
-Continuous
+#### 5.5.2 Single Column – Continuous
 ```
 {
-    "name": "flipper_length_mm",
-    "datatype": "double",
-    "required": false,
-    "dp:privacyId": false,
-    "dp:nullableProportion": 0.05,
-    "dp:publicPartitions": [{
-        "@type": "dp:PartitionKey",
-        "dp:lowerBound": 150.0,
-        "dp:upperBound": 200.0,
-        "dp:lowerInclusive": true,
-        "dp:upperInclusive": false,
-        "dp:maxPartitionLength": 100,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 1
-    },{
-        "@type": "dp:PartitionKey",
-        "dp:lowerBound": 200.0,
-        "dp:upperBound": 250.0,
-        "dp:lowerInclusive": true,
-        "dp:upperInclusive": true,
-        "dp:maxPartitionLength": 100,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 1
-    }]
-},
+  "name": "flipper_length_mm",
+  "datatype": "double",
+  "csvw-safe:publicPartitions": [
+    {
+      "@type": "csvw-safe:PartitionKey",
+      "csvw-safe:lowerBound": 150.0,
+      "csvw-safe:upperBound": 200.0,
+      "csvw-safe:lowerInclusive": true,
+      "csvw-safe:upperInclusive": false
+    },
+    {
+      "@type": "csvw-safe:PartitionKey",
+      "csvw-safe:lowerBound": 200.0,
+      "csvw-safe:upperBound": 250.0,
+      "csvw-safe:lowerInclusive": true,
+      "csvw-safe:upperInclusive": true
+    }
+  ]
+}
 ```
 
-#### 1.6.2 Multi-Column Level
+#### 5.5.3 Multi Column – Categorical × Categorical
 
-Here, `dp:components` is used to enumerate explicit combinations (subset of Cartesian product).
+Here, `csvw-safe:components` is used to enumerate explicit combinations (subset of Cartesian product).
 Categorical
 ```
 {
-  "@type": "dp:ColumnGroup",
-  "dp:columns": ["sex", "island"],
-  "dp:publicPartitions": [
+  "@type": "csvw-safe:ColumnGroup",
+  "csvw-safe:columns": ["sex", "island"],
+  "csvw-safe:publicPartitions": [
     {
-      "@type": "dp:PartitionKey",
-      "dp:components": {
+      "@type": "csvw-safe:PartitionKey",
+      "csvw-safe:components": {
         "sex": {
-          "@type": "dp:PartitionKey",
-          "dp:partitionValue": "MALE"
+          "@type": "csvw-safe:PartitionKey",
+          "csvw-safe:partitionValue": "MALE"
         },
         "island": {
-          "@type": "dp:PartitionKey",
-          "dp:partitionValue": "Torgersen"
+          "@type": "csvw-safe:PartitionKey",
+          "csvw-safe:partitionValue": "Torgersen"
         }
-      },
-      "dp:maxPartitionLength": 50,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 2
+      }
     },
     {
-      "@type": "dp:PartitionKey",
-      "dp:components": {
+      "@type": "csvw-safe:PartitionKey",
+      "csvw-safe:components": {
         "sex": {
-          "@type": "dp:PartitionKey",
-          "dp:partitionValue": "FEMALE"
+          "@type": "csvw-safe:PartitionKey",
+          "csvw-safe:partitionValue": "FEMALE"
         },
         "island": {
-          "@type": "dp:PartitionKey",
-          "dp:partitionValue": "Torgersen"
+          "@type": "csvw-safe:PartitionKey",
+          "csvw-safe:partitionValue": "Torgersen"
         }
-      },
-      "dp:maxPartitionLength": 50,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 2
+      }
     }
   ]
 }
 ```
-Categorical x Continuous
+
+#### 5.5.3 Multi Column – Categorical × Continuous
 ```
 {
-  "@type": "dp:ColumnGroup",
-  "dp:columns": ["sex", "flipper_length_mm"],
-  "dp:publicPartitions": [
+  "@type": "csvw-safe:ColumnGroup",
+  "csvw-safe:columns": ["sex", "flipper_length_mm"],
+  "csvw-safe:publicPartitions": [
     {
-      "@type": "dp:PartitionKey",
-      "dp:components": {
+      "@type": "csvw-safe:PartitionKey",
+      "csvw-safe:components": {
         "sex": {
-          "@type": "dp:PartitionKey",
-          "dp:partitionValue": "MALE"
+          "@type": "csvw-safe:PartitionKey",
+          "csvw-safe:partitionValue": "MALE"
         },
         "flipper_length_mm": {
-          "@type": "dp:PartitionKey",
-          "dp:lowerBound": 150.0,
-          "dp:upperBound": 200.0,
-          "dp:lowerInclusive": true,
-          "dp:upperInclusive": false
+          "@type": "csvw-safe:PartitionKey",
+          "csvw-safe:lowerBound": 150.0,
+          "csvw-safe:upperBound": 200.0,
+          "csvw-safe:lowerInclusive": true,
+          "csvw-safe:upperInclusive": false
         }
-      },
-      "dp:maxPartitionLength": 50,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 2
-    },
-    {
-      "@type": "dp:PartitionKey",
-      "dp:components": {
-        "sex": {
-          "@type": "dp:PartitionKey",
-          "dp:partitionValue": "FEMALE"
-        },
-        "flipper_length_mm": {
-          "@type": "dp:PartitionKey",
-          "dp:lowerBound": 150.0,
-          "dp:upperBound": 200.0,
-          "dp:lowerInclusive": true,
-          "dp:upperInclusive": false
-        }
-      },
-      "dp:maxPartitionLength": 50,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 2
+      }
     }
   ]
 }
 ```
 
-### 1.7 Relation to DP Metrics
 
-| DP Metric  | Meaning                               | CSVW-DP Term                  |
-| ---------- | ------------------------------------- | ----------------------------- |
-| $l_0$      | Affected partitions per person        | `dp:maxInfluencedPartitions`  |
-| $l_\infty$ | Max contribution within one partition | `dp:maxPartitionContribution` |
-| $l_1$      | Total changed rows                    | Derived: $l_1=l_0 * l_\infty$ |
-
-### 1.8 Visual Overview
+### 6. Visual Overview
 
 ```
-csvw:Table ⊂ dp:DPBounded
- ├─ dp:DPBounds
+csvw:Table ⊂ csvw-safe:DPBounded
+ ├─ csvw-safe:DPBounds
  │
  ├─ csvw:tableSchema → csvw:TableSchema
- │    └─ csvw:Column ⊂ dp:GroupingKey ⊂ dp:DPBounded
+ │    └─ csvw:Column ⊂ csvw-safe:GroupingKey ⊂ csvw-safe:DPBounded
  │         ├─ CSVW schema (datatype, required, default, etc.)
- │         ├─ dp:publicPartitions (DP-relevant)
- │         │    └─ dp:DPBounds
- │         └─ dp:DPBounds
+ │         ├─ csvw-safe:publicPartitions (DP-relevant)
+ │         │    └─ csvw-safe:DPBounds
+ │         └─ csvw-safe:DPBounds
  │
- └─ dp:ColumnGroup ⊂ dp:GroupingKey ⊂ dp:DPBounded
-      ├─ dp:columns → rdf:List(csvw:Column)
-      ├─ dp:publicPartitions (DP-relevant)
-      │    └─ dp:components (structural)
-      │         └─ dp:DPBounds
-      └─ dp:DPBounds
+ └─ csvw-safe:ColumnGroup ⊂ csvw-safe:GroupingKey ⊂ csvw-safe:DPBounded
+      ├─ csvw-safe:columns → rdf:List(csvw:Column)
+      ├─ csvw-safe:publicPartitions (DP-relevant)
+      │    └─ csvw-safe:components (structural)
+      │         └─ csvw-safe:DPBounds
+      └─ csvw-safe:DPBounds
 ```
 
 > **Full View:** [README_details.md](https://github.com/dscc-admin-ch/csvw-dp/blob/main/README_details.md)
@@ -462,78 +495,82 @@ csvw:Table ⊂ dp:DPBounded
 
 CSVW-DP enforces constraints to ensure both semantic correctness and DP validity. Constraints apply at table, column, multi-column group, and partition levels.
 
-All constraints assume the recursive `dp:PartitionKey` / `dp:components` model.
+All constraints assume the recursive `csvw-safe:PartitionKey` / `csvw-safe:components` model.
 
 ### 2.1 Table-Level Constraints
 
 Applied to `csvw:Table`:
 
-| Property                        | Constraint / Rule                                          |
-| ------------------------------- | ---------------------------------------------------------- |
-| `dp:partitionLength` (if known) | Must equal `dp:maxPartitionLength` at the table level      |
-| `dp:maxPartitionLength`         | ≤ `dp:maxPartitionLength` of any enclosing or parent level |
-| `dp:maxInfluencedPartitions`    | ≤ cumulative constraints from grouping keys and partitions |
-| `dp:maxPartitionContribution`   | ≤ maximum allowed contribution at parent or table level    |
-| `dp:maxNumPartitions`           | Table-level structural bound (if declared)                 |
+| Property                                   | Constraint / Rule                                                 |
+| ------------------------------------------ | ----------------------------------------------------------------- |
+| `csvw-safe:publicLength` (if declared)     | Must be ≤ `csvw-safe:maxLength`                                   |
+| `csvw-safe:maxLength`                      | Defines the global upper bound for the dataset (single partition) |
+| `csvw-safe:maxInfluencedPartitions`        | Must equal 1 (table is a single partition)                        |
+| `csvw-safe:maxContribution`                | ≤ `csvw-safe:maxLength`                                           |
+| `csvw-safe:maxNumPartitions` (if declared) | Structural upper bound on grouping universe                       |
 
 
 ### 2.2 Column-Level Constraints
 
 Applied to `csvw:Column` used as a grouping key:
 
-| Rule                                          | Meaning / Enforcement                                         |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| `required = true → dp:nullableProportion = 0` | Columns marked required cannot be nullable                    |
-| `dp:privacyId = true`                         | Column must **not participate in DP aggregation** (no bounds) |
-| `dp:publicPartitions` values                  | Must match column datatype (`string`, `number`, etc.)         |
-| `dp:lowerBound ≤ dp:upperBound` (numeric)     | Numeric partitions must have consistent bounds                |
-| `dp:lowerInclusive`, `dp:upperInclusive`      | Boolean flags must be present for numeric partitions          |
+| Rule                                                    | Meaning / Enforcement                                                    |
+| ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `required = true → csvw-safe:nullableProportion = 0`    | Required columns cannot be nullable                                      |
+| `csvw-safe:privacyId = true`                            | Column must **not participate in DP aggregation** (no DP bounds allowed) |
+| `csvw-safe:publicPartitions` values                     | Must match column datatype (`string`, `number`, etc.)                    |
+| `csvw-safe:lowerBound ≤ csvw-safe:upperBound` (numeric) | Numeric partitions must have consistent bounds                           |
+| `csvw-safe:lowerInclusive`, `csvw-safe:upperInclusive`  | Must be boolean if numeric bounds are declared                           |
 
-Note: Optional columns may declare null fractions; this can affect `dp:maxPartitionLength` calculations.
+Note: Optional columns may declare null fractions; this can affect `csvw-safe:maxLength` calculations.
 
 
 ### 2.3 Multi-Column Grouping Worst-Case Bounds
 
-For `dp:ColumnGroup` entities:
+For `csvw-safe:ColumnGroup` entities:
 
-| Property                      | Worst-case derivation / Rule                                                                          |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `dp:maxPartitionLength`       | ≤ `min(dp:maxPartitionLength)` of constituent columns/partitions                                      |
-| `dp:maxNumPartitions`         | ≤ product of per-column `dp:maxNumPartitions`                                                         |
-| `dp:maxInfluencedPartitions`  | ≤ `min(dp:maxInfluencedPartitions)` of constituent columns                                            |
-| `dp:maxPartitionContribution` | ≤ `min(dp:maxPartitionContribution)` of constituent columns                                           |
-| `dp:publicPartitions`         | Must match the **subset of Cartesian product** of per-column partitions, expressed as `dp:components` |
+| Property                            | Worst-case derivation / Rule                                                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `csvw-safe:maxLength`               | ≤ `min(csvw-safe:maxLength)` of constituent columns or inherited grouping bounds                                    |
+| `csvw-safe:maxNumPartitions`        | ≤ product of per-column `csvw-safe:maxNumPartitions`                                                                |
+| `csvw-safe:maxInfluencedPartitions` | ≤ `min(csvw-safe:maxInfluencedPartitions)` of constituent columns                                                   |
+| `csvw-safe:maxContribution`         | ≤ `min(csvw-safe:maxContribution)` of constituent columns                                                           |
+| `csvw-safe:publicPartitions`        | Must represent a **subset of the Cartesian product** of per-column partitions, expressed via `csvw-safe:components` |
 
-Notes:
-- Declaring dp:publicPartitions is only allowed if all columns in the group declare `dp:publicPartitions`.
-- dp:components in each partition key must reference columns in dp:columns, and the referenced columns must exist in the table schema.
-
-| Rule                                               | Meaning / Enforcement                                             |
-| -------------------------------------------------- | ----------------------------------------------------------------- |
-| No `dp:privacyId` column in group                  | Privacy identifiers cannot participate in grouped DP computations |
-| If any column lacks `dp:publicPartitions`          | The group **must not declare** `dp:publicPartitions`              |
-| If any column lacks `dp:maxNumPartitions`          | The group **must not declare** `dp:maxNumPartitions`              |
-| `dp:components` keys must match `dp:columns`       | Structural consistency                                            |
-| `dp:components` partition values must respect type | Each per-column `dp:PartitionKey` must obey column datatype       |
-| Overrides of DP bounds in `dp:components`          | Allowed but must be ≤ group-level DP bounds                       |
 
 Notes:
-- The recursion of `dp:PartitionKey` ensures both categorical and numeric dimensions are validated consistently.
-- Each `dp:PartitionKey` in `dp:components` inherits bounds from the parent unless explicitly overridden.
+- Declaring csvw-safe:publicPartitions is only allowed if all columns in the group declare `csvw-safe:publicPartitions`.
+- csvw-safe:components in each partition key must reference columns in csvw-safe:columns, and the referenced columns must exist in the table schema.
+
+Additional Group-Level Rules
+| Rule                                                                    | Meaning / Enforcement                                             |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| No `csvw-safe:privacyId = true` column in group                         | Privacy identifiers cannot participate in grouped DP computations |
+| If any column lacks `csvw-safe:publicPartitions`                        | The group **must not declare** `csvw-safe:publicPartitions`       |
+| If any column lacks `csvw-safe:maxNumPartitions`                        | The group **must not declare** `csvw-safe:maxNumPartitions`       |
+| `csvw-safe:components` keys must match `csvw-safe:columns`              | Structural consistency                                            |
+| Partition values in `csvw-safe:components` must respect column datatype | Type correctness                                                  |
+| Overrides of DP bounds in `csvw-safe:PartitionKey`                      | Allowed but must be ≤ group-level DP bounds                       |
+
+
+Notes:
+- The recursion of `csvw-safe:PartitionKey` ensures both categorical and numeric dimensions are validated consistently.
+- Each `csvw-safe:PartitionKey` in `csvw-safe:components` inherits bounds from the parent unless explicitly overridden.
 
 
 ### 2.4 Partition-Level Constraints
 
-Applied to `dp:PartitionKey`:
+Applied to `csvw-safe:PartitionKey`:
 
-| Rule                                                                                             | Meaning / Enforcement                                                        |
-| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `dp:maxNumPartitions = 1`                                                                        | Each partition is a single group; structural only                            |
-| `dp:components` keys must match parent columns                                                   | Structural consistency                                                       |
-| Categorical partitions must declare `dp:partitionValue`                                          | Numeric partitions must declare `dp:lowerBound`/`dp:upperBound`              |
-| Numeric partitions bounds must be consistent                                                     | `lowerBound ≤ upperBound`; `lowerInclusive`/`upperInclusive` must be boolean |
-| DP bounds (`dp:maxPartitionLength`, `dp:maxInfluencedPartitions`, `dp:maxPartitionContribution`) | Must be ≤ bounds declared at parent grouping key level                       |
-
+| Rule                                                                                                | Meaning / Enforcement                                  |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Structural partition represents a single group                                                      | Implicit `csvw-safe:maxNumPartitions = 1`              |
+| `csvw-safe:components` keys must match parent grouping columns                                      | Structural consistency                                 |
+| Categorical partitions must declare `csvw-safe:partitionValue`                                      | Required for categorical columns                       |
+| Numeric partitions must declare `csvw-safe:lowerBound` and `csvw-safe:upperBound`                   | Required for numeric columns                           |
+| Numeric bounds must satisfy `lowerBound ≤ upperBound`                                               | Interval validity                                      |
+| DP bounds (`csvw-safe:maxLength`, `csvw-safe:maxInfluencedPartitions`, `csvw-safe:maxContribution`) | Must be ≤ bounds declared at parent grouping key level |
+| `csvw-safe:publicLength` (if declared)                                                              | Must be ≤ `csvw-safe:maxLength`                        |
 
 
 > SHACL enforcement for all levels: [`csvw-dp-constaints.ttl`](https://github.com/dscc-admin-ch/csvw-dp/blob/main/csvw-dp-constaints.ttl)
