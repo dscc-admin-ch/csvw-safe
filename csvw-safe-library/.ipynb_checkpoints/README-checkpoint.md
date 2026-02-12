@@ -2,19 +2,22 @@
 
 This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
 
-It includes four main scripts:
+It includes four main modules/scripts:
 
-1. make_metadata_from_data.py
-2. make_dummy_from_metadata.py
-3. validate_metadata.py
-4. assert_same_structure.py
+1. `make_metadata_from_data.py`
+2. `make_dummy_from_metadata.py`
+3. `validate_metadata.py`
+4. `assert_same_structure.py`
 
 ![Overview](../images/utils_scripts.png)
+
+---
 
 ## Installation
 
 Install Python 3.9+ and required dependencies:
-```
+
+```bash
 pip install pandas numpy pyshacl
 ```
 Note: pyshacl is optional. SHACL validation will be skipped if not installed.
@@ -50,18 +53,14 @@ Example usage:
 # Basic metadata generation
 python make_metadata_from_data.py data.csv --id user_id
 
-
-# Strict mode
-python make_metadata_from_data.py data.csv --id user_id --mode strict
-
+# Strict/fine mode
+python make_metadata_from_data.py data.csv --id user_id --mode fine
 
 # Enable automatic column groups
 python make_metadata_from_data.py data.csv --id user_id --auto-column-groups
 
-
 # Disable automatic partition key detection
 python make_metadata_from_data.py data.csv --id user_id --no-auto-partition-keys
-
 
 # Save to a custom file
 python make_metadata_from_data.py data.csv --id user_id --output my_metadata.json
@@ -108,7 +107,6 @@ Example usage:
 # Python-only validation
 python validate_metadata.py my_metadata.json
 
-
 # With SHACL validation
 python validate_metadata.py my_metadata.json --shacl csvw-safe-constraints.ttl
 ```
@@ -126,7 +124,6 @@ Example usage:
 ```
 # Check dummy CSV against original
 python assert_same_structure.py original.csv dummy.csv
-
 
 # Skip categorical value subset check
 python assert_same_structure.py original.csv dummy.csv --no-categories
@@ -156,13 +153,13 @@ python assert_same_structure.py data.csv dummy.csv
 python validate_metadata.py metadata.json --shacl csvw-safe-constraints.ttl
 ```
 
-### Via python code
+### Python API Workflow
 ```
 import pandas as pd
-from csvw_safe_library.metadata import generate_csvw_dp_metadata
-from csvw_safe_library.dummy import make_dummy_dataset_csvw_dp
-from csvw_safe_library.validate import validate_metadata
-from csvw_safe_library.assert_structure import assert_same_structure
+from csvw_safe_library.make_metadata_from_data import generate_csvw_dp_metadata
+from csvw_safe_library.make_dummy_from_metadata import make_dummy_dataset_csvw_dp
+from csvw_safe_library.validate_metadata import validate_metadata
+from csvw_safe_library.assert_same_structure import assert_same_structure
 
 df = pd.read_csv("data.csv")
 
@@ -193,7 +190,7 @@ Automatically generated metadata may contain sensitive information — manual re
 
 The dummy dataset is intended for development, testing, and pipeline verification, not analysis of real individuals.
 
-# Structure
+# Directory Structure
 
 - Library functions in `csvw_safe_library/` for Python usage  
 - Thin CLI wrappers in `scripts/` for command-line convenience  
@@ -201,16 +198,16 @@ The dummy dataset is intended for development, testing, and pipeline verificatio
 csvw_safe_library/
 ├─ csvw_safe_library/          # Python package
 │  ├─ __init__.py
-│  ├─ metadata.py              # make_metadata_from_data.py logic
-│  ├─ dummy.py                 # make_dummy_from_metadata.py logic
-│  ├─ validate.py              # validate_metadata.py logic
-│  ├─ assert_structure.py      # assert_same_structure.py logic
-│  └─ utils.py                 # shared helpers (dtype inference, margins)
-├─ scripts/                    # CLI wrappers
-│  ├─ make_metadata.py
-│  ├─ make_dummy.py
+│  ├─ make_metadata_from_data.py
+│  ├─ make_dummy_from_metadata.py
 │  ├─ validate_metadata.py
-│  └─ assert_structure.py
+│  ├─ assert_same_structure.py
+│  └─ utils.py
+├─ scripts/                    # CLI wrappers
+│  ├─ make_metadata_from_data.py
+│  ├─ make_dummy_from_metadata.py
+│  ├─ validate_metadata.py
+│  └─ assert_same_structure.py
 ├─ tests/                      # Optional: sample data for testing
 ├─ README.md
 ├─ setup.py
