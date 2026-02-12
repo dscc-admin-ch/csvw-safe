@@ -50,9 +50,9 @@ This document is organized into:
 
 See:
 
-* [Guidelines and notes](https://github.com/dscc-admin-ch/csvw-safe/blob/main/guidelines.md)
-* [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/dp_libraries.md)
-* Example metadata: [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json)
+* [Guidelines and notes](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/guidelines.md)
+* [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/dp_libraries.md)
+* Example metadata: [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json) of the sklearn penguin dataset
 
 ---
 
@@ -595,7 +595,7 @@ csvw:Table ⊂ csvw-safe:DPBounded
       └─ csvw-safe:DPBounds
 ```
 
-> **Full View:** [README_details.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/README_details.md)
+> **Full View:** [README_details.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/README_details.md)
 
 ---
 

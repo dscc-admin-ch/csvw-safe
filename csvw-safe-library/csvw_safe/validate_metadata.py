@@ -28,6 +28,7 @@ def is_numeric(dtype: str) -> bool:
 def error(msg, errors):
     errors.append(msg)
 
+
 def check_unique(values, label, errors):
     if len(values) != len(set(values)):
         errors.append(f"Duplicate {label} detected")
@@ -47,6 +48,7 @@ def validate_no_interval_overlap(partitions, errors):
         for j in range(i+1, len(intervals)):
             if intervals_overlap(*intervals[i], *intervals[j]):
                 errors.append("Overlapping numeric partitions detected")
+
 
 def validate_dp_consistency(node, errors):
 
@@ -103,12 +105,13 @@ def validate_column(col: Dict[str, Any], errors: List[str]):
 
         col_min = col.get("minimum")
         col_max = col.get("maximum")
-    
-        for p in col["csvw-safe:publicPartitions"]:
-            if "csvw-safe:lowerBound" in p:
-                if p["csvw-safe:lowerBound"] < col_min or \
-                   p["csvw-safe:upperBound"] > col_max:
-                    error(f"Partition outside column domain in '{name}'", errors)
+
+        if col.get("csvw-safe:publicPartitions", 0):
+            for p in col["csvw-safe:publicPartitions"]:
+                if "csvw-safe:lowerBound" in p:
+                    if p["csvw-safe:lowerBound"] < col_min or \
+                       p["csvw-safe:upperBound"] > col_max:
+                        error(f"Partition outside column domain in '{name}'", errors)
 
     # Validate partitions if present
     if "csvw-safe:publicPartitions" in col:
@@ -213,9 +216,6 @@ def validate_partition_key(parent,
     if "csvw-safe:publicLength" in p and "csvw-safe:maxLength" in p:
         if p["csvw-safe:publicLength"] > p["csvw-safe:maxLength"]:
             error("Partition publicLength > maxLength", errors)
-
-    # After override checks and publicLength checks
-    validate_dp_consistency(p, errors)
 
 # ============================================================
 # ColumnGroup validation

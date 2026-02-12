@@ -41,7 +41,7 @@ def sample_partition_key(col_meta, nb_rows, rng):
     return serie
 
 
-def make_dummy_dataset_csvw_dp(metadata: dict, nb_rows: int = 100, seed: int = 0) -> pd.DataFrame:
+def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0) -> pd.DataFrame:
     """
     Create a dummy dataset from CSVW-DP metadata, respecting partitionKeys and columnGroups.
     """
@@ -120,7 +120,7 @@ def main():
     with metadata_path.open("r", encoding="utf-8") as f:
         metadata = json.load(f)
 
-    df_dummy = make_dummy_dataset_csvw_dp(metadata, nb_rows=args.rows, seed=args.seed)
+    df_dummy = make_dummy_from_metadata(metadata, nb_rows=args.rows, seed=args.seed)
 
     df_dummy.to_csv(args.output, index=False)
     print(f"Dummy dataset written to {args.output} ({len(df_dummy)} rows, {len(df_dummy.columns)} columns)")

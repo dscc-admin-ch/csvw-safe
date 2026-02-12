@@ -38,12 +38,12 @@ def compute_margins(df, individual_col, col):
     col_data = df[col].dropna()
 
     return {
-        "dp:maxNumPartitions": int(df[col].nunique(dropna=True)),
-        "dp:maxPartitionLength": int(col_data.value_counts().max() if len(col_data) else 0),
-        "dp:maxInfluencedPartitions": int(
+        "csvw-safe:maxNumPartitions": int(df[col].nunique(dropna=True)),
+        "csvw-safe:maxPartitionLength": int(col_data.value_counts().max() if len(col_data) else 0),
+        "csvw-safe:maxInfluencedPartitions": int(
             df.groupby(individual_col)[col].nunique(dropna=True).max()
         ),
-        "dp:maxPartitionContribution": int(
+        "csvw-safe:maxPartitionContribution": int(
             df.groupby([individual_col, col], observed=True).size().max()
         ),
     }
@@ -56,12 +56,34 @@ def compute_margins(df, individual_col, col):
 def detect_partition_keys(columns_meta):
     for col in columns_meta:
         if (
-            col.get("dp:publicPartitions")
-            and not col.get("dp:privacyId", False)
-            and col.get("dp:maxInfluencedPartitions", 1) > 1
+            col.get("csvw-safe:publicPartitions")
+            and not col.get("csvw-safe:privacyId", False)
+            and col.get("csvw-safe:maxInfluencedPartitions", 1) > 1
         ):
-            col["dp:partitionKey"] = True
+            col["csvw-safe:partitionKey"] = True
 
+
+def make_partition_key(col_name, values, continuous=False, bin_edges=None):
+    partitions = []
+
+    if continuous:
+        # bin_edges defines the ranges [(low, high, lower_inc, upper_inc), ...]
+        for low, high, lower_inc, upper_inc in bin_edges:
+            partitions.append({
+                "@type": "csvw-safe:PartitionKey",
+                "csvw-safe:lowerBound": float(low),
+                "csvw-safe:upperBound": float(high),
+                "csvw-safe:lowerInclusive": bool(lower_inc),
+                "csvw-safe:upperInclusive": bool(upper_inc)
+            })
+    else:
+        for val in values:
+            partitions.append({
+                "@type": "csvw-safe:PartitionKey",
+                "csvw-safe:partitionValue": val
+            })
+
+    return partitions
 
 # ----------------------------
 # Optional ColumnGroup Detection
@@ -69,24 +91,55 @@ def detect_partition_keys(columns_meta):
 
 def detect_column_groups(df, columns_meta, individual_col):
     groups = []
-    candidate_cols = [
-        c["name"]
-        for c in columns_meta
-        if c.get("dp:publicPartitions") and not c.get("dp:privacyId", False)
-    ]
 
-    for c1, c2 in combinations(candidate_cols, 2):
-        joint = df[[c1, c2]].dropna()
-
-        if len(joint) == 0:
+    # Only columns with categorical publicPartitions
+    candidate_cols = []
+    for c in columns_meta:
+        if c.get("csvw-safe:privacyId", False):
             continue
 
-        # Only create group if joint partitions are meaningful
-        if joint.drop_duplicates().shape[0] > 1:
-            groups.append({
-                "dp:columns": [c1, c2],
-                "dp:maxNumPartitions": int(joint.drop_duplicates().shape[0])
+        partitions = c.get("csvw-safe:publicPartitions")
+        if not partitions:
+            continue
+
+        # Check if first partition uses partitionValue (categorical)
+        if isinstance(partitions, list) and \
+           isinstance(partitions[0], dict) and \
+           "csvw-safe:partitionValue" in partitions[0]:
+            candidate_cols.append(c["name"])
+
+    for c1, c2 in combinations(candidate_cols, 2):
+
+        joint = df[[c1, c2]].dropna()
+        if joint.empty:
+            continue
+
+        joint_unique = joint.drop_duplicates()
+        if joint_unique.shape[0] <= 1:
+            continue
+
+        public_partitions = []
+
+        for _, row in joint_unique.iterrows():
+            public_partitions.append({
+                "@type": "csvw-safe:PartitionKey",
+                "csvw-safe:components": {
+                    c1: {
+                        "@type": "csvw-safe:PartitionKey",
+                        "csvw-safe:partitionValue": row[c1]
+                    },
+                    c2: {
+                        "@type": "csvw-safe:PartitionKey",
+                        "csvw-safe:partitionValue": row[c2]
+                    }
+                }
             })
+
+        groups.append({
+            "@type": "csvw-safe:ColumnGroup",
+            "csvw-safe:columns": [c1, c2],
+            "csvw-safe:publicPartitions": public_partitions
+        })
 
     return groups
 
@@ -95,17 +148,17 @@ def detect_column_groups(df, columns_meta, individual_col):
 # Tighten DP Bounds
 # ----------------------------
 
-def tighten_table_bounds(meta, df, individual_col, strict):
+def tighten_table_bounds(meta, df, individual_col):
 
     columns = meta["tableSchema"]["columns"]
 
     max_influenced = max(
-        col.get("dp:maxInfluencedPartitions", 1)
+        col.get("csvw-safe:maxInfluencedPartitions", 1)
         for col in columns
     )
 
     max_partition_contrib = max(
-        col.get("dp:maxPartitionContribution", 1)
+        col.get("csvw-safe:maxPartitionContribution", 1)
         for col in columns
     )
 
@@ -115,42 +168,35 @@ def tighten_table_bounds(meta, df, individual_col, strict):
         max_influenced
     )
 
-    if strict:
-        meta["tableSchema"]["dp:maxContributions"] = int(derived_max_contrib)
-
-    meta["tableSchema"]["dp:maxInfluencedPartitions"] = int(max_influenced)
-    meta["tableSchema"]["dp:maxPartitionContribution"] = int(max_partition_contrib)
+    meta["tableSchema"]["csvw-safe:maxInfluencedPartitions"] = int(max_influenced)
+    meta["tableSchema"]["csvw-safe:maxPartitionContribution"] = int(max_partition_contrib)
 
 
 # ----------------------------
 # Main Generator
 # ----------------------------
 
-def generate_csvw_dp_metadata(
+def make_metadata_from_data(
     df: pd.DataFrame,
-    csv_url: str,
-    individual_col: str,
+    individual_col: str, # TODO: add option if None --> field related are empty (private_id field always false)
     max_contributions: int = 2,
-    mode: str = "relaxed",
-    auto_partition_keys: bool = True,
+    auto_partition_keys: bool = False,
     auto_column_groups: bool = False,
 ):
 
     if individual_col not in df.columns:
         raise ValueError(f"individual_col '{individual_col}' not found")
 
-    strict = mode == "strict"
-
     meta = {
         "@context": [
             "http://www.w3.org/ns/csvw",
-            "https://w3id.org/csvw-dp#"
+            "../../../csvw-safe-context.jsonld" # local path for dev (TODO later)
+            #"https://w3id.org/csvw-dp#"
         ],
-        "url": csv_url,
         "tableSchema": {
-            "dp:maxContributions": int(max_contributions),
-            "dp:maxTableLength": int(len(df)),
-            "dp:tableLength": int(len(df)),
+            "csvw-safe:maxContributions": int(max_contributions),
+            "csvw-safe:maxTableLength": int(len(df)),
+            "csvw-safe:tableLength": int(len(df)),
             "columns": []
         }
     }
@@ -162,13 +208,18 @@ def generate_csvw_dp_metadata(
         col_info = {
             "name": col,
             "datatype": csvw_dtype(col_data),
-            "dp:privacyId": col == individual_col,
-            "required": col_data.isna().mean() == 0,
-            "dp:nullableProportion": round(float(col_data.isna().mean()), 3),
+            "csvw-safe:privacyId": col == individual_col,
+            "required": bool(col_data.isna().mean() == 0),
+            "csvw-safe:nullableProportion": round(float(col_data.isna().mean()), 3),
         }
 
         if pd.api.types.is_bool_dtype(col_data):
-            col_info["dp:publicPartitions"] = [True, False]
+            unique_vals = sorted(non_null.astype(bool).unique().tolist())
+            col_info["csvw-safe:publicPartitions"] = make_partition_key(
+                col,
+                unique_vals,
+                continuous=False
+            )
             col_info.update(compute_margins(df, individual_col, col))
 
         elif pd.api.types.is_datetime64_any_dtype(col_data):
@@ -177,23 +228,39 @@ def generate_csvw_dp_metadata(
                 col_info["maximum"] = str(non_null.max())
 
         elif pd.api.types.is_numeric_dtype(col_data):
+            if len(non_null):
+                col_info["minimum"] = float(non_null.min())
+                col_info["maximum"] = float(non_null.max())
+            
             if is_categorical_int(col_data):
                 col_info["datatype"] = "integer"
-                col_info["dp:publicPartitions"] = sorted(
-                    non_null.astype(int).unique().tolist()
-                )
+                unique_vals = sorted(non_null.astype(int).unique().tolist())
+                col_info["csvw-safe:publicPartitions"] = make_partition_key(col, unique_vals)
                 col_info.update(compute_margins(df, individual_col, col))
             else:
                 col_info["datatype"] = "double"
-                if len(non_null):
-                    col_info["minimum"] = float(np.floor(non_null.min()))
-                    col_info["maximum"] = float(np.ceil(non_null.max()))
+
+                if len(non_null): # TODO: only advanced for specif column, add fields
+                    min_val = float(np.floor(non_null.min()))
+                    max_val = float(np.ceil(non_null.max()))
+                    # Example: 2 bins
+                    mid = (min_val + max_val) / 2
+                    bins = [
+                        (non_null.min(), mid, True, False),
+                        (mid, non_null.max(), True, True)
+                    ]
+                    col_info["csvw-safe:publicPartitions"] = make_partition_key(col, None, continuous=True, bin_edges=bins)
 
         else:
             col_info["datatype"] = "string"
-            col_info["dp:publicPartitions"] = sorted(
-                non_null.astype(str).unique().tolist()
+            unique_vals = sorted(non_null.astype(str).unique().tolist())
+        
+            col_info["csvw-safe:publicPartitions"] = make_partition_key(
+                col,
+                unique_vals,
+                continuous=False
             )
+        
             col_info.update(compute_margins(df, individual_col, col))
 
         meta["tableSchema"]["columns"].append(col_info)
@@ -208,9 +275,9 @@ def generate_csvw_dp_metadata(
     if auto_column_groups:
         groups = detect_column_groups(df, meta["tableSchema"]["columns"], individual_col)
         if groups:
-            meta["tableSchema"]["dp:columnGroups"] = groups
+            meta["tableSchema"]["csvw-safe:columnGroups"] = groups
 
-    tighten_table_bounds(meta, df, individual_col, strict)
+    tighten_table_bounds(meta, df, individual_col)
 
     return meta
 
@@ -244,17 +311,10 @@ def main():
     )
 
     parser.add_argument(
-        "--mode",
-        choices=["relaxed", "strict"],
-        default="relaxed",
-        help="Metadata generation mode (default: relaxed)"
-    )
-
-    parser.add_argument(
         "--max-contributions",
         type=int,
         default=2,
-        help="Initial dp:maxContributions (strict mode may override)"
+        help="csvw-safe:maxContributions per individual in table"
     )
 
     parser.add_argument(
@@ -284,12 +344,10 @@ def main():
         return
 
     try:
-        metadata = generate_csvw_dp_metadata(
+        metadata = make_metadata_from_data(
             df=df,
-            csv_url=str(csv_path.name),
             individual_col=args.id,
             max_contributions=args.max_contributions,
-            mode=args.mode,
             auto_partition_keys=not args.no_auto_partition_keys,
             auto_column_groups=args.auto_column_groups,
         )

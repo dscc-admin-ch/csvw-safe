@@ -2,11 +2,11 @@
 
 This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
 
-It includes four main modules/scripts:
+It includes four main scripts:
 
 1. `make_metadata_from_data.py`
 2. `make_dummy_from_metadata.py`
-3. `validate_metadata.py`
+3. `validate_metadata.py` and `validate_metadata_shacl.py` (requires `pyshacl`)
 4. `assert_same_structure.py`
 
 ![Overview](../images/utils_scripts.png)
@@ -20,7 +20,7 @@ Install Python 3.9+ and required dependencies:
 ```bash
 pip install pandas numpy pyshacl
 ```
-Note: pyshacl is optional. SHACL validation will be skipped if not installed.
+Note: pyshacl only if additional validation with `validate_metadata_shacl.py`.
 
 Install the library via pip: TODO!!
 ```
@@ -28,7 +28,7 @@ pip install csvw-safe-library
 ```
 or 
 ```
-git clone https://github.com/your-org/csvw-safe-library.git
+git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
 cd csvw-safe-library
 pip install .
 ```
@@ -84,12 +84,7 @@ Example usage:
 python make_dummy_from_metadata.py my_metadata.json --rows 500 --output dummy.csv
 ```
 
-### 3. **`validate_metadata.py`**
-
-**Purpose:** Verify that metadata complies with all declared constraints.
-- Validates structural consistency (columns, groups, partitions).
-- Checks logical DP consistency (max contributions, influenced partitions, worst-case bounds).
-- Validates metadata against SHACL rules (optional).
+### 3. **`validate_metadata.py`** and `validate_metadata_shacl.py`
 
 | Concern               | Tool             |
 | --------------------- | ---------------- |
@@ -101,14 +96,35 @@ python make_dummy_from_metadata.py my_metadata.json --rows 500 --output dummy.cs
 | Standards compliance  | SHACL            |
 | Tool interoperability | SHACL            |
 
+#### `validate_metadata.py`
+**Purpose:** Verify that metadata complies with all declared constraints.
+- Validates structural consistency (columns, groups, partitions).
+- Checks logical DP consistency (max contributions, influenced partitions, worst-case bounds).
+- Does not require SHACL — lightweight Python-only validation
 
 Example usage:
 ```
-# Python-only validation
-python validate_metadata.py my_metadata.json
+python scripts/validate_metadata.py my_metadata.json
+```
 
-# With SHACL validation
-python validate_metadata.py my_metadata.json --shacl csvw-safe-constraints.ttl
+
+#### `validate_metadata_shacl.py`
+**Purpose:** Validate metadata against SHACL rules using `pyshacl`.
+- Requires `pyshacl` and `rdflib`
+- Checks RDF graph compliance and CSVW standards
+
+Example usage:
+```
+python scripts/validate_metadata_shacl.py my_metadata.json csvw-safe-constraints.ttl
+```
+
+Python usage
+```
+from scripts.validate_metadata_shacl import run_shacl_validation
+
+conforms, results_text = run_shacl_validation("my_metadata.json", "csvw-safe-constraints.ttl")
+print(conforms)
+print(results_text)
 ```
 
 ### 4. **`assert_same_structure.py`**
@@ -147,6 +163,10 @@ python make_dummy_from_metadata.py metadata.json --rows 1000 --output dummy.csv
 ```
 python assert_same_structure.py data.csv dummy.csv
 ```
+and optionnaly
+```
+python scripts/validate_metadata_shacl.py metadata.json csvw-safe-constraints.ttl
+```
 
 5. Optionally, run metadata validation:
 ```
@@ -156,21 +176,23 @@ python validate_metadata.py metadata.json --shacl csvw-safe-constraints.ttl
 ### Python API Workflow
 ```
 import pandas as pd
-from csvw_safe_library.make_metadata_from_data import generate_csvw_dp_metadata
-from csvw_safe_library.make_dummy_from_metadata import make_dummy_dataset_csvw_dp
-from csvw_safe_library.validate_metadata import validate_metadata
-from csvw_safe_library.assert_same_structure import assert_same_structure
+from csvw_safe.make_metadata_from_data import make_metadata_from_data
+from csvw_safe.validate_metadata import validate_metadata
+from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
+from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
+from csvw_safe.assert_same_structure import assert_same_structure
 
 df = pd.read_csv("data.csv")
 
 # Generate metadata
-metadata = generate_csvw_dp_metadata(df, csv_url="data.csv", individual_col="user_id")
+metadata = make_metadata_from_data(df, csv_url="data.csv", individual_col="user_id")
 
 # Generate dummy dataset
-dummy_df = make_dummy_dataset_csvw_dp(metadata, nb_rows=500)
+dummy_df = make_dummy_from_metadata(metadata, nb_rows=500)
 
 # Validate metadata
 errors = validate_metadata(metadata)
+errors = validate_metadata_shacl(metadata)
 
 # Assert structure
 assert_same_structure(df, dummy_df)
@@ -195,20 +217,24 @@ The dummy dataset is intended for development, testing, and pipeline verificatio
 - Library functions in `csvw_safe_library/` for Python usage  
 - Thin CLI wrappers in `scripts/` for command-line convenience  
 ```
-csvw_safe_library/
-├─ csvw_safe_library/          # Python package
+csvw-safe-library/
+├─ csvw_safe/                 # Python package
 │  ├─ __init__.py
 │  ├─ make_metadata_from_data.py
 │  ├─ make_dummy_from_metadata.py
 │  ├─ validate_metadata.py
+│  ├─ validate_metadata_shacl.py
 │  ├─ assert_same_structure.py
 │  └─ utils.py
 ├─ scripts/                    # CLI wrappers
 │  ├─ make_metadata_from_data.py
 │  ├─ make_dummy_from_metadata.py
 │  ├─ validate_metadata.py
+│  ├─ validate_metadata_shacl.py
 │  └─ assert_same_structure.py
-├─ tests/                      # Optional: sample data for testing
+├─ examples/
+│  └─ Notebooks.ipynb
+├─ tests/
 ├─ README.md
 ├─ setup.py
 ├─ pyproject.toml
