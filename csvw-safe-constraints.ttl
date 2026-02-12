@@ -1,178 +1,222 @@
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix dp: <https://w3id.org/csvw-dp#> .
-@prefix csvw: <http://www.w3.org/ns/csvw#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:        <http://www.w3.org/ns/shacl#> .
+@prefix rdf:       <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:      <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
+@prefix csvw:      <http://www.w3.org/ns/csvw#> .
+@prefix csvw-safe: <https://w3id.org/csvw-safe#> .
 
 #################################################################
-# SHACL shapes for CSVW-DP constraints
+# TABLE LEVEL
 #################################################################
 
-# ===============================================================
-# 1. Base shape for all DP-bounded entities
-# ===============================================================
-dp:DPBoundedShape
-  a sh:NodeShape ;
-  sh:targetClass dp:DPBounded ;
-  sh:property [
-    sh:path dp:maxPartitionLength ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 0 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxPartitionContribution ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 0 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxInfluencedPartitions ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 1 ;
-  ] ;
-  sh:property [
-    sh:path dp:partitionLength ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 0 ;
-    sh:optional true ;
-  ] ;
-  sh:property [
-    sh:path dp:maxNumPartitions ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 1 ;
-    sh:optional true ;
-  ] .
+csvw-safe:TableShape
+    a sh:NodeShape ;
+    sh:targetClass csvw:Table ;
 
-# ===============================================================
-# 2. Column-level constraints
-# ===============================================================
-dp:ColumnShape
-  a sh:NodeShape ;
-  sh:targetClass csvw:Column ;
-  sh:property [
-    sh:path dp:privacyId ;
-    sh:datatype xsd:boolean ;
-  ] ;
-  sh:property [
-    sh:path dp:nullableProportion ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 0 ;
-    sh:maxInclusive 1 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxPartitionLength ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 0 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxPartitionContribution ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 0 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxInfluencedPartitions ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 1 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxNumPartitions ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 1 ;
-    sh:optional true ;
-  ] .
+    # maxInfluencedPartitions must equal 1 if declared
+    sh:property [
+        sh:path csvw-safe:maxInfluencedPartitions ;
+        sh:hasValue 1 ;
+        sh:message "Table-level maxInfluencedPartitions must equal 1." ;
+    ] ;
 
-# ===============================================================
-# 3. Multi-column group constraints
-# ===============================================================
-dp:ColumnGroupShape
-  a sh:NodeShape ;
-  sh:targetClass dp:ColumnGroup ;
-  sh:property [
-    sh:path dp:columns ;
-    sh:minCount 2 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxPartitionLength ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 0 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxPartitionContribution ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 0 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxInfluencedPartitions ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 1 ;
-  ] ;
-  sh:property [
-    sh:path dp:maxNumPartitions ;
-    sh:datatype xsd:decimal ;
-    sh:minInclusive 1 ;
-  ] ;
-  sh:property [
-    sh:path dp:publicPartitions ;
-    sh:nodeKind sh:IRIOrBlankNode ;
-    sh:class dp:PartitionKeyShape ;
-  ] .
+    # publicLength ≤ maxLength
+    sh:property [
+        sh:path csvw-safe:publicLength ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+    ] ;
 
-# ===============================================================
-# 4. Partition-level constraints
-# ===============================================================
-dp:PartitionKeyShape
-  a sh:NodeShape ;
-  sh:targetClass dp:PartitionKey ;
-  sh:property [
-    sh:path dp:partitionValue ;
-    sh:datatype xsd:string ;
-    sh:optional true ;
-  ] ;
-  sh:property [
-    sh:path dp:lowerBound ;
-    sh:datatype xsd:decimal ;
-    sh:optional true ;
-  ] ;
-  sh:property [
-    sh:path dp:upperBound ;
-    sh:datatype xsd:decimal ;
-    sh:optional true ;
-  ] ;
-  sh:property [
-    sh:path dp:lowerInclusive ;
-    sh:datatype xsd:boolean ;
-    sh:optional true ;
-  ] ;
-  sh:property [
-    sh:path dp:upperInclusive ;
-    sh:datatype xsd:boolean ;
-    sh:optional true ;
-  ] ;
-  sh:property [
-    sh:path dp:partitionLabel ;
-    sh:datatype xsd:string ;
-    sh:optional true ;
-  ] ;
-  sh:property [
-    sh:path dp:components ;
-    sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:class dp:PartitionKeyShape ;
-    sh:optional true ;
-  ] ;
-  # Ensure that numeric partitions have bounds
-  sh:or (
-    [ sh:property [ sh:path dp:partitionValue ; sh:minCount 1 ] ]
-    [ sh:and (
-        [ sh:property [ sh:path dp:lowerBound ; sh:minCount 1 ] ]
-        [ sh:property [ sh:path dp:upperBound ; sh:minCount 1 ] ]
-      )]
-  ) .
+    sh:sparql [
+        sh:message "publicLength must be ≤ maxLength." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this csvw-safe:publicLength ?pl ;
+                      csvw-safe:maxLength ?ml .
+                FILTER (?pl > ?ml)
+            }
+        """ ;
+    ] ;
 
-# ===============================================================
-# 5. Recursive check for components
-# ===============================================================
-dp:ComponentsShape
-  a sh:NodeShape ;
-  sh:property [
-    sh:path dp:components ;
-    sh:nodeKind sh:BlankNodeOrIRI ;
-    sh:class dp:PartitionKeyShape ;
-  ] .
+    # maxContribution ≤ maxLength
+    sh:sparql [
+        sh:message "maxContribution must be ≤ maxLength." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this csvw-safe:maxContribution ?mc ;
+                      csvw-safe:maxLength ?ml .
+                FILTER (?mc > ?ml)
+            }
+        """ ;
+    ] .
+
+#################################################################
+# COLUMN LEVEL
+#################################################################
+
+csvw-safe:ColumnShape
+    a sh:NodeShape ;
+    sh:targetClass csvw:Column ;
+
+    # privacyId columns must not declare DP bounds
+    sh:sparql [
+        sh:message "privacyId columns must not declare DP bounds." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this csvw-safe:privacyId true .
+                $this ?p ?o .
+                FILTER (?p IN (
+                    csvw-safe:maxLength,
+                    csvw-safe:maxContribution,
+                    csvw-safe:maxInfluencedPartitions
+                ))
+            }
+        """ ;
+    ] ;
+
+    # nullableProportion between 0 and 1
+    sh:property [
+        sh:path csvw-safe:nullableProportion ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+    ] ;
+
+    # dependsOn and how must appear together
+    sh:sparql [
+        sh:message "dependsOn and how must be declared together." ;
+        sh:select """
+            SELECT $this WHERE {
+                {
+                  $this csvw-safe:dependsOn ?d .
+                  FILTER NOT EXISTS { $this csvw-safe:how ?h }
+                }
+                UNION
+                {
+                  $this csvw-safe:how ?h .
+                  FILTER NOT EXISTS { $this csvw-safe:dependsOn ?d }
+                }
+            }
+        """ ;
+    ] .
+
+#################################################################
+# COLUMN GROUP LEVEL
+#################################################################
+
+csvw-safe:ColumnGroupShape
+    a sh:NodeShape ;
+    sh:targetClass csvw-safe:ColumnGroup ;
+
+    # must have at least 2 columns
+    sh:property [
+        sh:path csvw-safe:columns ;
+        sh:minCount 2 ;
+    ] ;
+
+    # no privacyId columns in group
+    sh:sparql [
+        sh:message "ColumnGroup must not include privacyId columns." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this csvw-safe:columns ?col .
+                ?col csvw-safe:privacyId true .
+            }
+        """ ;
+    ] ;
+
+    # publicPartitions allowed only if all columns declare publicPartitions
+    sh:sparql [
+        sh:message "ColumnGroup can declare publicPartitions only if all constituent columns declare publicPartitions." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this csvw-safe:publicPartitions ?pp .
+                $this csvw-safe:columns ?col .
+                FILTER NOT EXISTS { ?col csvw-safe:publicPartitions ?any }
+            }
+        """ ;
+    ] ;
+
+    # maxNumPartitions allowed only if all columns declare it
+    sh:sparql [
+        sh:message "ColumnGroup can declare maxNumPartitions only if all constituent columns declare maxNumPartitions." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this csvw-safe:maxNumPartitions ?m .
+                $this csvw-safe:columns ?col .
+                FILTER NOT EXISTS { ?col csvw-safe:maxNumPartitions ?any }
+            }
+        """ ;
+    ] .
+
+#################################################################
+# PARTITION KEY LEVEL
+#################################################################
+
+csvw-safe:PartitionKeyShape
+    a sh:NodeShape ;
+    sh:targetClass csvw-safe:PartitionKey ;
+
+    # publicLength ≤ maxLength
+    sh:sparql [
+        sh:message "Partition publicLength must be ≤ maxLength." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this csvw-safe:publicLength ?pl ;
+                      csvw-safe:maxLength ?ml .
+                FILTER (?pl > ?ml)
+            }
+        """ ;
+    ] ;
+
+    # numeric bounds must satisfy lower ≤ upper
+    sh:sparql [
+        sh:message "Partition lowerBound must be ≤ upperBound." ;
+        sh:select """
+            SELECT $this WHERE {
+                $this csvw-safe:lowerBound ?l ;
+                      csvw-safe:upperBound ?u .
+                FILTER (?l > ?u)
+            }
+        """ ;
+    ] ;
+
+    # categorical OR numeric OR components required
+    sh:sparql [
+        sh:message "PartitionKey must define partitionValue OR numeric bounds OR components." ;
+        sh:select """
+            SELECT $this WHERE {
+                FILTER NOT EXISTS { $this csvw-safe:partitionValue ?v }
+                FILTER NOT EXISTS { $this csvw-safe:lowerBound ?l }
+                FILTER NOT EXISTS { $this csvw-safe:components ?c }
+            }
+        """ ;
+    ] .
+
+#################################################################
+# GROUP → PARTITION DP OVERRIDE CONSISTENCY
+#################################################################
+
+csvw-safe:PartitionOverrideShape
+    a sh:NodeShape ;
+    sh:targetClass csvw-safe:PartitionKey ;
+
+    sh:sparql [
+        sh:message "Partition-level DP bounds must not exceed parent grouping bounds." ;
+        sh:select """
+            SELECT $this WHERE {
+                ?parent csvw-safe:publicPartitions $this .
+
+                OPTIONAL { $this csvw-safe:maxLength ?ml1 }
+                OPTIONAL { ?parent csvw-safe:maxLength ?ml2 }
+
+                OPTIONAL { $this csvw-safe:maxContribution ?mc1 }
+                OPTIONAL { ?parent csvw-safe:maxContribution ?mc2 }
+
+                FILTER (
+                    (BOUND(?ml1) && BOUND(?ml2) && ?ml1 > ?ml2) ||
+                    (BOUND(?mc1) && BOUND(?mc2) && ?mc1 > ?mc2)
+                )
+            }
+        """ ;
+    ] .

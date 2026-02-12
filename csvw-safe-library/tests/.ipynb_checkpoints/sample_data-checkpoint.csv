@@ -1,0 +1,6 @@
+user_id,age,sex,flipper_length_mm,animal
+1,5,MALE,190,Penguin
+2,4,FEMALE,180,Penguin
+3,6,MALE,200,Penguin
+4,5,FEMALE,195,Penguin
+5,4,FEMALE,185,Penguin

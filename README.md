@@ -41,9 +41,12 @@ This document is organized into:
 
 1. Structural Modeling Extensions
 2. Differential Privacy Extensions
-3. Grouping Keys and Partitions
-4. DP Metric Mapping
-5. Constraints
+3. Differential Privacy Extensions
+4. Grouping Keys
+5. Public Partitions
+6. Constraints
+7. Utility Files
+8. Summaries
 
 See:
 
@@ -467,38 +470,15 @@ Categorical
 ```
 
 
-### 6. Visual Overview
-
-```
-csvw:Table ⊂ csvw-safe:DPBounded
- ├─ csvw-safe:DPBounds
- │
- ├─ csvw:tableSchema → csvw:TableSchema
- │    └─ csvw:Column ⊂ csvw-safe:GroupingKey ⊂ csvw-safe:DPBounded
- │         ├─ CSVW schema (datatype, required, default, etc.)
- │         ├─ csvw-safe:publicPartitions (DP-relevant)
- │         │    └─ csvw-safe:DPBounds
- │         └─ csvw-safe:DPBounds
- │
- └─ csvw-safe:ColumnGroup ⊂ csvw-safe:GroupingKey ⊂ csvw-safe:DPBounded
-      ├─ csvw-safe:columns → rdf:List(csvw:Column)
-      ├─ csvw-safe:publicPartitions (DP-relevant)
-      │    └─ csvw-safe:components (structural)
-      │         └─ csvw-safe:DPBounds
-      └─ csvw-safe:DPBounds
-```
-
-> **Full View:** [README_details.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/README_details.md)
-
 ---
 
-## 2. Constraints
+## 6. Constraints
 
 CSVW-SAFE enforces constraints to ensure both semantic correctness and DP validity. Constraints apply at table, column, multi-column group, and partition levels.
 
 All constraints assume the recursive `csvw-safe:PartitionKey` / `csvw-safe:components` model.
 
-### 2.1 Table-Level Constraints
+### 6.1 Table-Level Constraints
 
 Applied to `csvw:Table`:
 
@@ -511,7 +491,7 @@ Applied to `csvw:Table`:
 | `csvw-safe:maxNumPartitions` (if declared) | Structural upper bound on grouping universe                       |
 
 
-### 2.2 Column-Level Constraints
+### 6.2 Column-Level Constraints
 
 Applied to `csvw:Column` used as a grouping key:
 
@@ -526,7 +506,7 @@ Applied to `csvw:Column` used as a grouping key:
 Note: Optional columns may declare null fractions; this can affect `csvw-safe:maxLength` calculations.
 
 
-### 2.3 Multi-Column Grouping Worst-Case Bounds
+### 6.3 Multi-Column Grouping Worst-Case Bounds
 
 For `csvw-safe:ColumnGroup` entities:
 
@@ -559,7 +539,7 @@ Notes:
 - Each `csvw-safe:PartitionKey` in `csvw-safe:components` inherits bounds from the parent unless explicitly overridden.
 
 
-### 2.4 Partition-Level Constraints
+### 6.4 Partition-Level Constraints
 
 Applied to `csvw-safe:PartitionKey`:
 
@@ -577,19 +557,62 @@ Applied to `csvw-safe:PartitionKey`:
 > SHACL enforcement for all levels: [`csvw-safe-constaints.ttl`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constaints.ttl)
 
 ---
+## 7. Utility Files
 
-## 3. Summary of Files
+This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
+
+It includes four main scripts:
+
+1. make_metadata_from_data.py
+2. make_dummy_from_metadata.py
+3. validate_metadata.py
+4. assert_same_structure.py
+
+This is available in a pip library `csvw-safe-lib` described in [the README.md of `csvw-safe-lib`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/README.md).
+
+![Overview](images/utils_scripts.png)
+
+## 8. Summaries
+
+Visual Overview
+
+```
+csvw:Table ⊂ csvw-safe:DPBounded
+ ├─ csvw-safe:DPBounds
+ │
+ ├─ csvw:tableSchema → csvw:TableSchema
+ │    └─ csvw:Column ⊂ csvw-safe:GroupingKey ⊂ csvw-safe:DPBounded
+ │         ├─ CSVW schema (datatype, required, default, etc.)
+ │         ├─ csvw-safe:publicPartitions (DP-relevant)
+ │         │    └─ csvw-safe:DPBounds
+ │         └─ csvw-safe:DPBounds
+ │
+ └─ csvw-safe:ColumnGroup ⊂ csvw-safe:GroupingKey ⊂ csvw-safe:DPBounded
+      ├─ csvw-safe:columns → rdf:List(csvw:Column)
+      ├─ csvw-safe:publicPartitions (DP-relevant)
+      │    └─ csvw-safe:components (structural)
+      │         └─ csvw-safe:DPBounds
+      └─ csvw-safe:DPBounds
+```
+
+> **Full View:** [README_details.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/README_details.md)
+
+---
+
+Files
 
 | File                          | Purpose                             |
 | ----------------------------- | ----------------------------------- |
 | `README.md`                   | Description, Motivation             |
-| `csvw-safe-vocab.ttl`           | Vocabulary definition (OWL + RDFS)  |
-| `csvw-safe-context.jsonld`      | JSON-LD context                     |
-| `csvw-safe-constraints.ttl`     | SHACL validation rules              |
+| `csvw-safe-vocab.ttl`         | Vocabulary definition (OWL + RDFS)  |
+| `csvw-safe-context.jsonld`    | JSON-LD context                     |
+| `csvw-safe-constraints.ttl`   | SHACL validation rules              |
 | `penguin_metadata.json`       | Example metadata                    |
 | `dp_libraries.md`             | Mapping to DP libraries             |
 | `validate_metadata.py`        | Metadata validator                  |
 | `make_metadata_from_data.py`  | Infer baseline CSVW metadata        |
 | `make_dummy_from_metadata.py` | Dummy data generator                |
+| `assert_same_structure.py`    | Verify functional programming valid on dummy will be valid on real data |
 
-`make_metadata_from_data.py` and `make_dummy_from_metadata.py` still need DerivedColumn, GroupColumn logic (maybe).
+---
+

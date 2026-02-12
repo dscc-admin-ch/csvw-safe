@@ -1,129 +1,103 @@
 {
   "@context": {
-    "@version": 1.1,
-
     "csvw": "http://www.w3.org/ns/csvw#",
-    "dp": "https://w3id.org/csvw-dp#",
+    "csvw-safe": "https://w3id.org/csvw-safe#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
 
-    /* =====================================================
-       Core CSVW terms
-       ===================================================== */
-
     "Table": "csvw:Table",
-    "TableSchema": "csvw:TableSchema",
     "Column": "csvw:Column",
 
-    "tableSchema": {
-      "@id": "csvw:tableSchema",
-      "@type": "@id"
-    },
-
-    "columns": {
-      "@id": "csvw:column",
-      "@type": "@id",
-      "@container": "@list"
-    },
-
-    "name": "csvw:name",
-    "datatype": {
-      "@id": "csvw:datatype",
-      "@type": "@id"
-    },
-
-    /* =====================================================
-       DP core classes
-       ===================================================== */
-
-    "DPBounded": "dp:DPBounded",
-    "GroupingKey": "dp:GroupingKey",
-    "ColumnGroup": "dp:ColumnGroup",
-    "PartitionKey": "dp:PartitionKey",
-
-    /* =====================================================
-       DP bounds (generic, reusable)
-       ===================================================== */
-
-    "maxPartitionLength": {
-      "@id": "dp:maxPartitionLength",
-      "@type": "xsd:positiveInteger"
-    },
-
-    "partitionLength": {
-      "@id": "dp:partitionLength",
-      "@type": "xsd:positiveInteger"
-    },
-
-    "maxPartitionContribution": {
-      "@id": "dp:maxPartitionContribution",
-      "@type": "xsd:positiveInteger"
-    },
-
-    "maxInfluencedPartitions": {
-      "@id": "dp:maxInfluencedPartitions",
-      "@type": "xsd:positiveInteger"
-    },
-
-    "maxNumPartitions": {
-      "@id": "dp:maxNumPartitions",
-      "@type": "xsd:positiveInteger"
-    },
-
-    /* =====================================================
-       Column-level DP metadata
-       ===================================================== */
+    "DPBounded": "csvw-safe:DPBounded",
+    "GroupingKey": "csvw-safe:GroupingKey",
+    "ColumnGroup": "csvw-safe:ColumnGroup",
+    "PartitionKey": "csvw-safe:PartitionKey",
 
     "privacyId": {
-      "@id": "dp:privacyId",
+      "@id": "csvw-safe:privacyId",
       "@type": "xsd:boolean"
     },
 
     "nullableProportion": {
-      "@id": "dp:nullableProportion",
+      "@id": "csvw-safe:nullableProportion",
       "@type": "xsd:decimal"
     },
 
-    /* =====================================================
-       Grouping & partitions
-       ===================================================== */
-
-    "columnGroup": {
-      "@id": "dp:ColumnGroup",
+    "dependsOn": {
+      "@id": "csvw-safe:dependsOn",
       "@type": "@id"
     },
 
-    "columnsInGroup": {
-      "@id": "dp:columns",
+    "how": "csvw-safe:how",
+
+    "mapping": {
+      "@id": "csvw-safe:mapping",
+      "@type": "@id"
+    },
+
+    "maxNumPartitions": {
+      "@id": "csvw-safe:maxNumPartitions",
+      "@type": "xsd:integer"
+    },
+
+    "columns": {
+      "@id": "csvw-safe:columns",
       "@type": "@id",
       "@container": "@list"
     },
 
     "publicPartitions": {
-      "@id": "dp:publicPartitions",
-      "@container": "@list"
+      "@id": "csvw-safe:publicPartitions",
+      "@type": "@id",
+      "@container": "@set"
     },
 
-    /* =====================================================
-       PartitionKey structure
-       ===================================================== */
-
-    "partitionValue": "dp:partitionValue",
+    "partitionValue": "csvw-safe:partitionValue",
 
     "lowerBound": {
-      "@id": "dp:lowerBound",
+      "@id": "csvw-safe:lowerBound",
       "@type": "xsd:decimal"
     },
 
     "upperBound": {
-      "@id": "dp:upperBound",
+      "@id": "csvw-safe:upperBound",
       "@type": "xsd:decimal"
     },
 
-    "partitionLabel": "dp:partitionLabel",
+    "lowerInclusive": {
+      "@id": "csvw-safe:lowerInclusive",
+      "@type": "xsd:boolean"
+    },
+
+    "upperInclusive": {
+      "@id": "csvw-safe:upperInclusive",
+      "@type": "xsd:boolean"
+    },
+
+    "partitionLabel": "csvw-safe:partitionLabel",
 
     "components": {
-      "@id": "dp:components",
+      "@id": "csvw-safe:components",
       "@type": "@id"
+    },
+
+    "maxLength": {
+      "@id": "csvw-safe:maxLength",
+      "@type": "xsd:integer"
+    },
+
+    "maxContribution": {
+      "@id": "csvw-safe:maxContribution",
+      "@type": "xsd:integer"
+    },
+
+    "maxInfluencedPartitions": {
+      "@id": "csvw-safe:maxInfluencedPartitions",
+      "@type": "xsd:integer"
+    },
+
+    "publicLength": {
+      "@id": "csvw-safe:publicLength",
+      "@type": "xsd:integer"
     }
   }
 }
