@@ -4,115 +4,181 @@ import pandas as pd
 import json
 from pathlib import Path
 import argparse
-from itertools import product
 
 
-def sample_partition_key(col_meta, nb_rows, rng):
-    """Sample a column respecting dp:publicPartitions and nulls."""
-    nullable_prop = col_meta.get("dp:nullableProportion", 0)
-    dtype = col_meta["datatype"]
-    name = col_meta["name"]
+# ============================================================
+# Helpers
+# ============================================================
 
-    serie = None
-    if dtype in ("string", "integer", "boolean"):
-        choices = col_meta.get("dp:publicPartitions", [])
-        if not choices:
-            raise ValueError(f"No publicPartitions for partitionKey '{name}'")
-        serie = pd.Series(rng.choice(choices, size=nb_rows), dtype="object" if dtype=="string" else None)
-    elif dtype == "double":
-        low = float(col_meta["minimum"])
-        high = float(col_meta["maximum"])
-        serie = pd.Series(low + (high - low) * rng.random(size=nb_rows))
-    elif dtype == "dateTime":
-        dates = pd.date_range(start=col_meta["minimum"], end=col_meta["maximum"])
-        serie = pd.Series(rng.choice(dates, size=nb_rows))
+def sample_from_partitions(partitions, nb_rows, rng):
+    """
+    Sample values from csvw-safe:publicPartitions
+    Handles both categorical and continuous partitions.
+    """
+    if not partitions:
+        return pd.Series([pd.NA] * nb_rows)
+
+    first = partitions[0]
+
+    # ----------------------------------
+    # CATEGORICAL partitions
+    # ----------------------------------
+    if "csvw-safe:partitionValue" in first:
+        values = [
+            p["csvw-safe:partitionValue"]
+            for p in partitions
+        ]
+        return pd.Series(rng.choice(values, size=nb_rows))
+
+    # ----------------------------------
+    # CONTINUOUS partitions
+    # ----------------------------------
+    if "csvw-safe:lowerBound" in first:
+        samples = []
+        for _ in range(nb_rows):
+            p = rng.choice(partitions)
+            low = p["csvw-safe:lowerBound"]
+            high = p["csvw-safe:upperBound"]
+            val = rng.uniform(low, high)
+            samples.append(val)
+        return pd.Series(samples)
+
+    return pd.Series([pd.NA] * nb_rows)
+
+
+def apply_nulls(series, nullable_prop, dtype, rng):
+    if nullable_prop <= 0:
+        return series
+
+    n_null = int(len(series) * nullable_prop)
+    if n_null == 0:
+        return series
+
+    idx = rng.choice(series.index, size=n_null, replace=False)
+
+    if dtype == "dateTime":
+        series.loc[idx] = pd.NaT
     else:
-        raise ValueError(f"Unsupported dtype '{dtype}' for partitionKey '{name}'")
+        series.loc[idx] = pd.NA
 
-    # Apply nulls
-    if nullable_prop > 0:
-        n_null = int(nb_rows * nullable_prop)
-        if n_null > 0:
-            idx = rng.choice(serie.index, size=n_null, replace=False)
-            if dtype == "dateTime":
-                serie.loc[idx] = pd.NaT
-            else:
-                serie.loc[idx] = pd.NA
-    return serie
+    return series
 
 
-def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0) -> pd.DataFrame:
-    """
-    Create a dummy dataset from CSVW-DP metadata, respecting partitionKeys and columnGroups.
-    """
+# ============================================================
+# Main Generator
+# ============================================================
+
+def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0):
     rng = np.random.default_rng(seed)
+
+    table = metadata["tableSchema"]
+    columns_meta = table["columns"]
+
     data_dict = {}
-    columns_meta = {c["name"]: c for c in metadata["tableSchema"]["columns"]}
     used_columns = set()
 
-    # ----------------------------
-    # Handle columnGroups first
-    # ----------------------------
-    for group in metadata["tableSchema"].get("dp:columnGroups", []):
-        cols = group["dp:columns"]
-        # Use publicPartitions if available
-        partition_values = []
-        for c in cols:
-            c_meta = columns_meta[c]
-            pvals = c_meta.get("dp:publicPartitions")
-            if not pvals:
-                # fallback to uniform numeric sampling
-                if c_meta["datatype"] == "integer":
-                    pvals = list(range(int(c_meta["minimum"]), int(c_meta["maximum"])+1))
-                elif c_meta["datatype"] == "double":
-                    pvals = np.linspace(c_meta["minimum"], c_meta["maximum"], min(nb_rows, 20)).tolist()
-                elif c_meta["datatype"] == "string":
-                    pvals = ["A","B","C"]
-                elif c_meta["datatype"] == "boolean":
-                    pvals = [True, False]
-            partition_values.append(pvals)
+    # --------------------------------------------------------
+    # 1️⃣ Handle columnGroups FIRST
+    # --------------------------------------------------------
+    for group in table.get("csvw-safe:columnGroups", []):
+        cols = group["csvw-safe:columns"]
+        partitions = group.get("csvw-safe:publicPartitions", [])
 
-        # Sample tuples from Cartesian product
-        choices = list(product(*partition_values))
-        sampled = rng.choice(len(choices), size=nb_rows)
-        for i, col in enumerate(cols):
-            data_dict[col] = pd.Series([choices[s][i] for s in sampled])
+        if not partitions:
+            continue
+
+        sampled_groups = rng.choice(partitions, size=nb_rows)
+
+        for col in cols:
+            values = []
+            for p in sampled_groups:
+                component = p["csvw-safe:components"][col]
+                values.append(component["csvw-safe:partitionValue"])
+            data_dict[col] = pd.Series(values)
             used_columns.add(col)
 
-    # ----------------------------
-    # Handle partitionKeys not in groups
-    # ----------------------------
-    for col_name, col_meta in columns_meta.items():
-        if col_name in used_columns:
-            continue
-        if col_meta.get("dp:partitionKey", False):
-            data_dict[col_name] = sample_partition_key(col_meta, nb_rows, rng)
-            used_columns.add(col_name)
+    # --------------------------------------------------------
+    # 2️⃣ Handle remaining columns
+    # --------------------------------------------------------
+    for col_meta in columns_meta:
 
-    # ----------------------------
-    # Handle remaining columns
-    # ----------------------------
-    for col_name, col_meta in columns_meta.items():
-        if col_name in used_columns:
+        name = col_meta["name"]
+
+        if name in used_columns:
             continue
-        data_dict[col_name] = sample_partition_key(col_meta, nb_rows, rng)
-        used_columns.add(col_name)
+
+        dtype = col_meta["datatype"]
+        nullable_prop = col_meta.get("csvw-safe:nullableProportion", 0)
+        partitions = col_meta.get("csvw-safe:publicPartitions", [])
+
+        # ----------------------------------
+        # DateTime
+        # ----------------------------------
+        if dtype == "dateTime":
+            if "minimum" in col_meta and "maximum" in col_meta:
+                dates = pd.date_range(
+                    start=col_meta["minimum"],
+                    end=col_meta["maximum"],
+                )
+                series = pd.Series(rng.choice(dates, size=nb_rows))
+            else:
+                series = pd.Series([pd.NaT] * nb_rows)
+
+        # ----------------------------------
+        # Numeric without partitions
+        # ----------------------------------
+        elif dtype in ("double", "integer") and not partitions:
+            if "minimum" in col_meta and "maximum" in col_meta:
+                low = col_meta["minimum"]
+                high = col_meta["maximum"]
+
+                if dtype == "integer":
+                    series = pd.Series(
+                        rng.integers(int(low), int(high) + 1, size=nb_rows)
+                    )
+                else:
+                    series = pd.Series(
+                        rng.uniform(float(low), float(high), size=nb_rows)
+                    )
+            else:
+                series = pd.Series([pd.NA] * nb_rows)
+
+        # ----------------------------------
+        # Columns with partitions
+        # ----------------------------------
+        else:
+            series = sample_from_partitions(partitions, nb_rows, rng)
+
+            if dtype == "integer":
+                series = series.astype("Int64")
+
+        # Apply null proportion
+        series = apply_nulls(series, nullable_prop, dtype, rng)
+
+        data_dict[name] = series
+        used_columns.add(name)
 
     return pd.DataFrame(data_dict)
 
 
-# ----------------------------
+# ============================================================
 # CLI
-# ----------------------------
+# ============================================================
+
 def main():
-    parser = argparse.ArgumentParser(description="Generate dummy dataset from CSVW-DP metadata")
-    parser.add_argument("metadata_file", type=str, help="Input JSON metadata file")
-    parser.add_argument("--rows", type=int, default=100, help="Number of rows to generate")
-    parser.add_argument("--output", type=str, default="dummy.csv", help="Output CSV file")
-    parser.add_argument("--seed", type=int, default=0, help="Random seed")
+    parser = argparse.ArgumentParser(
+        description="Generate dummy dataset from CSVW-SAFE metadata"
+    )
+
+    parser.add_argument("metadata_file", type=str)
+    parser.add_argument("--rows", type=int, default=100)
+    parser.add_argument("--output", type=str, default="dummy.csv")
+    parser.add_argument("--seed", type=int, default=0)
+
     args = parser.parse_args()
 
     metadata_path = Path(args.metadata_file)
+
     if not metadata_path.exists():
         print(f"ERROR: Metadata file not found: {metadata_path}")
         return
@@ -120,10 +186,18 @@ def main():
     with metadata_path.open("r", encoding="utf-8") as f:
         metadata = json.load(f)
 
-    df_dummy = make_dummy_from_metadata(metadata, nb_rows=args.rows, seed=args.seed)
+    df_dummy = make_dummy_from_metadata(
+        metadata,
+        nb_rows=args.rows,
+        seed=args.seed
+    )
 
     df_dummy.to_csv(args.output, index=False)
-    print(f"Dummy dataset written to {args.output} ({len(df_dummy)} rows, {len(df_dummy.columns)} columns)")
+
+    print(
+        f"Dummy dataset written to {args.output} "
+        f"({len(df_dummy)} rows, {len(df_dummy.columns)} columns)"
+    )
 
 
 if __name__ == "__main__":
