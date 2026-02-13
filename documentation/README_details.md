@@ -4,79 +4,32 @@
 
 In full:
 ```
-csvw:Table
-  ⊂ dp:DPBounded
-  │
-  ├─ dp:DP bounds
-  │    ├─ dp:maxPartitionLength
-  │    ├─ dp:maxPartitionContribution
-  │    ├─ dp:maxInfluencedPartitions (= 1)
-  │    └─ dp:partitionLength
-  │
-  ├─ csvw:tableSchema → csvw:TableSchema
-  │      │
-  │      └─ csvw:column → csvw:Column
-  │             │
-  │             │  csvw:Column
-  │             │    ⊂ dp:GroupingKey
-  │             │      ⊂ dp:DPBounded
-  │             │
-  │             ├─ CSVW schema metadata
-  │             │    ├─ datatype
-  │             │    ├─ required
-  │             │    └─ minimum / maximum
-  │             │
-  │             ├─ dp:DP bounds
-  │             │    ├─ dp:maxPartitionLength
-  │             │    ├─ dp:maxPartitionContribution
-  │             │    ├─ dp:maxInfluencedPartitions
-  │             │    └─ dp:maxNumPartitions
-  │             │
-  │             └─ dp:publicPartitions   (DP-relevant)
-  │                   │
-  │                   └─ dp:PartitionKey
-  │                         ⊂ dp:DPBounded
-  │                         │
-  │                         ├─ partition definition
-  │                         │    ├─ dp:partitionValue
-  │                         │    └─ OR dp:lowerBound / dp:upperBound
-  │                         │
-  │                         └─ dp:DP bounds
-  │                              ├─ dp:maxPartitionLength
-  │                              └─ dp:maxPartitionContribution
-  │
-  └─ dp:ColumnGroup
-        ⊂ dp:GroupingKey
-          ⊂ dp:DPBounded
-            │
-            ├─ dp:columns → rdf:List(csvw:Column)
-            │
-            ├─ dp:DP bounds
-            │    ├─ dp:maxPartitionLength
-            │    ├─ dp:maxPartitionContribution
-            │    ├─ dp:maxInfluencedPartitions
-            │    └─ dp:maxNumPartitions
-            │
-            └─ dp:publicPartitions     (DP-relevant)
-                  │
-                  └─ dp:PartitionKey
-                        │
-                        ├─ dp:partitionBindings   (structural)
-                        │    ├─ column → literal
-                        │    └─ column → interval
-                        │
-                        └─ dp:DP bounds
+Table
+ ├─ Table Properties
+ │   ├─ maxLength (required)
+ │   ├─ publicLength
+ │   └─ contributions
+ │
+ └─ Schema
+     ├─ Columns
+     │   └─ Column
+     │       ├─ Column Properties
+     │       ├─ Groupable Properties
+     │       └─ publicPartitions
+     │           └─ Partition
+     │               ├─ PartitionKey
+     │               └─ Partition Properties
+     │
+     └─ ColumnGroups
+         └─ ColumnGroup
+             ├─ columns (list of column references)
+             ├─ Groupable Properties
+             └─ publicPartitions
+                 └─ Partition
+                     ├─ components
+                     │   └─ PartitionKey (per column)
+                     └─ Partition Properties
 ```
-
-Diagram
-
-- `dp:DPBounded`: The common base for anything that can carry DP limits: grouping keys and individual partitions.
-
-- `dp:GroupingKey`: Defines a group-by universe:
-    - a single column
-    - or a multi-column `dp:ColumnGroup`
-
-- `dp:PartitionKey`: Defines one publicly known partition inside a grouping key. It may optionally override or refine DP bounds.
 
 ---
 
@@ -151,3 +104,19 @@ But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has me
  └─────────────────┘
 ```
 
+Table 
+- Table Properties (some compulsory)
+    - Schema
+        - Columns
+            - Column Properties
+            - Groupable Properties
+            - Public partitions
+                - PartitionKey
+                    - Partition Properties
+    - ColumnsGroup
+        - columns
+        - Groupable Properties
+        - Public partitions
+            - components
+                - [PartitionKey]
+            - Partition Properties

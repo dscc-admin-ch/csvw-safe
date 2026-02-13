@@ -207,7 +207,7 @@
       "dp:maxPartitionContribution": 2,
       "dp:publicPartitions": [
         {
-          "@type": "dp:PartitionKey",
+          "@type": "dp:Partition",
           "dp:components": {
             "sex": {
               "@type": "dp:PartitionKey",
@@ -222,7 +222,7 @@
           "dp:maxPartitionContribution": 1
         },
         {
-          "@type": "dp:PartitionKey",
+          "@type": "dp:Partition",
           "dp:components": {
             "sex": {
               "@type": "dp:PartitionKey",
@@ -246,7 +246,7 @@
       ],
       "dp:publicPartitions": [
         {
-          "@type": "dp:PartitionKey",
+          "@type": "dp:Partition",
           "dp:components": {
             "sex": {
               "@type": "dp:PartitionKey",
@@ -265,7 +265,7 @@
           "dp:maxPartitionContribution": 2
         },
         {
-          "@type": "dp:PartitionKey",
+          "@type": "dp:Partition",
           "dp:components": {
             "sex": {
               "@type": "dp:PartitionKey",
