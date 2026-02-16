@@ -104,23 +104,35 @@ But with domain/data knowledge (if public), ColumnGroup [`year`, `month`] has me
  └─────────────────┘
 ```
 
+
+## PROPERTIES
 Table 
 - Table Properties (some compulsory)
     - Schema
         - Columns
             - Column Properties
-            - Groupable Properties
             - Public partitions
-                - PartitionKey
-                    - Partition Properties
+                - Partition identified by PartitionKey
+                - Partition Properties
     - ColumnsGroup
-        - columns
-        - Groupable Properties
+        - property: list of columns
         - Public partitions
-            - components
-                - [PartitionKey]
+            - Partitions identified by components which are a list of [PartitionKey] per column
             - Partition Properties
 
+
+## CONTRIBUTIONS
+Table 
+- Table Properties: maxContributions, maxLength
+    - Schema
+        - Columns
+            - Column Contribution: maxInfluencedPartitions
+            - Public partitions
+                - Partition Properties: maxContributions, maxLength, publicLength
+    - ColumnsGroup
+        - ColumnGroup Contribution: maxInfluencedPartitions
+        - Public partitions
+            - Partition Properties: maxContributions, maxLength, publicLength
 
 A grouping scope is determined by the grouping key of the query:
 | Query type                | Governing scope           |
