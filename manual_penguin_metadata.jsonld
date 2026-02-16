@@ -1,334 +1,251 @@
 {
-  "@context": [
-    "http://www.w3.org/ns/csvw",
-    "https://w3id.org/csvw-dp-context.jsonld"
-  ],
-  "@type": "csvw:Table",
-  "dp:maxPartitionContribution": 2,
-  "dp:partitionLength": 344,
-  "dp:maxPartitionLength": 344,
-  "tableSchema": {
-    "columns": [
+   "@context":[
+       "http://www.w3.org/ns/csvw",
+       "https://w3id.org/csvw-dp-context.jsonld"
+   ],
+   "@type":"csvw:Table",
+   "csvw-safe:maxLength":344,
+   "csvw-safe:publicLength":344,
+   "csvw-safe:privacyContributions":[
+       {
+         "@type":"csvw-safe:ContributionKey",
+         "csvw-safe:privacyUnit":"penguin_id",
+         "csvw-safe:maxContributions": 2
+       }
+   ],
+   "tableSchema":{
+      "columns":[
+        {
+            "name":"penguin_id",
+            "datatype":"int",
+            "csvw-safe:privacyId":true,
+            "required":true
+        },
+          {
+            "name":"species",
+            "datatype":"string",
+            "required":true,
+            "csvw-safe:privacyId":false,
+            "csvw-safe:nullableProportion":0,
+            "csvw-safe:maxLength":200,
+            "csvw-safe:maxNumPartitions":3,
+            "csvw-safe:maxInfluencedPartitions":1,
+            "csvw-safe:privacyContributions":[
+               {
+                  "@type":"csvw-safe:ContributionKey",
+                  "csvw-safe:privacyUnit":"row",
+                  "csvw-safe:maxContributions":2,
+                  "csvw-safe:maxInfluencedPartitions":1
+               }
+            ],
+            "csvw-safe:publicPartitions":[
+               {
+                  "@type":"csvw-safe:Partition",
+                  "csvw-safe:partitionValue":"Adelie",
+                  "csvw-safe:maxContributions": 2
+               },
+               {
+                  "@type":"csvw-safe:Partition",
+                  "csvw-safe:partitionValue":"Chinstrap",
+                  "csvw-safe:maxContributions": 1
+               },
+               {
+                  "@type":"csvw-safe:Partition",
+                  "csvw-safe:partitionValue":"Gentoo",
+                  "csvw-safe:maxContributions": 1
+               }
+            ]
+         },
+         {
+            "name":"island",
+            "datatype":"string",
+            "required":true,
+            "csvw-safe:privacyId":false,
+            "csvw-safe:nullableProportion":0,
+            "csvw-safe:privacyContributions":[
+               {
+                  "@type":"csvw-safe:ContributionKey",
+                  "csvw-safe:privacyUnit":"row",
+                  "csvw-safe:maxContributions":2,
+                  "csvw-safe:maxInfluencedPartitions":1
+               }
+            ],
+            "csvw-safe:partitionsInformations": [
+                "csvw-safe:maxLength":200,
+                "csvw-safe:publicPartitions":[
+                   {
+                      "@type":"csvw-safe:PartitionKey",
+                      "csvw-safe:partitionValue":"Torgersen",
+                      "csvw-safe:maxLength":50,
+                      "csvw-safe:contributions":[
+                         {
+                            "@type":"csvw-safe:ContributionKey",
+                            "csvw-safe:privacyUnit":"row",
+                            "csvw-safe:maxContributions":1
+                         }
+                      ]
+                   },
+                   {
+                      "@type":"csvw-safe:PartitionKey",
+                      "csvw-safe:partitionValue":"Biscoe",
+                      "csvw-safe:maxLength":100,
+                   },
+                   {
+                      "@type":"csvw-safe:PartitionKey",
+                      "csvw-safe:partitionValue":"Dream"
+                   }
+                ]
+            ],
+         },
+         {
+            "name":"bill_length_mm",
+            "datatype":"double",
+            "required":true,
+            "minimum":30,
+            "maximum":65,
+            "csvw-safe:privacyId":false,
+            "csvw-safe:nullableProportion":0
+         },
+         {
+            "name":"bill_depth_mm",
+            "datatype":"double",
+            "required":false,
+            "minimum":13,
+            "maximum":23,
+            "csvw-safe:privacyId":false,
+            "csvw-safe:nullableProportion":0.05
+         },
+         {
+            "name":"flipper_length_mm",
+            "datatype":"double",
+            "required":false,
+            "minimum":150,
+            "maximum":250,
+            "csvw-safe:privacyId":false,
+            "csvw-safe:nullableProportion":0.05,
+            "csvw-safe:publicPartitions":[
+               {
+                  "@type":"csvw-safe:PartitionKey",
+                  "csvw-safe:lowerBound":150,
+                  "csvw-safe:upperBound":200,
+                  "csvw-safe:lowerInclusive":true,
+                  "csvw-safe:upperInclusive":false
+               },
+               {
+                  "@type":"csvw-safe:PartitionKey",
+                  "csvw-safe:lowerBound":200,
+                  "csvw-safe:upperBound":250,
+                  "csvw-safe:lowerInclusive":true,
+                  "csvw-safe:upperInclusive":true
+               }
+            ]
+         },
+         {
+            "name":"body_mass_g",
+            "datatype":"double",
+            "required":false,
+            "minimum":2000,
+            "maximum":7000,
+            "csvw-safe:privacyId":false,
+            "csvw-safe:nullableProportion":0.05,
+            "csvw-safe:publicPartitions":[
+               {
+                  "@type":"csvw-safe:PartitionKey",
+                  "csvw-safe:lowerBound":2000,
+                  "csvw-safe:upperBound":4000,
+                  "csvw-safe:lowerInclusive":true,
+                  "csvw-safe:upperInclusive":true
+               },
+               {
+                  "@type":"csvw-safe:PartitionKey",
+                  "csvw-safe:lowerBound":4000,
+                  "csvw-safe:upperBound":5000,
+                  "csvw-safe:lowerInclusive":true,
+                  "csvw-safe:upperInclusive":true
+               },
+               {
+                  "@type":"csvw-safe:PartitionKey",
+                  "csvw-safe:lowerBound":5000,
+                  "csvw-safe:upperBound":7000,
+                  "csvw-safe:lowerInclusive":true,
+                  "csvw-safe:upperInclusive":true
+               }
+            ]
+         },
+         {
+            "name":"sex",
+            "datatype":"string",
+            "required":false,
+            "csvw-safe:privacyId":false,
+            "csvw-safe:nullableProportion":0.2,
+            "csvw-safe:maxNumPartitions":2,
+            "csvw-safe:maxInfluencedPartitions":1,
+            "csvw-safe:privacyContributions":[
+               {
+                  "@type":"csvw-safe:ContributionKey",
+                  "csvw-safe:privacyUnit":"row",
+                  "csvw-safe:maxContributions":2,
+                  "csvw-safe:maxInfluencedPartitions":1
+               }
+            ],
+            "csvw-safe:publicPartitions":[
+               {
+                  "@type":"csvw-safe:PartitionKey",
+                  "csvw-safe:partitionValue":"MALE"
+               },
+               {
+                  "@type":"csvw-safe:PartitionKey",
+                  "csvw-safe:partitionValue":"FEMALE"
+               }
+            ]
+         }
+      ]
+   },
+   "csvw-safe:AdditionalInformation":[
       {
-        "name": "island",
-        "datatype": "string",
-        "required": true,
-        "dp:privacyId": false,
-        "dp:nullableProportion": 0,
-        "dp:publicPartitions": [
-          {
-            "@type": "dp:PartitionKey",
-            "dp:partitionValue": "Torgersen",
-            "dp:maxPartitionLength": 50,
-            "dp:maxPartitionContribution": 1
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:partitionValue": "Biscoe"
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:partitionValue": "Dream"
-          }
-        ],
-        "dp:maxPartitionLength": 200,
-        "dp:maxNumPartitions": 3,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
-      },
-      {
-        "name": "species",
-        "datatype": "string",
-        "required": true,
-        "dp:privacyId": false,
-        "dp:nullableProportion": 0,
-        "dp:publicPartitions": [
-          {
-            "@type": "dp:PartitionKey",
-            "dp:partitionValue": "Adelie",
-            "dp:maxPartitionLength": 160,
-            "dp:maxPartitionContribution": 1
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:partitionValue": "Chinstrap",
-            "dp:maxPartitionLength": 70,
-            "dp:maxPartitionContribution": 1
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:partitionValue": "Gentoo",
-            "dp:maxPartitionLength": 130,
-            "dp:maxPartitionContribution": 1
-          }
-        ],
-        "dp:maxPartitionLength": 200,
-        "dp:maxNumPartitions": 3,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
-      },
-      {
-        "name": "bill_length_mm",
-        "datatype": "double",
-        "required": true,
-        "dp:privacyId": false,
-        "dp:nullableProportion": 0,
-        "minimum": 30,
-        "maximum": 65
-      },
-      {
-        "name": "bill_depth_mm",
-        "datatype": "double",
-        "required": false,
-        "dp:privacyId": false,
-        "dp:nullableProportion": 0.05,
-        "minimum": 13,
-        "maximum": 23
-      },
-      {
-        "name": "flipper_length_mm",
-        "datatype": "double",
-        "required": false,
-        "dp:privacyId": false,
-        "dp:nullableProportion": 0.05,
-        "minimum": 150,
-        "maximum": 250,
-        "dp:publicPartitions": [
-          {
-            "@type": "dp:PartitionKey",
-            "dp:lowerBound": 150,
-            "dp:upperBound": 200,
-            "dp:lowerInclusive": true,
-            "dp:upperInclusive": false,
-            "dp:maxPartitionLength": 100,
-            "dp:maxPartitionContribution": 1
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:lowerBound": 200,
-            "dp:upperBound": 250,
-            "dp:lowerInclusive": true,
-            "dp:upperInclusive": true,
-            "dp:maxPartitionLength": 100
-          }
-        ]
-      },
-      {
-        "name": "body_mass_g",
-        "datatype": "double",
-        "required": false,
-        "dp:privacyId": false,
-        "dp:nullableProportion": 0.05,
-        "minimum": 2000,
-        "maximum": 7000,
-        "dp:publicPartitions": [
-          {
-            "@type": "dp:PartitionKey",
-            "dp:lowerBound": 2000,
-            "dp:upperBound": 3000,
-            "dp:lowerInclusive": true,
-            "dp:upperInclusive": true,
-            "dp:maxPartitionLength": 100,
-            "dp:maxPartitionContribution": 1
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:lowerBound": 3000,
-            "dp:upperBound": 4000,
-            "dp:lowerInclusive": true,
-            "dp:upperInclusive": true,
-            "dp:maxPartitionLength": 100,
-            "dp:maxPartitionContribution": 1
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:lowerBound": 4000,
-            "dp:upperBound": 5000,
-            "dp:lowerInclusive": true,
-            "dp:upperInclusive": true,
-            "dp:maxPartitionLength": 100,
-            "dp:maxPartitionContribution": 1
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:lowerBound": 5000,
-            "dp:upperBound": 6000,
-            "dp:lowerInclusive": true,
-            "dp:upperInclusive": true,
-            "dp:maxPartitionLength": 100,
-            "dp:maxPartitionContribution": 1
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:lowerBound": 6000,
-            "dp:upperBound": 7000,
-            "dp:lowerInclusive": true,
-            "dp:upperInclusive": true,
-            "dp:maxPartitionLength": 100,
-            "dp:maxPartitionContribution": 1
-          }
-        ]
-      },
-      {
-        "name": "sex",
-        "datatype": "string",
-        "required": false,
-        "dp:privacyId": false,
-        "dp:nullableProportion": 0.2,
-        "dp:publicPartitions": [
-          {
-            "@type": "dp:PartitionKey",
-            "dp:partitionValue": "MALE",
-            "dp:maxPartitionLength": 200
-          },
-          {
-            "@type": "dp:PartitionKey",
-            "dp:partitionValue": "FEMALE",
-            "dp:maxPartitionLength": 200
-          }
-        ],
-        "dp:maxNumPartitions": 2,
-        "dp:maxPartitionLength": 400,
-        "dp:maxInfluencedPartitions": 1,
-        "dp:maxPartitionContribution": 2
+         "@type":"csvw-safe:ColumnGroup",
+         "csvw-safe:columns":[
+            "sex",
+            "island"
+         ],
+         "csvw-safe:maxNumPartitions":5,
+         "csvw-safe:maxInfluencedPartitions": 1,
+         "csvw-safe:privacyContributions":[
+            {
+               "@type":"csvw-safe:ContributionKey",
+               "csvw-safe:privacyUnit":"row",
+               "csvw-safe:maxContributions":2,
+               "csvw-safe:maxInfluencedPartitions":1
+            }
+         ],
+         "csvw-safe:publicPartitions":[
+            {
+               "@type":"csvw-safe:Partition",
+               "csvw-safe:components":{
+                  "sex":{
+                     "@type":"csvw-safe:PartitionKey",
+                     "csvw-safe:partitionValue":"MALE"
+                  },
+                  "island":{
+                     "@type":"csvw-safe:PartitionKey",
+                     "csvw-safe:partitionValue":"Torgersen"
+                  }
+               }
+            },
+            {
+               "@type":"csvw-safe:Partition",
+               "csvw-safe:components":{
+                  "sex":{
+                     "@type":"csvw-safe:PartitionKey",
+                     "csvw-safe:partitionValue":"FEMALE"
+                  },
+                  "island":{
+                     "@type":"csvw-safe:PartitionKey",
+                     "csvw-safe:partitionValue":"Torgersen"
+                  }
+               }
+            }
+         ]
       }
-    ]
-  },
-  "dp:columnGroups": [
-    {
-      "@type": "dp:ColumnGroup",
-      "dp:columns": [
-        "sex",
-        "island"
-      ],
-      "dp:maxNumPartitions": 6,
-      "dp:maxPartitionLength": 100,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 2,
-      "dp:publicPartitions": [
-        {
-          "@type": "dp:Partition",
-          "dp:components": {
-            "sex": {
-              "@type": "dp:PartitionKey",
-              "dp:partitionValue": "MALE"
-            },
-            "island": {
-              "@type": "dp:PartitionKey",
-              "dp:partitionValue": "Torgersen"
-            }
-          },
-          "dp:maxPartitionLength": 20,
-          "dp:maxPartitionContribution": 1
-        },
-        {
-          "@type": "dp:Partition",
-          "dp:components": {
-            "sex": {
-              "@type": "dp:PartitionKey",
-              "dp:partitionValue": "FEMALE"
-            },
-            "island": {
-              "@type": "dp:PartitionKey",
-              "dp:partitionValue": "Torgersen"
-            }
-          },
-          "dp:maxPartitionLength": 20,
-          "dp:maxPartitionContribution": 1
-        }
-      ]
-    },
-    {
-      "@type": "dp:ColumnGroup",
-      "dp:columns": [
-        "sex",
-        "flipper_length_mm"
-      ],
-      "dp:publicPartitions": [
-        {
-          "@type": "dp:Partition",
-          "dp:components": {
-            "sex": {
-              "@type": "dp:PartitionKey",
-              "dp:partitionValue": "MALE"
-            },
-            "flipper_length_mm": {
-              "@type": "dp:PartitionKey",
-              "dp:lowerBound": 150,
-              "dp:upperBound": 200,
-              "dp:lowerInclusive": true,
-              "dp:upperInclusive": false
-            }
-          },
-          "dp:maxPartitionLength": 50,
-          "dp:maxInfluencedPartitions": 1,
-          "dp:maxPartitionContribution": 2
-        },
-        {
-          "@type": "dp:Partition",
-          "dp:components": {
-            "sex": {
-              "@type": "dp:PartitionKey",
-              "dp:partitionValue": "FEMALE"
-            },
-            "flipper_length_mm": {
-              "@type": "dp:PartitionKey",
-              "dp:lowerBound": 150,
-              "dp:upperBound": 200,
-              "dp:lowerInclusive": true,
-              "dp:upperInclusive": false
-            }
-          },
-          "dp:maxPartitionLength": 50,
-          "dp:maxInfluencedPartitions": 1,
-          "dp:maxPartitionContribution": 2
-        }
-      ]
-    },
-    {
-      "@type": "dp:ColumnGroup",
-      "dp:columns": [
-        "species",
-        "sex"
-      ],
-      "dp:maxNumPartitions": 6,
-      "dp:maxPartitionLength": 100,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 2
-    },
-    {
-      "@type": "dp:ColumnGroup",
-      "dp:columns": [
-        "species",
-        "body_mass_g"
-      ],
-      "dp:maxNumPartitions": 6,
-      "dp:maxPartitionLength": 50,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 1
-    },
-    {
-      "@type": "dp:ColumnGroup",
-      "dp:columns": [
-        "species",
-        "island"
-      ],
-      "dp:maxNumPartitions": 6,
-      "dp:maxPartitionLength": 100,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 2
-    },
-    {
-      "@type": "dp:ColumnGroup",
-      "dp:columns": [
-        "species",
-        "island",
-        "sex"
-      ],
-      "dp:maxNumPartitions": 18,
-      "dp:maxPartitionLength": 50,
-      "dp:maxInfluencedPartitions": 1,
-      "dp:maxPartitionContribution": 2
-    }
-  ]
+   ]
 }

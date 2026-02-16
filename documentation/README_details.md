@@ -120,3 +120,24 @@ Table
             - components
                 - [PartitionKey]
             - Partition Properties
+
+
+A grouping scope is determined by the grouping key of the query:
+| Query type                | Governing scope           |
+| ------------------------- | ------------------------- |
+| No GROUP BY               | table                     |
+| GROUP BY column           | that column               |
+| GROUP BY multiple columns | corresponding ColumnGroup |
+| Histogram over partitions | partition set             |
+
+Implementations MUST select the nearest parent Groupable object.
+
+For a query grouped by key G: Contribution bounds must be taken from the Groupable object representing G.
+If not present, bounds are inherited from the nearest parent scope.
+Order: 
+```
+Partition → ColumnGroup → Column → Table
+```
+
+
+

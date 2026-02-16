@@ -59,35 +59,186 @@ In CSVW-SAFE, there are 4 main objects on which the properties apply:
 | `csvw-safe:ColumnGroup` | Multi-column grouping key      |
 | `csvw-safe:Partition`   | A possible group of rows       |
 
-- `csvw:Table` and `csvw:Column` are tables and columns as described in `csvw`.
+- `csvw:Table`  are tables as described in `csvw`. A `csvw:Table` contains a `csvw:TableSchema` (with a list of `csvw:Columns`) and optionnaly a `csvw-safe:AdditionalInformation` (with a list of `csvw-safe:ColumnGroup` and their partitions).
+- `csvw:Column` are columns as described in `csvw`.
 - `csvw-safe:ColumnGroup` represents a group of columns. It is useful to describe contributions and partitions after a groupby on a group of columns.
-- A `csvw-safe:Groupable:` is any object that can produce partitions when used in a grouping operation. It defines a partitioning space. `csvw:Column` and `csvw-safe:ColumnGroup` are `Groupable`.
-- A `csvw-safe:Groupable:` does not define partitions unless `csvw-safe:publicPartitions` is declared.
-- If `csvw-safe:publicPartitions` is declared, it contains a list of `csvw-safe:Partition`.
+- `csvw:Column` and `csvw-safe:ColumnGroup` can have partitions. If `csvw-safe:publicPartitions` is declared, it contains a list of `csvw-safe:Partition`.
 - A `csvw-safe:Partition` represents one possible group of rows. For details on `csvw-safe:Partition`, see point 2.4 below.
 CSVW-SAFE structural and contribution properties apply on these four main classes. 
 
 ![Overview](images/csvw-safe_structure.png)
 
-A grouping scope is determined by the grouping key of the query:
-| Query type                | Governing scope           |
-| ------------------------- | ------------------------- |
-| No GROUP BY               | table                     |
-| GROUP BY column           | that column               |
-| GROUP BY multiple columns | corresponding ColumnGroup |
-| Histogram over partitions | partition set             |
 
-Implementations MUST select the nearest parent Groupable object.
+## 2. Differential Privacy Extensions
 
-For a query grouped by key G: Contribution bounds must be taken from the Groupable object representing G.
-If not present, bounds are inherited from the nearest parent scope.
-Order: 
+A privacy unit defines dataset adjacency. Two datasets are neighbours if and only if all rows associated with one value of the privacy unit are added or removed.
+
+CSVW-SAFE assumes bounded user-level differential privacy where neighboring datasets differ by all rows associated with one or more privacy units. 
+When multiple privacy units exist, guarantees apply independently per privacy unit and mechanisms must be parameterized by the chosen privacy unit. DP guarantees apply per declared unit independently.
+
+Partitions referenced in contribution bounds are defined relative to a grouping space, not the physical table.
+
+A privacy unit is an identifier representing an individual or entity whose data must be protected (e.g. `patient_id`, `user_id`, `hospital_id`).
+
+Contribution bounds describe how much influence one privacy unit can have on the output.
+
+### 2.1 All Levels
+
+We define 6 new terms that can be used to infer DP bounds. 
+
+| Name                         | Table    | Partition | Column         | ColumnGroup    |
+|------------------------------|---------:|----------:|---------------:|----------------|
+| `csvw-safe:maxContributions` | Yes (C)  | Yes       | No             | No             |
+| `csvw-safe:maxInfluencedPartitions`| 1  | 1         | Yes            | Yes            |
+| `csvw-safe:maxLength`        | Yes (C)  | Yes       | No             | No             |
+| `csvw-safe:publicLength`     | Yes      | Yes       | No             | No             |
+| `csvw-safe:maxNumPartitions` | No       | No        | Yes            | Yes            |
+| `csvw-safe:publicPartitions` | No       | No        | Yes            | Yes            |
+
+(C): means compulsory to apply DP. The rest is optional and will avoid wasting budget on public information and avoir overstimating sensitivity.
+
+`csvw-safe:maxContributions` ($l_\infty$) is the maximum number of rows belonging to the same privacy unit within a single partition.
+- At the table level, it is the maximum number of rows a privacy unit may contribute to the entire dataset. This bound governs sensitivity of queries without grouping. It is compulsory to apply DP.
+- At the partition level, it is the maximum number of rows in the partition which concern the privacy unit.
+
+`csvw-safe:maxInfluencedPartitions` ($l_0$) is the maximum number of partitions in which the same privacy unit may appear. It is evaluated relative to the grouping key (Column or ColumnGroup) used in the query.
+- At the table level, it does not make sense and is 1.
+- At the partition level, it does not make sense and is 1.
+- At the column level, it is the number of partitions of the column (after a groupy) that can be affected by an individual.
+- At the multiple column level, it is the number of partitions of the group of columns (after a groupby) that can be affected by an individual. In the worst case, the product of the number of partitions of all individual columns.
+
+**Note**:These parameters allow systems to determine the maximum number of rows that may change if one privacy unit is added or removed. 
+The total number of rows a privacy unit may influence $l_1 = l_0 \cdot l_\infty$ is not defined as a new word as it depends on the query and $l_\infty$ and $l_0$.
+
+`csvw-safe:maxLength` is the maximum theoretical number of rows. Is also enables to compute additional noise requirements in case of overflow when doing some operations. See reference: [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708).
+- At the table level, it is the maximum theoretical number of rows in the table. It is compulsory to apply DP.
+- At the partition level, it is the maximum theoretical number of rows in the partition.
+
+`csvw-safe:publicLength` is the exact number of rows if it is known (if it is public information). This is only safe if the length is invariant across neighbouring datasets (invariant under the adjacency relation). If given, it can save budget for some operations. For instance, for a mean, all the budget is spent for the sum and then divided by publicLength instead of splitting the budget in half for a count and a sum.
+- At the table level, it is the number of rows in the table. 
+- At the partition level, it is the number of rows in the partition.
+- It does not make sense at `csvw-safe:Column` and `csvw-safe:ColumnGroup` level as it is the same as at `csvw:Table` level.
+
+`csvw-safe:maxNumPartitions` is the maximum number of partitions after a groupby operations on a `csvw-safe:Column` or a `csvw-safe:ColumnGroup`.
+- At the column level, it is the number of different categories in the column.
+- At the group of columns level, it is the number of different partitions that can be produced by grouping multiple columns (cartesian product of the partitions of each column in the simplest case).
+If `csvw-safe:maxInfluencedPartitions` is not public, then `csvw-safe:maxNumPartitions` can be used as an upper bound, if known and useful to reduce sensitivity.
+
+`csvw-safe:publicPartitions` is the list of known public partitions in a column or group of column. They are made of `csvw-safe:Partition` (see section 2.3 on partitions level structural properties).
+- At the column level, it is the list of public `csvw-safe:Partition` of a given column.
+- At the group of columns level, it is the list of public `csvw-safe:Partition` produced by grouping multiple columns.
+This enables to avoid spending budget (delta) to release partitions name if already public.
+
+Along with `csvw-safe:publicPartitions`, the term `csvw-safe:exhaustivePartitions` is used. If all partitions are public and given in `csvw-safe:publicPartitions`, then it is True, otherwise, it is False. `csvw-safe:exhaustivePartitions` applies to `csvw-safe:Column` and `csvw-safe:ColumnGroup` objects. Null values form an implicit partition unless prohibited by `required=true`.
+
+
+### 2.2 Contribution with respect to an privacy unit
+
+`csvw-safe:maxContributions` ($l_\infty$) and `csvw-safe:maxInfluencedPartitions` ($l_0$) are defined wrt to a privacy unit.
+
+A `csvw-safe:ContributionKey` defines contribution bounds for a specific privacy unit and determines the adjacency relation used for differential privacy guarantees.
+
+If there is only one privacy unit, then it can be defined at the top level *"csvw-safe:privacyUnit": "patient_id"* and then,
+At column level `csvw-safe:maxInfluencedPartitions`:
 ```
-Partition → ColumnGroup → Column → Table
+{
+  "@type": "csvw:Column",
+  "name": "disease",
+  "csvw-safe:maxInfluencedPartitions": 10
+}
+```
+and at partition level `csvw-safe:maxContributions`:
+```
+"csvw-safe:publicPartitions":[
+   {
+      "@type":"csvw-safe:Partition",
+      "csvw-safe:partitionValue":"Adelie",
+      "csvw-safe:maxContributions": 1
+   },
+   {
+      "@type":"csvw-safe:Partition",
+      "csvw-safe:partitionValue":"Chinstrap",
+      "csvw-safe:maxContributions": 1
+   }
+]
 ```
 
 
-## 2. Structural Modeling Extensions
+However, if there are two privacy units *patient_id* and *hospital_id*, then they must be defined for each individually.
+
+At column level `csvw-safe:maxInfluencedPartitions`:
+```
+{
+  "@type": "csvw:Column",
+  "name": "disease",
+  "csvw-safe:PrivacyContributions": [
+    {
+      "@type": "csvw-safe:ContributionKey",
+      "csvw-safe:privacyUnit": "patient_id",
+      "csvw-safe:maxInfluencedPartitions": 10,
+    },
+    {
+      "@type": "csvw-safe:ContributionKey",
+      "csvw-safe:privacyUnit": "hospital_id",
+      "csvw-safe:maxInfluencedPartitions": 2,
+    }
+  ]
+}
+```
+and at partition level `csvw-safe:maxContributions`:
+```
+"csvw-safe:publicPartitions":[
+   {
+      "@type":"csvw-safe:Partition",
+      "csvw-safe:partitionValue":"Adelie",
+      "csvw-safe:PrivacyContributions": [
+        {
+          "@type": "csvw-safe:ContributionKey",
+          "csvw-safe:privacyUnit": "patient_id",
+          "csvw-safe:maxContributions": 1,
+        },
+        {
+          "@type": "csvw-safe:ContributionKey",
+          "csvw-safe:privacyUnit": "hospital_id",
+          "csvw-safe:maxContributions": 2,
+        }
+      ]
+   },
+   {
+      "@type":"csvw-safe:Partition",
+      "csvw-safe:partitionValue":"Chinstrap",
+      "csvw-safe:PrivacyContributions": [
+        {
+          "@type": "csvw-safe:ContributionKey",
+          "csvw-safe:privacyUnit": "patient_id",
+          "csvw-safe:maxContributions": 1,
+        },
+        {
+          "@type": "csvw-safe:ContributionKey",
+          "csvw-safe:privacyUnit": "hospital_id",
+          "csvw-safe:maxContributions": 1,
+        }
+      ]
+   }
+]
+```
+
+### 2.3 Minimum Metadata for Worst-Case Sensitivity
+
+Some fields are compulsory:
+- Table-level (for all privacy unit)
+    - `csvw-safe:maxLength` (see [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708))
+    - `csvw-safe:maxContributions` (for sensitivity)
+- Continuous columns when column participates in numeric aggregation:
+    - `minimum` (for sensitivity)
+    - `maximum` (for sensitivity)
+
+Declaring bounds at grouping or partition level is optional but recommended.
+Providing tighter bounds reduces worst-case sensitivity and thus allows lower noise addition under a fixed privacy budget.
+
+
+
+## 3. Structural Modeling Extensions
 
 Structural metadata supports:
 
@@ -97,40 +248,7 @@ Structural metadata supports:
 All standard CSVW column properties (`datatype`, `format`, `minimum`, `maximum`, `required`, `default`) are re-used as is.
 In particular, for continuous columns, `minimum` and `maximum` are compusory to apply DP.
 
-### 2.1 All Levels
-
-| Name                     | Table | Partition | Column (fixed) | Groupable object       |
-|--------------------------|------:|----------:|---------------:|------------------------|
-| maxLength                | Yes   | Yes       | No             | Yes**                  |
-| publicLength             | Yes   | Yes       | No             | Yes***                 |
-| maxNumPartitions         | No    | No        | Yes            | Yes                    |
-| publicPartitions         | No    | No        | Yes            | Yes                    |
-
-Yes**/*: If given, it is interpreted as a applied on all resulting partitions.
-
-`csvw-safe:maxLength` is the maximum theoretical number of rows. Is also enables to compute additional noise requirements in case of overflow when doing some operations. See reference: [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708).
-- At the table level, it is the maximum theoretical number of rows in the table. It is compulsory to apply DP.
-- At the partition level, it is the maximum theoretical number of rows in the partition.
-- If given at the groupable level, it is an upper bound on the number of rows in any resulting partition. (Yes**)
-
-`csvw-safe:publicLength` is the exact number of rows if it is known (if it is public information). This is only safe if the length is invariant across neighbouring datasets (invariant under the adjacency relation). If given, it can save budget for some operations. For instance, for a mean, all the budget is spent for the sum and then divided by publicLength instead of splitting the budget in half for a count and a sum.
-- At the table level, it is the number of rows in the table. 
-- At the partition level, it is the number of rows in the partition.
-- If given at the groupable level, it means it is the number or rows of this value for all partitions (all partitions have this same length - be careful, this is rarely true). (Yes***)
-
-`csvw-safe:maxNumPartitions` is the maximum number of partitions after a groupby operations. It applies to Groupable objects.
-- At the column level, it is the number of different categories in the column.
-- At the group of columns level, it is the number of different partitions that can be produced by grouping multiple columns (cartesian product of the partitions of each column in the simplest case).
-
-`csvw-safe:publicPartitions` is the known public partitions in a column or group of column. They are made of `csvw-safe:Partition` (see section 2.3 on partitions level structural properties).
-- At the column level, it is the list of public `csvw-safe:Partition` of a given column.
-- At the group of columns level, it is the list of public `csvw-safe:Partition` produced by grouping multiple columns.
-
-If all partitions are public and given in `csvw-safe:publicPartitions`, then `csvw-safe:exhaustivePartitions` is True, otherwise, it is False. `csvw-safe:exhaustivePartitions` applies to `csvw-safe:Groupable` objects.
-Null values form an implicit partition unless prohibited by `required=true`.
-
-
-### 2.2 Column-Level Structural Properties
+### 3.1 Column-Level Structural Properties
 
 For structural purposes, other fields exist on the `csvw:Column`:
 
@@ -151,7 +269,7 @@ For structural purposes, other fields exist on the `csvw:Column`:
 - maxNumPartitions describes grouping universe size but does not affect sensitivity unless combined with DP bounds.
 - multiple columns may have `csvw-safe:privacyId=true`. In these cases, DP contributions (section 3) must be provided per privacy unit.
 
-### 2.3 ColumnGroup-Level Structural Properties
+### 3.2 ColumnGroup-Level Structural Properties
 `csvw-safe:ColumnGroup` represents a grouping key composed of multiple columns
 
 | Property            | Meaning                             |
@@ -162,7 +280,7 @@ If a `csvw-safe:ColumnGroup` is declared, all referenced columns must exist in t
 
 A `ColumnGroup` defines a joint grouping space. It does not automatically enumerate all combinations; explicit partitions may optionally restrict this space (see Partitions-Level below).
 
-### 2.4 Partition-Level Structural Properties
+### 3.3 Partition-Level Structural Properties
 
 A `csvw-safe:publicPartitions` is a list of `csvw-safe:Partition` based on
 - A categorical value
@@ -278,101 +396,7 @@ Similarly for a `csvw:ColumnGroup` with categorical and continuous data, the par
 ```
 
 
-## 3. Differential Privacy Extensions
-
-A privacy unit defines dataset adjacency. Two datasets are neighbours if and only if all rows associated with one value of the privacy unit are added or removed.
-
-CSVW-SAFE assumes bounded user-level differential privacy where neighboring datasets differ by all rows associated with one or more privacy units. 
-When multiple privacy units exist, guarantees apply independently per privacy unit and mechanisms must be parameterized by the chosen privacy unit. DP guarantees apply per declared unit independently.
-
-Partitions referenced in contribution bounds are defined relative to a grouping space, not the physical table.
-
-A privacy unit is an identifier representing an individual or entity whose data must be protected (e.g. `patient_id`, `user_id`, `hospital_id`).
-
-Contribution bounds describe how much influence one privacy unit can have on the output.
-
-### 3.1 Contribution Concepts
-
-For a given privacy unit, three quantities are tracked:
-| Symbol     | Meaning                       | Metadata property                   |
-| ---------- | ----------------------------- | ----------------------------------- |
-| $l_\infty$ | maximum rows per partition    | `csvw-safe:maxContributions`        |
-| $l_0$      | number of partitions affected | `csvw-safe:maxInfluencedPartitions` |
-| $l_1$      | total rows affected           | derived: $l_1 = l_0 \cdot l_\infty$ |
-
-These parameters allow systems to determine the maximum number of rows that may change if one privacy unit is added or removed.
-The total number of rows a privacy unit may influence is: $l_1=l_0 * l_\infty$.
-
-
-### 3.1 All Levels Privacy Fields
-
-These properties must appear at table level and are optional at partition and groupable object level.
-
-| Name                                        | Table | Partition | Column (fixed) | Groupable object       |
-|---------------------------------------------|------:|----------:|---------------:|------------------------|
-| `csvw-safe:contributions`                   | Yes   | Yes       | No             | Yes**                  |
-
-Yes**/*: If given, it is interpreted as a applied on all resulting partitions.
-
-
-A `csvw-safe:ContributionKey` defines contribution bounds for a specific privacy unit and determines the adjacency relation used for differential privacy guarantees.
-
-Two datasets are considered neighbors if they differ only in rows belonging to a single privacy unit, bounded by the declared contribution parameters.
-| Name                                | Table | Partition | Column (fixed) | Groupable object       |
-|-------------------------------------|------:|----------:|---------------:|------------------------|
-| `csvw-safe:maxContributions`        | Yes   | Yes       | No             | Yes**                  |
-| `csvw-safe:maxInfluencedPartitions` | No    | No        | No             | Yes (grouping concept) |
-
-`csvw-safe:maxContributions` is the maximum number of rows belonging to the same privacy unit within a single partition.
-- At the table level, it is the maximum number of rows a privacy unit may contribute to the entire dataset. This bound governs sensitivity of queries without grouping. It is compulsory to apply DP.
-- At the partition level, it is the maximum number of rows in the partition which concern the privacy unit.
-- If given at the groupable level, it is an upper bound on the maxiumum number of rows which concern the privacy unit in any resulting partition. When grouping is used, the governing bound is the groupable scope. (Yes**)
-
-`csvw-safe:maxInfluencedPartitions` is the maximum number of partitions in which the same privacy unit may appear. It is evaluated relative to the grouping key used in the query; different grouping keys induce different adjacency partitions.
-- At the groupable level, it is the maximum number of partitions a privacy unit can affect.
-
-
-#### 3.2 Contribution properties at privacy unit level
-
-Contribution bounds must be associated with a specific privacy unit.
-If a dataset contains multiple privacy units, each must define its own bounds.
-
-```
-{
-  "@type": "csvw:Column",
-  "name": "disease",
-  "csvw-safe:contributions": [
-    {
-      "@type": "csvw-safe:ContributionKey",
-      "csvw-safe:privacyUnit": "patient_id",
-      "csvw-safe:maxInfluencedPartitions": 10,
-      "csvw-safe:maxContributions": 20
-    },
-    {
-      "@type": "csvw-safe:ContributionKey",
-      "csvw-safe:privacyUnit": "hospital_id",
-      "csvw-safe:maxInfluencedPartitions": 2,
-      "csvw-safe:maxContributions": 20
-    }
-  ]
-}
-```
-
-#### 3.3 Minimum Metadata for Worst-Case Sensitivity
-
-Some fields are compulsory:
-- Table-level (for all privacy unit)
-    - `csvw-safe:maxLength` (see [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708))
-    - `csvw-safe:maxContributions` (for sensitivity)
-- Continuous columns when column participates in numeric aggregation:
-    - `minimum` (for sensitivity)
-    - `maximum` (for sensitivity)
-
-Declaring bounds at grouping or partition level is optional but recommended.
-Providing tighter bounds reduces worst-case sensitivity and thus allows lower noise addition under a fixed privacy budget.
-
 ---
-
 
 
 ## 4. Constraints
