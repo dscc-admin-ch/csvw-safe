@@ -45,34 +45,159 @@ See:
 * **JSON-LD context:** `csvw-safe-context.jsonld`
 
 
-In CSVW-SAFE, there are 4 main objects on which the properties apply:
-| Class                   | Purpose                        |
-| ----------------------- | ------------------------------ |
-| `csvw:Table`            | Dataset-level guarantees       |
-| `csvw:Column`           | Column schema and grouping key |
-| `csvw-safe:GroupingKey` | Multi-column grouping key      |
-| `csvw-safe:Partition`   | A possible region of rows in the data domain |
+### 1.1 Main classes
 
-- `csvw:Table`  are tables as described in `csvw`. A `csvw:Table` contains a `csvw:TableSchema` (with a list of `csvw:Columns`) and optionnaly a `csvw-safe:AdditionalInformation` (with a list of `csvw-safe:ColumnGroup` and their partitions).
-- `csvw:Column` are columns as described in `csvw`.
-- `csvw-safe:GroupingKey` defines a grouping space on which contribution bounds apply. A grouping key is not part of the table schema and only needs to be declared when tighter bounds than per-column bounds are known. If a GroupingKey is not declared, systems MUST assume the grouping is independent across columns and derive bounds from per-column metadata using worst-case composition.
-- `csvw:Column` and `csvw-safe:ColumnGroup` can have partitions. If `csvw-safe:Partitions` is declared, it contains a list of `csvw-safe:Partition`.
-- A `csvw-safe:Partition` represents a group of rows the grouping region defined by a column or a group of columns. For details on `csvw-safe:Partition`, see point 2.4 below.
+CSVW-SAFE uses four core objects on which structural and privacy properties apply:
 
-CSVW-SAFE structural and contribution properties apply on these four main classes. 
+| Class                   | Purpose                                                 |
+| ----------------------- | ------------------------------------------------------- |
+| `csvw:Table`            | Dataset-level guarantees and global contribution bounds |
+| `csvw:Column`           | Column schema and single-column grouping space          |
+| `csvw-safe:GroupingKey` | Multi-column grouping space                             |
+| `csvw-safe:Partition`   | A region of the value domain (not the rows themselves)  |
 
+- `csvw:Table` are tables as described in `csvw`. A `csvw:Table` contains a `csvw:TableSchema` (with a list of `csvw:Columns`) and optionally a `csvw-safe:AdditionalInformation` (with a list of `csvw-safe:ColumnGroup` and their partitions).
+
+- `csvw:Column` are columns as described in `csvw`. It also defines a single column grouping space.
+
+- `csvw-safe:GroupingKey` defines a multi-column grouping space (not part of schema).It represents the structure of a potential GROUP BY operation. There are two possible types:
+- Single-column grouping → defined directly on a csvw:Column
+- Multi-column grouping → defined using csvw-safe:GroupingKey.
+If no GroupingKey is declared, systems must assume independence across columns and bounds are derived using worst-case composition (sensitivity may be overestimated).
+As a result `csvw:Column` and `csvw-safe:GroupingKey` may declare public partitions. Each declared partition is a `csvw-safe:Partition`.
+
+- A `csvw-safe:Partition` is a publicly defined region of the value domain. It is a structural element defined from public attributes and independent of whether rows exist in that region. For details on `csvw-safe:Partition`, see point 2.4 below.
+    - A partition is a region of the value domain defined only from public information. A partition may exist even if no rows belong to it.
+    - A group is the set of rows from a specific dataset instance that fall inside that region. A group only exists when rows actually fall into that partition.
+
+#### Example
+
+Example with a penguin dataset example.
+We have a `csvw:Table` with 4 rows and 3 `csvw:Columns`:
+| penguin_id | species   | island    | flipper_length_mm |
+| ---------- | --------- | --------- | ----------------- |
+| 1          | Adelie    | Torgersen | 180               |
+| 2          | Adelie    | Biscoe    | 195               |
+| 3          | Chinstrap | Dream     | 200               |
+| 4          | Gentoo    | Biscoe    | 210               |
+
+Some columns have public partitions: `csvw-safe:Partitions`
+- `csvw:Column` species → categorical `csvw-safe:Partition` by species value: Adelie, Chinstrap, Gentoo.
+- `csvw:Column` island → categorical `csvw-safe:Partition` by island value: Torgersen, Biscoe, Dream.
+- `csvw:Column` flipper_length_mm → numeric `csvw-safe:Partition`: [150–200], [200–250] (for instance).
+
+with the JSON
+```
+{
+  "@type": "csvw:Table",
+  "name": "penguins",
+  "csvw:tableSchema": {
+    "columns": [
+      {
+        "@type": "csvw:Column",
+        "name": "penguin_id",
+        "datatype": "integer"
+      },
+      {
+        "@type": "csvw:Column",
+        "name": "species",
+        "datatype": "string",
+        "csvw-safe:public.partitions": [
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Adelie" }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Chinstrap" }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Gentoo" }}
+        ]
+      },
+      {
+        "@type": "csvw:Column",
+        "name": "island",
+        "datatype": "string",
+        "csvw-safe:public.partitions": [
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Torgersen" }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Biscoe" }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Dream" }}
+        ]
+      },
+      {
+        "@type": "csvw:Column",
+        "name": "flipper_length_mm",
+        "datatype": "double",
+        "minimum": 150,
+        "maximum": 250,
+        "csvw-safe:public.partitions": [
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "lowerBound": 150, "upperBound": 200 }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "lowerBound": 200, "upperBound": 250 }}
+        ]
+      }
+    ]
+  }
+}
+```
+A `csvw-safe:GroupingKey` would by for instance based on columns ["species", "island"]. And the resulting partitions would be
+- `csvw-safe:GroupingKey` ["species", "island"] → categorical `csvw-safe:Partition` by species and island values: (Adelie, Torgerson), (Adelie, Biscoe), (Chinstrap, Dream), (Gentoo, Biscoe).
+- `csvw-safe:GroupingKey` ["species", "flipper_length_mm"] → `csvw-safe:Partition` by species and island values: (Adelie, [150–200]), (Chinstrap, [150–200]), (Gentoo, [200–250]).
+
+Adding to the JSON
+```
+{
+  "@type": "csvw:Table",
+  "name": "penguins",
+  "csvw:tableSchema": {...},
+  "csvw-safe:additionalInformation": [
+    {
+      "@type": "csvw-safe:GroupingKey",
+      "csvw-safe:columns": ["species", "island"],
+      "csvw-safe:public.partitions": [
+        {
+          "@type": "csvw-safe:Partition",
+          "csvw-safe:predicate": {
+            "components": {
+              "species": { "partitionValue": "Adelie" },
+              "island": { "partitionValue": "Torgersen" }
+            }
+          }
+        },
+        {
+          "@type": "csvw-safe:Partition",
+          "csvw-safe:predicate": {
+            "components": {
+              "species": { "partitionValue": "Adelie" },
+              "island": { "partitionValue": "Biscoe" }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 1.2 Type of Properties
 ![Overview](images/csvw-safe_structure.png)
 
-The properties belong to two categories:
-| Aspect                 | Describes                                     | Name               | 
-| ---------------------- | --------------------------------------------- | ------------------ |
-| Public invariant facts | true structural facts about the data universe | `csvw-safe:public.` |
-| Model assumptions      | Used to compute worst-case DP sensitivity     | `csvw-safe:bounds.`  |
-| Synthetic data modelling |  Synthetic or dummy closer to original      | `csvw-safe:synth.`  |
+CSVW-SAFE properties belong to three categories:
+| Aspect                                 | Describes                                             | Namespace prefix    |
+| -------------------------------------- | ----------------------------------------------------- | ------------------- |
+| **Public invariant facts**             | True structural facts about the data universe         | `csvw-safe:public.` |
+| **Model assumptions (privacy bounds)** | Worst-case assumptions used to compute DP sensitivity | `csvw-safe:bounds.` |
+| **Synthetic modeling hints**           | Information for generating realistic dummy data       | `csvw-safe:synth.`  |
 
+These properties should only be in the metadata if their release does not consume privacy budget.
+The should not depend on the observed dataset instance (not specific empirical observations) and should hold for all neighbouring datasets.
 
-`csvw-safe:public.` statements hold for every dataset in the adjacency relation. They may be released without consuming privacy budget and therefore must hold for all neighbouring datasets.
-`csvw-safe:bounds.` must hold for all datasets consistent with the declared public constraints, regardless of observed data.
+**Public invariant facts**: `csvw-safe:public.`
+These describe facts that are true for every dataset in the adjacency relation.
+If a statement is declared as `csvw-safe:public.`, it is assumed to be universally valid and safe to disclose.
+
+**Model assumptions**: `csvw-safe:bounds.`
+A privacy unit identifies the entity whose participation defines dataset adjacency. Two datasets are neighbours if and only if all rows associated with one privacy unit are added or removed.
+`csvw-safe:bounds.` define worst-case contribution bounds required for DP calibration (maximum influence one privacy unit may have on a query result).
+They must hold for all datasets consistent with the declared public constraints and are guarantees about the possible universe of neighbouring datasets.
+
+**Synthetic modeling hints**: `csvw-safe:synth.`
+These properties are optional and serve dummy data generation.
+
+They improve the realism of synthetic datasetsa and dummy dataset but should not affect DP guarantees. They may be approximate proportions.
 
 ---
 
@@ -91,16 +216,28 @@ Contribution bounds describe how much influence one privacy unit can have on the
 
 We define 6 new terms that can be used to infer DP bounds. 
 
-| Name                                     | Table    | Partition | Column         | GroupingKey    |
-|------------------------------------------|---------:|----------:|---------------:|----------------|
-| `csvw-safe:bounds.maxContributions`       | Yes (C)  | Yes       | No             | No             |
-| `csvw-safe:bounds.maxGroupsPerUnit`       | 1        | 1         | Yes            | Yes            |
-| `csvw-safe:bounds.maxLength`              | Yes (C)  | Yes       | No             | No             |
-| `csvw-safe:bounds.maxNumPartitions`       | No       | No        | Yes            | Yes            |
-| `csvw-safe:public.length`                | Yes      | Yes       | No             | No             |
-| `csvw-safe:public.partitions`            | No       | No        | Yes            | Yes            |
+| Term                      | TL;DR                                                                  |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `bounds.maxContributions` | Max rows a privacy unit can contribute in a region (l∞)                |
+| `bounds.maxGroupsPerUnit` | Max groups / partitions a privacy unit can appear in (l0)              |
+| `bounds.maxLength`        | Max rows in table / partition (theoretical upper bound)                |
+| `bounds.maxNumPartitions` | Max number of non-empty output partitions for a column or grouping key |
+| `public.length`           | Exact number of rows if public                                         |
+| `public.partitions`       | List of known partitions (publicly known regions)                      |
 
-(C): means compulsory to apply DP. The rest is optional and will avoid wasting budget on public information and avoir overstimating sensitivity.
+They can be properties of different classes:
+
+| Name                                     | Table           | Partition | Column         | GroupingKey    |
+|------------------------------------------|----------------:|----------:|---------------:|----------------|
+| `csvw-safe:bounds.maxContributions`      | Yes (required)  | Yes       | No             | No             |
+| `csvw-safe:bounds.maxGroupsPerUnit`      | 1               | 1         | Yes            | Yes            |
+| `csvw-safe:bounds.maxLength`             | Yes (required)  | Yes       | No             | No             |
+| `csvw-safe:bounds.maxNumPartitions`      | No              | No        | Yes            | Yes            |
+| `csvw-safe:public.length`                | Yes             | Yes       | No             | No             |
+| `csvw-safe:public.partitions`            | No              | No        | Yes            | Yes            |
+
+Required values are mandatory for DP calibration.
+Others improve tightness and avoid unnecessary noise.
 
 `csvw-safe:bounds.maxContributions` ($l_\infty$) maximum number of rows contributed by a single privacy unit to any one grouping region.
 - At the table level, it is the maximum number of rows a privacy unit may contribute to the entire dataset. This bound governs sensitivity of queries without grouping. It is compulsory to apply DP.
@@ -115,19 +252,19 @@ We define 6 new terms that can be used to infer DP bounds.
 **Note**:These parameters allow systems to determine the maximum number of rows that may change if one privacy unit is added or removed. 
 The total number of rows a privacy unit may influence $l_1 = l_0 \cdot l_\infty$ is not defined as a new word as it depends on the query and $l_\infty$ and $l_0$.
 
-`csvw-safe:bounds.maxLength` is the maximum theoretical number of rows. Is also enables to compute additional noise requirements in case of overflow when doing some operations. See reference: [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708).
+`csvw-safe:bounds.maxLength` is the maximum theoretical number of rows. It also enables to compute additional noise requirements in case of overflow when doing some operations. See reference: [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708).
 - At the table level, it is the maximum theoretical number of rows in the table. It is compulsory to apply DP.
 - At the partition level, it is the maximum theoretical number of rows in the partition.
 
-`csvw-safe:public.length` is the exact number of rows if it is known (if it is public information). If given, it allows exact denominator in sensitivity computation. For instance, for a mean, all the budget is spent for the sum and then divided by publicLength instead of splitting the budget in half for a count and a sum.
+`csvw-safe:public.length` is the exact number of rows if it is known (if it is public information). If given, it allows exact denominator in sensitivity computation. For instance, for a mean, all the budget is spent for the sum and then divided by publicLength instead of splitting the budget in half for a count and a sum. length is invariant across neighbors.
 - At the table level, it is the number of rows in the table. 
 - At the partition level, it is the number of rows in the partition.
 - It does not make sense at `csvw-safe:Column` and `csvw-safe:GroupingKey` level as it is the same as at `csvw:Table` level.
 
-`csvw-safe:bounds.maxNumPartitions` refers to the maximum number of non-empty groups that may appear in a query result, not the size of the value domain. (TODO)
-- At the column level, it is the number of different categories in the column.
+`csvw-safe:bounds.maxNumPartitions` refers to the maximum number of non-empty groups that may appear in a query result, not the size of the value domain.
+- At the column level, it is the number of different categories in the column. For instance, a column with 3 categories has `maxNumPartitions=3`.
 - At the group of columns level, it is the number of different partitions that can be produced by grouping multiple columns (cartesian product of the partitions of each column in the simplest case).
-If `public.partitions` is declared and `exhaustivePartitions=true`, then maxNumPartitions equals the number of declared partitions. Otherwise, `maxNumPartitions` must be explicitly declared. TODO: is it csvw-safe:synth ???
+If `public.partitions` is declared and `exhaustivePartitions=true`, then maxNumPartitions equals the number of declared partitions. Otherwise, `maxNumPartitions` must be explicitly declared.
 
 `csvw-safe:public.partitions` is the list of known public partitions in a column or group of column. They are made of `csvw-safe:Partition` (see section 2.3 on partitions level structural properties).
 - At the column level, it is the list of public `csvw-safe:Partition` of a given column.
@@ -135,6 +272,104 @@ If `public.partitions` is declared and `exhaustivePartitions=true`, then maxNumP
 This enables to avoid spending budget (delta) to release partitions name if already public.
 
 Along with `csvw-safe:public.partitions`, the term `csvw-safe:public.exhaustivePartitions` is used. If all partitions are public and given in `csvw-safe:public.partitions`, then it is True, otherwise, it is False. `csvw-safe:public.exhaustivePartitions` applies to `csvw-safe:Column` and `csvw-safe:GroupingKey` objects. Null values form an implicit partition unless prohibited by `required=true`.
+
+This is an example when there is only one known privacy unit: penguin_id.
+
+```
+{
+  "@type": "csvw:Table",
+  "name": "penguins",
+
+  "csvw-safe:public.privacyUnit": "penguin_id",
+
+  "csvw-safe:bounds.maxContributions": 3,
+  "csvw-safe:bounds.maxLength": 1000,
+  "csvw-safe:public.length": 342,
+
+  "csvw:tableSchema": {
+    "columns": [
+
+      {
+        "@type": "csvw:Column",
+        "name": "species",
+        "datatype": "string",
+
+        "csvw-safe:bounds.maxGroupsPerUnit": 2,
+        "csvw-safe:bounds.maxNumPartitions": 3,
+        "csvw-safe:public.exhaustivePartitions": true,
+
+        "csvw-safe:public.partitions": [
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": {"partitionValue": "Adelie"},
+            "csvw-safe:bounds.maxContributions": 1,
+            "csvw-safe:bounds.maxLength": 200
+          },
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": {"partitionValue": "Gentoo"},
+            "csvw-safe:bounds.maxContributions": 1,
+            "csvw-safe:bounds.maxLength": 200
+          },
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": {"partitionValue": "Chinstrap"},
+            "csvw-safe:bounds.maxContributions": 1,
+            "csvw-safe:bounds.maxLength": 200
+          }
+        ]
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "flipper_length_mm",
+        "datatype": "double",
+        "minimum": 150,
+        "maximum": 250,
+
+        "csvw-safe:bounds.maxGroupsPerUnit": 2,
+        "csvw-safe:bounds.maxNumPartitions": 2,
+
+        "csvw-safe:public.partitions": [
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": {"lowerBound":150,"upperBound":200},
+            "csvw-safe:bounds.maxContributions":1
+          },
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": {"lowerBound":200,"upperBound":250},
+            "csvw-safe:bounds.maxContributions":1
+          }
+        ]
+      }
+    ]
+  },
+
+  "csvw-safe:GroupingKeys":[
+    {
+      "@type":"csvw-safe:GroupingKey",
+      "csvw-safe:columns":["species","flipper_length_mm"],
+
+      "csvw-safe:bounds.maxGroupsPerUnit":3,
+      "csvw-safe:bounds.maxNumPartitions":6,
+
+      "csvw-safe:public.partitions":[
+        {
+          "@type":"csvw-safe:Partition",
+          "csvw-safe:predicate":{
+            "components":{
+              "species":{"partitionValue":"Adelie"},
+              "flipper_length_mm":{"lowerBound":150,"upperBound":200}
+            }
+          },
+          "csvw-safe:bounds.maxContributions":1
+        }
+      ]
+    }
+  ]
+}
+```
 
 
 ### 2.2 Contribution with respect to an privacy unit
@@ -151,16 +386,9 @@ Two parameters are used:
 
 **Privacy contribution object**: Contribution bounds are defined using `csvw-safe:Contribution`.
 
-A contribution attaches bounds to a specific privacy unit.
-
-| Property                            | Meaning                                         |
-| ----------------------------------- | ----------------------------------------------- |
-| `csvw-safe:public.privacyUnit`      | identifier column defining the protected entity |
-| `csvw-safe:bounds.maxContributions` | per-region row bound                            |
-| `csvw-safe:bounds.maxGroupsPerUnit` | number of affected regions                      |
-
-Sensitivity must be computed with respect to one declared privacy unit at a time.
-A mechanism calibrated for one privacy unit does not automatically guarantee privacy for another unless explicitly composed.
+- A contribution attaches bounds to a specific privacy unit:  `csvw-safe:public.privacyUnit`, which identifies the column defining the protected entity.
+- Sensitivity must be computed with respect to one declared privacy unit at a time.
+- A mechanism calibrated for one privacy unit does not automatically guarantee privacy for another unless explicitly composed.
 
 #### 2.2.1 Single Privacy Unit: 
 If exactly one privacy unit exists, it may be declared at table level:
@@ -240,17 +468,7 @@ Example at partition level:
 ]
 ```
 
-#### 2.2.3 Adjacency definition (TODO: not sure, is it really relevant)
-The dataset must declare the neighboring relation used for `csvw-safe:bounds.*`: `csvw-safe:adjacencyDefinition` with default `addRemoveUnit`.
-The values can be:
-| Value           | Meaning                                 |
-| --------------- | --------------------------------------- |
-| `addRemoveUnit` | add/remove all rows of one privacy unit |
-| `replaceUnit`   | replace all rows of one privacy unit    |
-| `addRemoveRow`  | row-level adjacency                     |
-| `custom`        | formally specified externally           |
 
-#### 2.2.4 Adjacency definition (TODO: not sure, is it really relevant)
 If more than one privacy unit exists, the dataset must specify: `csvw-safe:privacyModel`.
 The values can be:
 | Value          | Meaning                                     |
@@ -259,9 +477,9 @@ The values can be:
 | `hierarchical` | units nested (e.g. patient inside hospital) |
 | `joint`        | adjacency defined on combined unit          |
 
-#### 2.2.5 Structural hierarchy for contribution bounds
+
+#### 2.2.3 Structural hierarchy for contribution bounds
 ```
-adjacencyDefinition
 privacyModel
 
 Table
@@ -269,6 +487,7 @@ Table
  ├─ bounds.maxLength
  │
  ├─ Columns
+ |   ├─ datatype, min/max, required
  │   ├─ bounds.maxGroupsPerUnit
  │   └─ public.partitions
  │        └─ Partition
@@ -281,8 +500,10 @@ Table
      └─ public.partitions
           └─ Partition
                ├─ predicate (components)
-               └─ bounds.*
+               ├─ public.*
+               └─ bounds.maxContributions / bounds.maxLength
 ```
+
 
 ### 2.3 Minimum Metadata for Worst-Case Sensitivity
 This section defines the minimum metadata required for a system to compute sound worst-case sensitivity bounds for differentially private mechanisms.
@@ -312,6 +533,38 @@ For any column used in a numeric aggregation (SUM, MEAN, VAR, STDDEV, etc.), the
 These bounds define the per-row contribution range and are necessary to compute aggregation sensitivity.
 A system must refuse DP calibration for a numeric aggregation if these bounds are missing.
 
+
+### 2.4 Other description
+
+#### More on `maxNumPartitions`
+
+- maxNumPartitions does not limit the per-unit contribution.
+- It limits the maximum number of output groups (non-empty partitions) a query could produce.
+- This is relevant for noise allocation in certain DP mechanisms (like hierarchical counting, per-partition noise, or when bounding the maximum size of vector-valued queries).
+- It does not reduce sensitivity; it’s more about knowing the potential output size so the DP library can avoid under- or over-allocating noise.
+
+| Concept              | Meaning                         | Example          |
+| -------------------- | ------------------------------- | ---------------- |
+| domain size          | all possible values             | age \in [0, 120] |
+| partitions           | possible output groups          | {0, 1, ..., 120} |
+| non-empty partitions | groups that can actually appear | {18, 19, 20, 21} |
+
+DP error depends on non-empty partitions. In the example: maximum vector length of 4.
+
+#### How DP library would use CSVW-SAFE parameters
+
+| Axis                      | Parameter                              | Effect in DP computation                                                                    |
+| ------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Per-unit impact**       | `maxContributions`, `maxGroupsPerUnit` | Compute Δf for a single privacy unit under the chosen adjacency metric.                     |
+| **Per-query output size** | `maxNumPartitions`                     | Defines the number of entries the noise must cover. Useful for vector/group queries.        |
+
+**Workflow**:
+
+1. DP library reads metadata (l_\infty, l_0, maxNumPartitions) and the adjacency metric.
+2. Computes worst-case sensitivity: $sensitivity=f(l_0, l_\infty, adjacency)$.
+3. Computes noise scale using sensitivity and output size: $noise scale ~ g(sensitivity, maxNumPartitions)$.
+
+The adjacency definition does not change the metadata, it changes how the library interprets $l_\infty$ and $l_0$ to compute the sensitivity. Thus, we do not define it in the metadata.
 
 ---
 
@@ -360,22 +613,15 @@ A `GroupingKey` defines a joint grouping space. It does not automatically enumer
 
 ### 3.3 Partition-Level Structural Properties
 
-#### Concept (TODO: how to explain better?)
-A partition describes a publicly defined region of rows determined solely by public attributes.
+#### Concept
 
-A partition describes a region in the grouping universe.
-A group is the subset of rows in a specific dataset instance belonging to that region.
-A partition is a region of the value domain.
-A group is the result of applying a grouping operation to a dataset.
-Each group corresponds to exactly one declared partition, but a partition may correspond to zero groups if no rows fall inside it.
+A partition is a publicly defined region of the value domain determined solely by public attributes. It describes a region in the grouping universe, (not a subset of observed rows).
 
-A grouping query (e.g. GROUP BY) produces groups that correspond to these regions. Differential privacy bounds are defined with respect to these grouping regions, not to the physical rows present in the dataset.
+It is differnt to a group:
+- Partition → region of possible values (structural, dataset-independent). A partition may correspond to zero groups if no rows fall into it.
+- Group → rows of a particular dataset that satisfy the partition predicate. Each group corresponds to exactly one declared partition.
 
-A partition is composed of:
-- Predicate — how rows are selected
-- Partition properties — public facts and/or safety bounds about that region
-
-A row belongs to a partition iff it satisfies its predicate.
+Differential privacy contribution bounds are defined with respect to partitions (grouping regions), not to the physical rows currently present.
 
 Partitions may be declared for:
 - a `csvw:Column`
@@ -403,15 +649,18 @@ If all possible regions are declared, `csvw-safe:public.exhaustivePartitions = t
 | `csvw-safe:bounds.*`  | DP safety bounds       |
 
 
-**Predicate**: A predicate defines row membership. The fields are
-| Property         | Meaning                               |
-| ---------------- | ------------------------------------- |
-| `partitionValue` | categorical equality                  |
-| `lowerBound`     | numeric lower bound                   |
-| `upperBound`     | numeric upper bound                   |
-| `lowerInclusive` | default true                          |
-| `upperInclusive` | default false                         |
-| `components`     | map column → predicate (multi-column) |
+**Predicate**: A predicate defines row membership. 
+The predicate can show how rows are selcted for categorical and for numeric columns
+
+The fields are:
+| Property         | Meaning                               | Type of Columns |
+| ---------------- | ------------------------------------- |---------------- |
+| `partitionValue` | categorical equality                  | categorical     |
+| `lowerBound`     | numeric lower bound                   | numeric         |
+| `upperBound`     | numeric upper bound                   | numeric         |
+| `lowerInclusive` | default true                          | numeric         |
+| `upperInclusive` | default false                         | numeric         |
+| `components`     | map column → predicate (multi-column) | GroupingKey     |
 
 
 
@@ -503,20 +752,6 @@ Similarly for a `csvw:GroupingKey` with categorical and continuous data, the par
 }
 ```
 
-Structural hierarchy
-```
-Table
- ├─ Columns
- │   └─ public.partitions
- │       ├─ predicate
- │       └─ partition properties
- │
- └─ GroupingKey
-     └─ public.partitions
-         ├─ component predicates
-         └─ partition properties
-```
-
 
 ---
 
@@ -537,6 +772,8 @@ Table
 | `make_metadata_from_data.py`  | Infer baseline CSVW metadata        |
 | `make_dummy_from_metadata.py` | Dummy data generator                |
 | `assert_same_structure.py`    | Verify functional programming valid on dummy will be valid on real data |
+
+[`csvw-safe-constraints.md`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constraints.md) describes constraints on metadata, ensure that they are valid and not worst than worst case bounds. [`csvw-safe-constraints.ttl`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constraints.ttl) describes part of the constraints in a turtle file.
 
 This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
 

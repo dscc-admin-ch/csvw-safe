@@ -1,103 +1,126 @@
 {
   "@context": {
+
     "csvw": "http://www.w3.org/ns/csvw#",
     "csvw-safe": "https://w3id.org/csvw-safe#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
 
+    "@version": 1.1,
+
     "Table": "csvw:Table",
     "Column": "csvw:Column",
 
-    "DPBounded": "csvw-safe:DPBounded",
     "GroupingKey": "csvw-safe:GroupingKey",
-    "ColumnGroup": "csvw-safe:ColumnGroup",
-    "PartitionKey": "csvw-safe:PartitionKey",
-
-    "privacyId": {
-      "@id": "csvw-safe:privacyId",
-      "@type": "xsd:boolean"
-    },
-
-    "nullableProportion": {
-      "@id": "csvw-safe:nullableProportion",
-      "@type": "xsd:decimal"
-    },
-
-    "dependsOn": {
-      "@id": "csvw-safe:dependsOn",
-      "@type": "@id"
-    },
-
-    "how": "csvw-safe:how",
-
-    "mapping": {
-      "@id": "csvw-safe:mapping",
-      "@type": "@id"
-    },
-
-    "maxNumPartitions": {
-      "@id": "csvw-safe:maxNumPartitions",
-      "@type": "xsd:integer"
-    },
+    "Partition": "csvw-safe:Partition",
+    "Predicate": "csvw-safe:Predicate",
+    "Contribution": "csvw-safe:Contribution",
 
     "columns": {
       "@id": "csvw-safe:columns",
       "@type": "@id",
-      "@container": "@list"
-    },
-
-    "publicPartitions": {
-      "@id": "csvw-safe:publicPartitions",
-      "@type": "@id",
       "@container": "@set"
     },
 
-    "partitionValue": "csvw-safe:partitionValue",
+    "predicate": {
+      "@id": "csvw-safe:predicate",
+      "@type": "@id"
+    },
 
+    "components": {
+      "@id": "csvw-safe:components",
+      "@type": "@id",
+      "@container": "@index"
+    },
+
+    "partitionValue": "csvw-safe:partitionValue",
     "lowerBound": {
       "@id": "csvw-safe:lowerBound",
       "@type": "xsd:decimal"
     },
-
     "upperBound": {
       "@id": "csvw-safe:upperBound",
       "@type": "xsd:decimal"
     },
 
-    "lowerInclusive": {
-      "@id": "csvw-safe:lowerInclusive",
-      "@type": "xsd:boolean"
+    "privacyModel": "csvw-safe:privacyModel",
+
+    "public": {
+      "@context": {
+        "privacyUnit": {
+          "@id": "csvw-safe:public.privacyUnit",
+          "@type": "@id"
+        },
+        "length": {
+          "@id": "csvw-safe:public.length",
+          "@type": "xsd:integer"
+        },
+        "partitions": {
+          "@id": "csvw-safe:public.partitions",
+          "@type": "@id",
+          "@container": "@set"
+        },
+        "exhaustivePartitions": {
+          "@id": "csvw-safe:public.exhaustivePartitions",
+          "@type": "xsd:boolean"
+        }
+      }
     },
 
-    "upperInclusive": {
-      "@id": "csvw-safe:upperInclusive",
-      "@type": "xsd:boolean"
+    "bounds": {
+      "@context": {
+        "maxContributions": {
+          "@id": "csvw-safe:bounds.maxContributions",
+          "@type": "xsd:integer"
+        },
+        "maxGroupsPerUnit": {
+          "@id": "csvw-safe:bounds.maxGroupsPerUnit",
+          "@type": "xsd:integer"
+        },
+        "maxLength": {
+          "@id": "csvw-safe:bounds.maxLength",
+          "@type": "xsd:integer"
+        },
+        "maxNumPartitions": {
+          "@id": "csvw-safe:bounds.maxNumPartitions",
+          "@type": "xsd:integer"
+        }
+      }
     },
 
-    "partitionLabel": "csvw-safe:partitionLabel",
-
-    "components": {
-      "@id": "csvw-safe:components",
+    "contribution": {
+      "@id": "csvw-safe:contribution",
       "@type": "@id"
     },
 
-    "maxLength": {
-      "@id": "csvw-safe:maxLength",
-      "@type": "xsd:integer"
+    "contrib": {
+      "@context": {
+        "privacyUnit": {
+          "@id": "csvw-safe:contribution.privacyUnit",
+          "@type": "@id"
+        },
+        "maxContributions": {
+          "@id": "csvw-safe:contribution.maxContributions",
+          "@type": "xsd:integer"
+        },
+        "maxGroupsPerUnit": {
+          "@id": "csvw-safe:contribution.maxGroupsPerUnit",
+          "@type": "xsd:integer"
+        }
+      }
     },
 
-    "maxContribution": {
-      "@id": "csvw-safe:maxContribution",
-      "@type": "xsd:integer"
-    },
-
-    "maxInfluencedPartitions": {
-      "@id": "csvw-safe:maxInfluencedPartitions",
-      "@type": "xsd:integer"
-    },
-
-    "publicLength": {
-      "@id": "csvw-safe:publicLength",
-      "@type": "xsd:integer"
+    "synth": {
+      "@context": {
+        "nullableProportion": {
+          "@id": "csvw-safe:synth.nullableProportion",
+          "@type": "xsd:decimal"
+        },
+        "dependency": {
+          "@id": "csvw-safe:synth.dependency",
+          "@type": "@id"
+        },
+        "dependencyType": "csvw-safe:synth.dependencyType"
+      }
     }
   }
 }

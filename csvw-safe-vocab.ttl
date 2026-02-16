@@ -32,153 +32,141 @@ csvw-safe:
 # Core Classes
 #################################################################
 
-csvw-safe:DPBounded a owl:Class ;
-    rdfs:label "DP Bounded Entity" ;
-    rdfs:comment "Abstract class for entities that declare differential privacy contribution bounds." .
-
 csvw-safe:GroupingKey a owl:Class ;
-    rdfs:subClassOf csvw-safe:DPBounded ;
     rdfs:label "Grouping Key" ;
-    rdfs:comment "Abstract grouping space over which aggregation or partitioning may occur." .
+    rdfs:comment "Defines a grouping space over one or more columns." .
 
-csvw-safe:ColumnGroup a owl:Class ;
-    rdfs:subClassOf csvw-safe:GroupingKey ;
-    rdfs:label "Column Group" ;
-    rdfs:comment "Multi-column grouping key composed of an ordered list of columns." .
+csvw-safe:Partition a owl:Class ;
+    rdfs:label "Partition" ;
+    rdfs:comment "Public region of a grouping domain (output coordinate)." .
 
-csvw-safe:PartitionKey a owl:Class ;
-    rdfs:subClassOf csvw-safe:DPBounded ;
-    rdfs:label "Partition Key" ;
-    rdfs:comment "Represents one allowed partition within a grouping key." .
+csvw-safe:Predicate a owl:Class ;
+    rdfs:label "Predicate" ;
+    rdfs:comment "Logical condition defining membership in a partition." .
 
-#################################################################
-# CSVW Alignments
-#################################################################
+csvw-safe:Contribution a owl:Class ;
+    rdfs:label "Contribution Bound" ;
+    rdfs:comment "Contribution bounds attached to a specific privacy unit." .
 
-csvw:Table rdfs:subClassOf csvw-safe:DPBounded .
-
-csvw:Column rdfs:subClassOf csvw-safe:GroupingKey .
+csvw-safe:Dependency a owl:Class ;
+    rdfs:label "Column Dependency" ;
+    rdfs:comment "Public constraint relating two columns." .
 
 #################################################################
-# Structural Modeling Properties
+# Privacy model
 #################################################################
 
-csvw-safe:privacyId a owl:DatatypeProperty ;
-    rdfs:domain csvw:Column ;
-    rdfs:range xsd:boolean ;
-    rdfs:label "privacy identifier flag" ;
-    rdfs:comment "Indicates that the column identifies individuals or units and must not participate in DP aggregation." .
-
-csvw-safe:nullableProportion a owl:DatatypeProperty ;
-    rdfs:domain csvw:Column ;
-    rdfs:range xsd:decimal ;
-    rdfs:label "nullable proportion" ;
-    rdfs:comment "Approximate fraction (0–1) of null values in the column." .
-
-csvw-safe:dependsOn a owl:ObjectProperty ;
-    rdfs:domain csvw:Column ;
-    rdfs:range csvw:Column ;
-    rdfs:label "depends on column" ;
-    rdfs:comment "Declares a dependency relationship with another column." .
-
-csvw-safe:how a owl:DatatypeProperty ;
-    rdfs:domain csvw:Column ;
+csvw-safe:privacyModel a owl:DatatypeProperty ;
+    rdfs:domain csvw:Table ;
     rdfs:range xsd:string ;
-    rdfs:label "dependency type" ;
-    rdfs:comment "Specifies dependency type: 'bigger', 'smaller', or 'mapping'." .
+    rdfs:comment "independent | hierarchical | joint" .
 
-csvw-safe:mapping a owl:ObjectProperty ;
-    rdfs:domain csvw:Column ;
-    rdfs:label "dependency mapping" ;
-    rdfs:comment "Required if dependency type is 'mapping'; describes value mapping relationship." .
-
-csvw-safe:maxNumPartitions a owl:DatatypeProperty ;
-    rdfs:range xsd:integer ;
-    rdfs:label "maximum number of partitions" ;
-    rdfs:comment "Structural upper bound on number of distinct partitions induced by a grouping key." .
-
-csvw-safe:columns a owl:ObjectProperty ;
-    rdfs:domain csvw-safe:ColumnGroup ;
+csvw-safe:public.privacyUnit a owl:ObjectProperty ;
+    rdfs:domain csvw:Table ;
     rdfs:range csvw:Column ;
-    rdfs:label "columns" ;
-    rdfs:comment "Ordered list of columns forming a multi-column grouping key." .
+    rdfs:comment "Column identifying protected entity." .
 
 #################################################################
-# Public Partitions
+# Public properties
 #################################################################
 
-csvw-safe:publicPartitions a owl:ObjectProperty ;
-    rdfs:domain csvw-safe:GroupingKey ;
-    rdfs:range csvw-safe:PartitionKey ;
-    rdfs:label "public partitions" ;
-    rdfs:comment "Explicit universe of allowed partitions for a grouping key." .
+csvw-safe:public.length a owl:DatatypeProperty ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Exact row count invariant across neighboring datasets." .
+
+csvw-safe:public.partitions a owl:ObjectProperty ;
+    rdfs:range csvw-safe:Partition ;
+    rdfs:comment "Declared admissible partitions." .
+
+csvw-safe:public.exhaustivePartitions a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean .
+
+#################################################################
+# Bounds (DP sensitivity)
+#################################################################
+
+csvw-safe:bounds.maxContributions a owl:DatatypeProperty ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "l∞: rows per partition per privacy unit." .
+
+csvw-safe:bounds.maxGroupsPerUnit a owl:DatatypeProperty ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "l0: partitions affected per privacy unit." .
+
+csvw-safe:bounds.maxLength a owl:DatatypeProperty ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Maximum possible number of rows." .
+
+csvw-safe:bounds.maxNumPartitions a owl:DatatypeProperty ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Maximum non-empty output partitions." .
+
+#################################################################
+# Partition predicates
+#################################################################
+
+csvw-safe:predicate a owl:ObjectProperty ;
+    rdfs:domain csvw-safe:Partition ;
+    rdfs:range csvw-safe:Predicate .
 
 csvw-safe:partitionValue a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:PartitionKey ;
-    rdfs:range rdfs:Literal ;
-    rdfs:label "partition value" ;
-    rdfs:comment "Categorical partition value." .
+    rdfs:domain csvw-safe:Predicate .
 
 csvw-safe:lowerBound a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:PartitionKey ;
-    rdfs:range xsd:decimal ;
-    rdfs:label "lower bound" ;
-    rdfs:comment "Lower bound of numeric partition interval." .
+    rdfs:domain csvw-safe:Predicate ;
+    rdfs:range xsd:decimal .
 
 csvw-safe:upperBound a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:PartitionKey ;
-    rdfs:range xsd:decimal ;
-    rdfs:label "upper bound" ;
-    rdfs:comment "Upper bound of numeric partition interval." .
-
-csvw-safe:lowerInclusive a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:PartitionKey ;
-    rdfs:range xsd:boolean ;
-    rdfs:label "lower inclusive" ;
-    rdfs:comment "Whether lower bound is inclusive (default true)." .
-
-csvw-safe:upperInclusive a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:PartitionKey ;
-    rdfs:range xsd:boolean ;
-    rdfs:label "upper inclusive" ;
-    rdfs:comment "Whether upper bound is inclusive (default false)." .
-
-csvw-safe:partitionLabel a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:PartitionKey ;
-    rdfs:range xsd:string ;
-    rdfs:label "partition label" ;
-    rdfs:comment "Optional human-readable label for partition." .
+    rdfs:domain csvw-safe:Predicate ;
+    rdfs:range xsd:decimal .
 
 csvw-safe:components a owl:ObjectProperty ;
-    rdfs:domain csvw-safe:PartitionKey ;
-    rdfs:range csvw-safe:PartitionKey ;
-    rdfs:label "components" ;
-    rdfs:comment "Recursive per-column constraints for multi-column partition keys." .
+    rdfs:domain csvw-safe:Predicate ;
+    rdfs:range csvw-safe:Predicate .
+
 
 #################################################################
-# Differential Privacy Properties
+# Grouping keys
 #################################################################
 
-csvw-safe:maxLength a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:DPBounded ;
-    rdfs:range xsd:integer ;
-    rdfs:label "maximum length" ;
-    rdfs:comment "Maximum number of rows in a partition." .
-
-csvw-safe:maxContribution a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:DPBounded ;
-    rdfs:range xsd:integer ;
-    rdfs:label "maximum contribution" ;
-    rdfs:comment "Maximum rows contributed by one individual within a partition." .
-
-csvw-safe:maxInfluencedPartitions a owl:DatatypeProperty ;
+csvw-safe:columns a owl:ObjectProperty ;
     rdfs:domain csvw-safe:GroupingKey ;
-    rdfs:range xsd:integer ;
-    rdfs:label "maximum influenced partitions" ;
-    rdfs:comment "Maximum number of distinct partitions an individual may affect." .
+    rdfs:range csvw:Column .
 
-csvw-safe:publicLength a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:DPBounded ;
-    rdfs:range xsd:integer ;
-    rdfs:label "public length" ;
-    rdfs:comment "Actual number of rows if publicly known." .
+
+#################################################################
+# Contribution objects (multi privacy unit support)
+#################################################################
+
+csvw-safe:contribution a owl:ObjectProperty ;
+    rdfs:range csvw-safe:Contribution .
+
+csvw-safe:contribution.privacyUnit a owl:ObjectProperty ;
+    rdfs:domain csvw-safe:Contribution ;
+    rdfs:range csvw:Column .
+
+csvw-safe:contribution.maxContributions a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:Contribution ;
+    rdfs:range xsd:integer .
+
+csvw-safe:contribution.maxGroupsPerUnit a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:Contribution ;
+    rdfs:range xsd:integer .
+
+#################################################################
+# Partition predicates
+#################################################################
+
+csvw-safe:synth.nullableProportion a owl:DatatypeProperty ;
+    rdfs:domain csvw:Column ;
+    rdfs:range xsd:decimal .
+
+csvw-safe:synth.dependency a owl:ObjectProperty ;
+    rdfs:domain csvw:Column ;
+    rdfs:range csvw-safe:Dependency .
+
+csvw-safe:synth.dependencyType a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:Dependency ;
+    rdfs:range xsd:string .
+
+
