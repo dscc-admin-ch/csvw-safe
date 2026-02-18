@@ -53,7 +53,7 @@ CSVW-SAFE uses four core objects on which structural and privacy properties appl
 | ----------------------- | ------------------------------------------------------- |
 | `csvw:Table`            | Dataset-level guarantees and global contribution bounds |
 | `csvw:Column`           | Column schema and single-column grouping space          |
-| `csvw-safe:GroupingKey` | Multi-column grouping space                             |
+| `csvw-safe:GroupingKey` | Single or multi-column grouping space                   |
 | `csvw-safe:Partition`   | A region of the value domain (not the rows themselves)  |
 
 - `csvw:Table` are tables as described in `csvw`. A `csvw:Table` contains a `csvw:TableSchema` (with a list of `csvw:Columns`) and optionally a `csvw-safe:AdditionalInformation` (with a list of `csvw-safe:ColumnGroup` and their partitions).
@@ -214,27 +214,17 @@ Contribution bounds describe how much influence one privacy unit can have on the
 
 ### 2.1 All Levels
 
-We define 6 new terms that can be used to infer DP bounds. 
+We define 6 properties that can be used to infer DP noise. 
 
-| Term                      | TL;DR                                                                  |
-| ------------------------- | ---------------------------------------------------------------------- |
-| `bounds.maxContributions` | Max rows a privacy unit can contribute in a region (l∞)                |
-| `bounds.maxGroupsPerUnit` | Max groups / partitions a privacy unit can appear in (l0)              |
-| `bounds.maxLength`        | Max rows in table / partition (theoretical upper bound)                |
-| `bounds.maxNumPartitions` | Max number of non-empty output partitions for a column or grouping key |
-| `public.length`           | Exact number of rows if public                                         |
-| `public.partitions`       | List of known partitions (publicly known regions)                      |
+| Term                      | Definition                                                             |      Table     | Partition | GroupingKey |
+| ------------------------- | ---------------------------------------------------------------------- | :------------: | :-------: | :---------: |
+| `bounds.maxContributions` | Max rows a privacy unit can contribute in a region ($l_\infty$)        | Yes (required) |    Yes    |      No     |
+| `bounds.maxGroupsPerUnit` | Max groups / partitions a privacy unit can appear in ($l_0$)           |        1       |     1     |     Yes     |
+| `bounds.maxLength`        | Max rows in table / partition (theoretical upper bound)                | Yes (required) |    Yes    |      No     |
+| `bounds.maxNumPartitions` | Max number of non-empty output partitions for a column or grouping key |       No       |     No    |     Yes     |
+| `public.length`           | Exact number of rows if public                                         |       Yes      |    Yes    |      No     |
+| `public.partitions`       | List of known partitions (publicly known regions)                      |       No       |     No    |     Yes     |
 
-They can be properties of different classes:
-
-| Name                                     | Table           | Partition | Column         | GroupingKey    |
-|------------------------------------------|----------------:|----------:|---------------:|----------------|
-| `csvw-safe:bounds.maxContributions`      | Yes (required)  | Yes       | No             | No             |
-| `csvw-safe:bounds.maxGroupsPerUnit`      | 1               | 1         | Yes            | Yes            |
-| `csvw-safe:bounds.maxLength`             | Yes (required)  | Yes       | No             | No             |
-| `csvw-safe:bounds.maxNumPartitions`      | No              | No        | Yes            | Yes            |
-| `csvw-safe:public.length`                | Yes             | Yes       | No             | No             |
-| `csvw-safe:public.partitions`            | No              | No        | Yes            | Yes            |
 
 Required values are mandatory for DP calibration.
 Others improve tightness and avoid unnecessary noise.
@@ -246,7 +236,7 @@ Others improve tightness and avoid unnecessary noise.
 `csvw-safe:bounds.maxGroupsPerUnit` ($l_0$) is the maximum number of groups produced by a grouping operation on this key in which a single privacy unit may appear. The grouping key is the `csvw:Column` or `csvw-safe:GroupingKey` on which the property is declared.
 - At the table level, it does not make sense and is 1.
 - At the partition level, it does not make sense and is 1.
-- At the column level, it is the number of partitions of the column (after a groupby) that can be affected by an individual.
+- At the grouping key level (column level or multiple column level), it is the number of partitions of the column (after a groupby) that can be affected by an individual.
 - At the multiple column level, it is the number of partitions of the group of columns (after a groupby) that can be affected by an individual. In the worst case, the product of the number of partitions of all individual columns.
 
 **Note**:These parameters allow systems to determine the maximum number of rows that may change if one privacy unit is added or removed. 
@@ -348,7 +338,7 @@ This is an example when there is only one known privacy unit: penguin_id.
 
   "csvw-safe:GroupingKeys":[
     {
-      "@type":"csvw-safe:GroupingKey",
+      "@type":"csvw-safe:ColumnGroup",
       "csvw-safe:columns":["species","flipper_length_mm"],
 
       "csvw-safe:bounds.maxGroupsPerUnit":3,

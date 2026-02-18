@@ -1,251 +1,176 @@
 {
-   "@context":[
-       "http://www.w3.org/ns/csvw",
-       "https://w3id.org/csvw-dp-context.jsonld"
-   ],
-   "@type":"csvw:Table",
-   "csvw-safe:maxLength":344,
-   "csvw-safe:publicLength":344,
-   "csvw-safe:privacyContributions":[
-       {
-         "@type":"csvw-safe:ContributionKey",
-         "csvw-safe:privacyUnit":"penguin_id",
-         "csvw-safe:maxContributions": 2
-       }
-   ],
-   "tableSchema":{
-      "columns":[
-        {
-            "name":"penguin_id",
-            "datatype":"int",
-            "csvw-safe:privacyId":true,
-            "required":true
-        },
-          {
-            "name":"species",
-            "datatype":"string",
-            "required":true,
-            "csvw-safe:privacyId":false,
-            "csvw-safe:nullableProportion":0,
-            "csvw-safe:maxLength":200,
-            "csvw-safe:maxNumPartitions":3,
-            "csvw-safe:maxInfluencedPartitions":1,
-            "csvw-safe:privacyContributions":[
-               {
-                  "@type":"csvw-safe:ContributionKey",
-                  "csvw-safe:privacyUnit":"row",
-                  "csvw-safe:maxContributions":2,
-                  "csvw-safe:maxInfluencedPartitions":1
-               }
-            ],
-            "csvw-safe:publicPartitions":[
-               {
-                  "@type":"csvw-safe:Partition",
-                  "csvw-safe:partitionValue":"Adelie",
-                  "csvw-safe:maxContributions": 2
-               },
-               {
-                  "@type":"csvw-safe:Partition",
-                  "csvw-safe:partitionValue":"Chinstrap",
-                  "csvw-safe:maxContributions": 1
-               },
-               {
-                  "@type":"csvw-safe:Partition",
-                  "csvw-safe:partitionValue":"Gentoo",
-                  "csvw-safe:maxContributions": 1
-               }
-            ]
-         },
-         {
-            "name":"island",
-            "datatype":"string",
-            "required":true,
-            "csvw-safe:privacyId":false,
-            "csvw-safe:nullableProportion":0,
-            "csvw-safe:privacyContributions":[
-               {
-                  "@type":"csvw-safe:ContributionKey",
-                  "csvw-safe:privacyUnit":"row",
-                  "csvw-safe:maxContributions":2,
-                  "csvw-safe:maxInfluencedPartitions":1
-               }
-            ],
-            "csvw-safe:partitionsInformations": [
-                "csvw-safe:maxLength":200,
-                "csvw-safe:publicPartitions":[
-                   {
-                      "@type":"csvw-safe:PartitionKey",
-                      "csvw-safe:partitionValue":"Torgersen",
-                      "csvw-safe:maxLength":50,
-                      "csvw-safe:contributions":[
-                         {
-                            "@type":"csvw-safe:ContributionKey",
-                            "csvw-safe:privacyUnit":"row",
-                            "csvw-safe:maxContributions":1
-                         }
-                      ]
-                   },
-                   {
-                      "@type":"csvw-safe:PartitionKey",
-                      "csvw-safe:partitionValue":"Biscoe",
-                      "csvw-safe:maxLength":100,
-                   },
-                   {
-                      "@type":"csvw-safe:PartitionKey",
-                      "csvw-safe:partitionValue":"Dream"
-                   }
-                ]
-            ],
-         },
-         {
-            "name":"bill_length_mm",
-            "datatype":"double",
-            "required":true,
-            "minimum":30,
-            "maximum":65,
-            "csvw-safe:privacyId":false,
-            "csvw-safe:nullableProportion":0
-         },
-         {
-            "name":"bill_depth_mm",
-            "datatype":"double",
-            "required":false,
-            "minimum":13,
-            "maximum":23,
-            "csvw-safe:privacyId":false,
-            "csvw-safe:nullableProportion":0.05
-         },
-         {
-            "name":"flipper_length_mm",
-            "datatype":"double",
-            "required":false,
-            "minimum":150,
-            "maximum":250,
-            "csvw-safe:privacyId":false,
-            "csvw-safe:nullableProportion":0.05,
-            "csvw-safe:publicPartitions":[
-               {
-                  "@type":"csvw-safe:PartitionKey",
-                  "csvw-safe:lowerBound":150,
-                  "csvw-safe:upperBound":200,
-                  "csvw-safe:lowerInclusive":true,
-                  "csvw-safe:upperInclusive":false
-               },
-               {
-                  "@type":"csvw-safe:PartitionKey",
-                  "csvw-safe:lowerBound":200,
-                  "csvw-safe:upperBound":250,
-                  "csvw-safe:lowerInclusive":true,
-                  "csvw-safe:upperInclusive":true
-               }
-            ]
-         },
-         {
-            "name":"body_mass_g",
-            "datatype":"double",
-            "required":false,
-            "minimum":2000,
-            "maximum":7000,
-            "csvw-safe:privacyId":false,
-            "csvw-safe:nullableProportion":0.05,
-            "csvw-safe:publicPartitions":[
-               {
-                  "@type":"csvw-safe:PartitionKey",
-                  "csvw-safe:lowerBound":2000,
-                  "csvw-safe:upperBound":4000,
-                  "csvw-safe:lowerInclusive":true,
-                  "csvw-safe:upperInclusive":true
-               },
-               {
-                  "@type":"csvw-safe:PartitionKey",
-                  "csvw-safe:lowerBound":4000,
-                  "csvw-safe:upperBound":5000,
-                  "csvw-safe:lowerInclusive":true,
-                  "csvw-safe:upperInclusive":true
-               },
-               {
-                  "@type":"csvw-safe:PartitionKey",
-                  "csvw-safe:lowerBound":5000,
-                  "csvw-safe:upperBound":7000,
-                  "csvw-safe:lowerInclusive":true,
-                  "csvw-safe:upperInclusive":true
-               }
-            ]
-         },
-         {
-            "name":"sex",
-            "datatype":"string",
-            "required":false,
-            "csvw-safe:privacyId":false,
-            "csvw-safe:nullableProportion":0.2,
-            "csvw-safe:maxNumPartitions":2,
-            "csvw-safe:maxInfluencedPartitions":1,
-            "csvw-safe:privacyContributions":[
-               {
-                  "@type":"csvw-safe:ContributionKey",
-                  "csvw-safe:privacyUnit":"row",
-                  "csvw-safe:maxContributions":2,
-                  "csvw-safe:maxInfluencedPartitions":1
-               }
-            ],
-            "csvw-safe:publicPartitions":[
-               {
-                  "@type":"csvw-safe:PartitionKey",
-                  "csvw-safe:partitionValue":"MALE"
-               },
-               {
-                  "@type":"csvw-safe:PartitionKey",
-                  "csvw-safe:partitionValue":"FEMALE"
-               }
-            ]
-         }
-      ]
-   },
-   "csvw-safe:AdditionalInformation":[
+  "@context": [
+    "http://www.w3.org/ns/csvw",
+    "https://w3id.org/csvw-safe-context.jsonld"
+  ],
+  "@type": "csvw:Table",
+  "name": "penguins",
+
+  "csvw-safe:public.privacyUnit": "penguin_id",
+
+  "csvw-safe:bounds.maxContributions": 2,
+  "csvw-safe:bounds.maxLength": 344,
+  "csvw-safe:public.length": 344,
+
+  "csvw:tableSchema": {
+    "columns": [
+
       {
-         "@type":"csvw-safe:ColumnGroup",
-         "csvw-safe:columns":[
-            "sex",
-            "island"
-         ],
-         "csvw-safe:maxNumPartitions":5,
-         "csvw-safe:maxInfluencedPartitions": 1,
-         "csvw-safe:privacyContributions":[
-            {
-               "@type":"csvw-safe:ContributionKey",
-               "csvw-safe:privacyUnit":"row",
-               "csvw-safe:maxContributions":2,
-               "csvw-safe:maxInfluencedPartitions":1
-            }
-         ],
-         "csvw-safe:publicPartitions":[
-            {
-               "@type":"csvw-safe:Partition",
-               "csvw-safe:components":{
-                  "sex":{
-                     "@type":"csvw-safe:PartitionKey",
-                     "csvw-safe:partitionValue":"MALE"
-                  },
-                  "island":{
-                     "@type":"csvw-safe:PartitionKey",
-                     "csvw-safe:partitionValue":"Torgersen"
-                  }
-               }
-            },
-            {
-               "@type":"csvw-safe:Partition",
-               "csvw-safe:components":{
-                  "sex":{
-                     "@type":"csvw-safe:PartitionKey",
-                     "csvw-safe:partitionValue":"FEMALE"
-                  },
-                  "island":{
-                     "@type":"csvw-safe:PartitionKey",
-                     "csvw-safe:partitionValue":"Torgersen"
-                  }
-               }
-            }
-         ]
+        "@type": "csvw:Column",
+        "name": "penguin_id",
+        "datatype": "integer",
+        "required": true,
+        "csvw-safe:public.privacyId": true
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "species",
+        "datatype": "string",
+        "required": true,
+
+        "csvw-safe:bounds.maxGroupsPerUnit": 1,
+        "csvw-safe:bounds.maxNumPartitions": 3,
+        "csvw-safe:public.exhaustivePartitions": true,
+
+        "csvw-safe:public.partitions": [
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": { "partitionValue": "Adelie" },
+            "csvw-safe:bounds.maxContributions": 1,
+            "csvw-safe:bounds.maxLength": 200
+          },
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": { "partitionValue": "Chinstrap" },
+            "csvw-safe:bounds.maxContributions": 1,
+            "csvw-safe:bounds.maxLength": 200
+          },
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": { "partitionValue": "Gentoo" },
+            "csvw-safe:bounds.maxContributions": 1,
+            "csvw-safe:bounds.maxLength": 200
+          }
+        ]
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "island",
+        "datatype": "string",
+        "required": true,
+
+        "csvw-safe:bounds.maxGroupsPerUnit": 1,
+        "csvw-safe:bounds.maxNumPartitions": 3,
+        "csvw-safe:public.exhaustivePartitions": true,
+
+        "csvw-safe:public.partitions": [
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Torgersen" } },
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Biscoe" } },
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Dream" } }
+        ]
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "bill_length_mm",
+        "datatype": "double",
+        "required": true,
+        "minimum": 30,
+        "maximum": 65
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "bill_depth_mm",
+        "datatype": "double",
+        "required": false,
+        "minimum": 13,
+        "maximum": 23,
+        "csvw-safe:synth.nullableProportion": 0.05
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "flipper_length_mm",
+        "datatype": "double",
+        "required": false,
+        "minimum": 150,
+        "maximum": 250,
+        "csvw-safe:synth.nullableProportion": 0.05,
+
+        "csvw-safe:bounds.maxGroupsPerUnit": 2,
+        "csvw-safe:bounds.maxNumPartitions": 2,
+
+        "csvw-safe:public.partitions": [
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": { "lowerBound": 150, "upperBound": 200 }
+          },
+          {
+            "@type": "csvw-safe:Partition",
+            "csvw-safe:predicate": { "lowerBound": 200, "upperBound": 250 }
+          }
+        ]
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "body_mass_g",
+        "datatype": "double",
+        "required": false,
+        "minimum": 2000,
+        "maximum": 7000,
+        "csvw-safe:synth.nullableProportion": 0.05
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "sex",
+        "datatype": "string",
+        "required": false,
+        "csvw-safe:synth.nullableProportion": 0.2,
+
+        "csvw-safe:bounds.maxGroupsPerUnit": 1,
+        "csvw-safe:bounds.maxNumPartitions": 2,
+
+        "csvw-safe:public.partitions": [
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "MALE" } },
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "FEMALE" } }
+        ]
       }
-   ]
+    ]
+  },
+
+  "csvw-safe:GroupingKeys": [
+    {
+      "@type": "csvw-safe:GroupingKey",
+      "csvw-safe:columns": ["sex", "island"],
+
+      "csvw-safe:bounds.maxGroupsPerUnit": 1,
+      "csvw-safe:bounds.maxNumPartitions": 6,
+
+      "csvw-safe:public.partitions": [
+        {
+          "@type": "csvw-safe:Partition",
+          "csvw-safe:predicate": {
+            "components": {
+              "sex": { "partitionValue": "MALE" },
+              "island": { "partitionValue": "Torgersen" }
+            }
+          }
+        },
+        {
+          "@type": "csvw-safe:Partition",
+          "csvw-safe:predicate": {
+            "components": {
+              "sex": { "partitionValue": "FEMALE" },
+              "island": { "partitionValue": "Torgersen" }
+            }
+          }
+        }
+      ]
+    }
+  ]
 }

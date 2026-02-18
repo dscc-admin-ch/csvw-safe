@@ -29,3 +29,15 @@
 ## Mapping
 
 ![Libraries](images/dp_libraries.png)
+
+
+
+| Term                      | OpenDP                                                                 | 
+| ------------------------- | ---------------------------------------------------------------------- | 
+| `bounds.maxContributions` | `privacy_unit=dp.unit_of(contributions=36)`                            |
+| `bounds.maxGroupsPerUnit` | `margins=[dp.polars.Margin(max_groups=3)]`                             | 
+| `bounds.maxLength`        | `margins=[dp.polars.Margin(max_length=150_000)]`                       | 
+| `bounds.maxNumPartitions` | upper bound of `bounds.maxGroupsPerUnit` if unknown                    |
+| `public.length`           | `margins=[dp.polars.Margin(invariant="length")]`                       |
+| `public.partitions`       | `margins=[dp.polars.Margin(invariant="keys")]` if exhaustivePartitions or `.with_keys()` or `join()` in query |
+
