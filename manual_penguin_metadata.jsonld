@@ -143,9 +143,9 @@
     ]
   },
 
-  "csvw-safe:GroupingKeys": [
+  "csvw-safe:additionalInformation": [
     {
-      "@type": "csvw-safe:GroupingKey",
+      "@type": "csvw-safe:ColumnGroup",
       "csvw-safe:columns": ["sex", "island"],
 
       "csvw-safe:bounds.maxGroupsPerUnit": 1,
