@@ -28,89 +28,141 @@ csvw-safe:
     rdfs:seeAlso <https://github.com/dscc-admin-ch/csvw-dp> .
 
 
-#################################################################
+################################################################################
 # Core Classes
-#################################################################
+################################################################################
 
 csvw-safe:GroupingKey a owl:Class ;
     rdfs:label "Grouping Key" ;
-    rdfs:comment "Defines a grouping space over one or more columns." .
+    rdfs:comment "Represents a multi-column grouping space." .
+
+csvw-safe:ColumnGroup a owl:Class ;
+    rdfs:subClassOf csvw-safe:GroupingKey ;
+    rdfs:label "Column Group" ;
+    rdfs:comment "Grouping key composed of multiple columns." .
 
 csvw-safe:Partition a owl:Class ;
     rdfs:label "Partition" ;
-    rdfs:comment "Public region of a grouping domain (output coordinate)." .
-
-csvw-safe:Predicate a owl:Class ;
-    rdfs:label "Predicate" ;
-    rdfs:comment "Logical condition defining membership in a partition." .
+    rdfs:comment "A publicly defined region of the value domain." .
 
 csvw-safe:Contribution a owl:Class ;
-    rdfs:label "Contribution Bound" ;
-    rdfs:comment "Contribution bounds attached to a specific privacy unit." .
+    rdfs:label "Contribution" ;
+    rdfs:comment "Contribution bounds relative to a specific privacy unit." .
 
-csvw-safe:Dependency a owl:Class ;
-    rdfs:label "Column Dependency" ;
-    rdfs:comment "Public constraint relating two columns." .
+################################################################################
+# Privacy Model
+################################################################################
 
-#################################################################
-# Privacy model
-#################################################################
-
-csvw-safe:privacyModel a owl:DatatypeProperty ;
+csvw-safe:privacyModel a owl:ObjectProperty ;
     rdfs:domain csvw:Table ;
+    rdfs:range csvw-safe:PrivacyModel ;
+    rdfs:label "privacy model" .
+
+csvw-safe:PrivacyModel a owl:Class .
+
+csvw-safe:independent a csvw-safe:PrivacyModel .
+csvw-safe:hierarchical a csvw-safe:PrivacyModel .
+csvw-safe:joint a csvw-safe:PrivacyModel .
+
+################################################################################
+# Public Invariant Properties
+################################################################################
+
+csvw-safe:public.privacyUnit a owl:DatatypeProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-safe:Contribution)
+    ] ;
     rdfs:range xsd:string ;
-    rdfs:comment "independent | hierarchical | joint" .
+    rdfs:label "privacy unit identifier" .
 
-csvw-safe:public.privacyUnit a owl:ObjectProperty ;
-    rdfs:domain csvw:Table ;
-    rdfs:range csvw:Column ;
-    rdfs:comment "Column identifying protected entity." .
-
-#################################################################
-# Public properties
-#################################################################
-
-csvw-safe:public.length a owl:DatatypeProperty ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "Exact row count invariant across neighboring datasets." .
-
-csvw-safe:public.partitions a owl:ObjectProperty ;
-    rdfs:range csvw-safe:Partition ;
-    rdfs:comment "Declared admissible partitions." .
-
-csvw-safe:public.exhaustivePartitions a owl:DatatypeProperty ;
+csvw-safe:public.privacyId a owl:DatatypeProperty ;
+    rdfs:domain csvw:Column ;
     rdfs:range xsd:boolean .
 
-#################################################################
-# Bounds (DP sensitivity)
-#################################################################
+csvw-safe:public.length a owl:DatatypeProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-safe:Partition)
+    ] ;
+    rdfs:range xsd:nonNegativeInteger .
+
+csvw-safe:public.maxNumPartitions a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:GroupingKey ;
+    rdfs:range xsd:nonNegativeInteger .
+
+csvw-safe:public.partitions a owl:ObjectProperty ;
+    rdfs:domain csvw-safe:GroupingKey ;
+    rdfs:range csvw-safe:Partition .
+
+csvw-safe:public.exhaustivePartitions a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:GroupingKey ;
+    rdfs:range xsd:boolean .
+
+################################################################################
+# Contribution Bounds (Privacy Guarantees)
+################################################################################
 
 csvw-safe:bounds.maxContributions a owl:DatatypeProperty ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "l∞: rows per partition per privacy unit." .
-
-csvw-safe:bounds.maxGroupsPerUnit a owl:DatatypeProperty ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "l0: partitions affected per privacy unit." .
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-safe:Partition csvw-safe:Contribution)
+    ] ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "l_infinity bound: max rows per privacy unit per region." .
 
 csvw-safe:bounds.maxLength a owl:DatatypeProperty ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "Maximum possible number of rows." .
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-safe:Partition)
+    ] ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "Maximum theoretical number of rows." .
 
-csvw-safe:bounds.maxNumPartitions a owl:DatatypeProperty ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "Maximum non-empty output partitions." .
+csvw-safe:bounds.maxGroupsPerUnit a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:GroupingKey ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "l_0 bound: max partitions affected per privacy unit." .
 
-#################################################################
-# Partition predicates
-#################################################################
+################################################################################
+# Preprocessing Recommendations
+################################################################################
+
+csvw-safe:rec.maxContributions a owl:DatatypeProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-safe:Partition csvw-safe:Contribution)
+    ] ;
+    rdfs:range xsd:nonNegativeInteger .
+
+csvw-safe:rec.maxGroupsPerUnit a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:GroupingKey ;
+    rdfs:range xsd:nonNegativeInteger .
+
+################################################################################
+# Contribution Wrapper
+################################################################################
+
+csvw-safe:contributions a owl:ObjectProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-safe:Partition csvw-safe:GroupingKey)
+    ] ;
+    rdfs:range csvw-safe:Contribution .
+
+################################################################################
+# Partition Predicate Model
+################################################################################
 
 csvw-safe:predicate a owl:ObjectProperty ;
     rdfs:domain csvw-safe:Partition ;
     rdfs:range csvw-safe:Predicate .
 
+csvw-safe:Predicate a owl:Class .
+
 csvw-safe:partitionValue a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:Predicate .
+    rdfs:domain csvw-safe:Predicate ;
+    rdfs:range xsd:string .
 
 csvw-safe:lowerBound a owl:DatatypeProperty ;
     rdfs:domain csvw-safe:Predicate ;
@@ -120,53 +172,34 @@ csvw-safe:upperBound a owl:DatatypeProperty ;
     rdfs:domain csvw-safe:Predicate ;
     rdfs:range xsd:decimal .
 
+csvw-safe:lowerInclusive a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:Predicate ;
+    rdfs:range xsd:boolean .
+
+csvw-safe:upperInclusive a owl:DatatypeProperty ;
+    rdfs:domain csvw-safe:Predicate ;
+    rdfs:range xsd:boolean .
+
 csvw-safe:components a owl:ObjectProperty ;
     rdfs:domain csvw-safe:Predicate ;
-    rdfs:range csvw-safe:Predicate .
+    rdfs:range rdf:Property ;
+    rdfs:comment "Map column name to component predicate (JSON-LD object form)." .
 
-
-#################################################################
-# Grouping keys
-#################################################################
-
-csvw-safe:columns a owl:ObjectProperty ;
-    rdfs:domain csvw-safe:GroupingKey ;
-    rdfs:range csvw:Column .
-
-
-#################################################################
-# Contribution objects (multi privacy unit support)
-#################################################################
-
-csvw-safe:contribution a owl:ObjectProperty ;
-    rdfs:range csvw-safe:Contribution .
-
-csvw-safe:contribution.privacyUnit a owl:ObjectProperty ;
-    rdfs:domain csvw-safe:Contribution ;
-    rdfs:range csvw:Column .
-
-csvw-safe:contribution.maxContributions a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:Contribution ;
-    rdfs:range xsd:integer .
-
-csvw-safe:contribution.maxGroupsPerUnit a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:Contribution ;
-    rdfs:range xsd:integer .
-
-#################################################################
-# Partition predicates
-#################################################################
+################################################################################
+# Structural Modeling (Synthetic Hints)
+################################################################################
 
 csvw-safe:synth.nullableProportion a owl:DatatypeProperty ;
     rdfs:domain csvw:Column ;
     rdfs:range xsd:decimal .
 
-csvw-safe:synth.dependency a owl:ObjectProperty ;
+csvw-safe:synth.dependsOn a owl:ObjectProperty ;
     rdfs:domain csvw:Column ;
-    rdfs:range csvw-safe:Dependency .
+    rdfs:range csvw:Column .
 
-csvw-safe:synth.dependencyType a owl:DatatypeProperty ;
-    rdfs:domain csvw-safe:Dependency ;
+csvw-safe:synth.how a owl:DatatypeProperty ;
+    rdfs:domain csvw:Column ;
     rdfs:range xsd:string .
 
-
+csvw-safe:synth.mapping a owl:ObjectProperty ;
+    rdfs:domain csvw:Column .

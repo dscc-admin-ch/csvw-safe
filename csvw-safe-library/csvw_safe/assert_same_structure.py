@@ -6,12 +6,12 @@ import argparse
 import sys
 
 # ----------------------------
-# Utility: Infer simple CSVW-style datatype
+# Utility: Infer CSVW-SAFE style datatype
 # ----------------------------
 def infer_dtype(series: pd.Series) -> str:
     if pd.api.types.is_bool_dtype(series):
         return "boolean"
-    elif pd.api.types.is_integer_dtype(series):
+    elif pd.api.types.is_integer_dtype(series) or pd.api.types.is_nullable_integer_dtype(series):
         return "integer"
     elif pd.api.types.is_float_dtype(series):
         return "double"
@@ -28,10 +28,12 @@ def assert_same_structure(csv1_path: Path, csv2_path: Path, check_categories: bo
     df2 = pd.read_csv(csv2_path, parse_dates=True)
 
     # ----------------------------
-    # Columns
+    # Columns: order and names
     # ----------------------------
     if list(df1.columns) != list(df2.columns):
-        raise AssertionError(f"Column names/order differ:\nOriginal: {list(df1.columns)}\nDummy:    {list(df2.columns)}")
+        raise AssertionError(
+            f"Column names/order differ:\nOriginal: {list(df1.columns)}\nDummy:    {list(df2.columns)}"
+        )
 
     # ----------------------------
     # Data types
@@ -49,10 +51,12 @@ def assert_same_structure(csv1_path: Path, csv2_path: Path, check_categories: bo
         required1 = df1[col].notna().all()
         required2 = df2[col].notna().all()
         if required1 != required2:
-            raise AssertionError(f"Column '{col}' nullability mismatch: original required={required1}, dummy required={required2}")
+            raise AssertionError(
+                f"Column '{col}' nullability mismatch: original required={required1}, dummy required={required2}"
+            )
 
     # ----------------------------
-    # Categorical values (optional)
+    # Categorical subset check (optional)
     # ----------------------------
     if check_categories:
         for col in df1.columns:
@@ -61,16 +65,17 @@ def assert_same_structure(csv1_path: Path, csv2_path: Path, check_categories: bo
                 vals1 = set(df1[col].dropna().unique())
                 vals2 = set(df2[col].dropna().unique())
                 if not vals2.issubset(vals1):
-                    raise AssertionError(f"Column '{col}' dummy values {vals2} are not subset of original {vals1}")
+                    raise AssertionError(
+                        f"Column '{col}' dummy values {vals2} are not subset of original {vals1}"
+                    )
 
     print(f"✅ Structure check passed: {len(df1.columns)} columns match, datatypes compatible, nullability compatible.")
-
 
 # ----------------------------
 # CLI
 # ----------------------------
 def main():
-    parser = argparse.ArgumentParser(description="Assert that two CSVs have the same structure")
+    parser = argparse.ArgumentParser(description="Assert that two CSVs match CSVW-SAFE structure")
     parser.add_argument("original_csv", type=str, help="Original CSV file")
     parser.add_argument("dummy_csv", type=str, help="Dummy CSV file")
     parser.add_argument("--no-categories", action="store_true", help="Skip checking categorical values")
@@ -84,7 +89,6 @@ def main():
     except Exception as e:
         print(f"ERROR: {e}")
         sys.exit(2)
-
 
 if __name__ == "__main__":
     main()

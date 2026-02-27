@@ -30,20 +30,20 @@
         "required": true,
 
         "csvw-safe:bounds.maxGroupsPerUnit": 1,
-        "csvw-safe:bounds.maxNumPartitions": 3,
+        "csvw-safe:public.maxNumPartitions": 3,
         "csvw-safe:public.exhaustivePartitions": true,
 
         "csvw-safe:public.partitions": [
           {
             "@type": "csvw-safe:Partition",
             "csvw-safe:predicate": { "partitionValue": "Adelie" },
-            "csvw-safe:bounds.maxContributions": 1,
+            "csvw-safe:bounds.maxContributions": 2,
             "csvw-safe:bounds.maxLength": 200
           },
           {
             "@type": "csvw-safe:Partition",
             "csvw-safe:predicate": { "partitionValue": "Chinstrap" },
-            "csvw-safe:bounds.maxContributions": 1,
+            "csvw-safe:bounds.maxContributions": 2,
             "csvw-safe:bounds.maxLength": 200
           },
           {
@@ -62,13 +62,13 @@
         "required": true,
 
         "csvw-safe:bounds.maxGroupsPerUnit": 1,
-        "csvw-safe:bounds.maxNumPartitions": 3,
+        "csvw-safe:public.maxNumPartitions": 3,
         "csvw-safe:public.exhaustivePartitions": true,
 
         "csvw-safe:public.partitions": [
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Torgersen" } },
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Biscoe" } },
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Dream" } }
+          "Torgersen",
+          "Biscoe",
+          "Dream"
         ]
       },
 
@@ -101,7 +101,7 @@
         "csvw-safe:synth.nullableProportion": 0.05,
 
         "csvw-safe:bounds.maxGroupsPerUnit": 2,
-        "csvw-safe:bounds.maxNumPartitions": 2,
+        "csvw-safe:public.maxNumPartitions": 2,
 
         "csvw-safe:public.partitions": [
           {
@@ -133,11 +133,11 @@
         "csvw-safe:synth.nullableProportion": 0.2,
 
         "csvw-safe:bounds.maxGroupsPerUnit": 1,
-        "csvw-safe:bounds.maxNumPartitions": 2,
+        "csvw-safe:public.maxNumPartitions": 2,
 
         "csvw-safe:public.partitions": [
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "MALE" } },
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "FEMALE" } }
+          "MALE",
+          "FEMALE"
         ]
       }
     ]
@@ -149,7 +149,7 @@
       "csvw-safe:columns": ["sex", "island"],
 
       "csvw-safe:bounds.maxGroupsPerUnit": 1,
-      "csvw-safe:bounds.maxNumPartitions": 6,
+      "csvw-safe:public.maxNumPartitions": 6,
 
       "csvw-safe:public.partitions": [
         {

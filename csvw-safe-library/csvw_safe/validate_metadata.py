@@ -1,12 +1,12 @@
 """
-Advanced CSVW-SAFE metadata validator.
+CSVW-SAFE Metadata Validator (Aligned with new vocabulary)
 
-Implements:
-- Structural validation
-- Recursive PartitionKey validation
-- GroupingKey logic
-- DP bound inheritance & override checks
-- Worst-case DP consistency
+Validates:
+- Structural correctness
+- Partition schema
+- ColumnGroup logic
+- Bound consistency (bounds.*)
+- Public facts consistency (public.*)
 """
 
 import json
@@ -18,60 +18,50 @@ VALID_TYPES = {"string", "boolean", "integer", "double", "dateTime"}
 
 
 # ============================================================
-# Utility helpers
+# Utilities
 # ============================================================
-
-def is_numeric(dtype: str) -> bool:
-    return dtype in ("integer", "double")
-
 
 def error(msg, errors):
     errors.append(msg)
 
 
-def check_unique(values, label, errors):
-    if len(values) != len(set(values)):
-        errors.append(f"Duplicate {label} detected")
+def is_numeric(dtype: str) -> bool:
+    return dtype in ("integer", "double")
 
 
 def intervals_overlap(a1, a2, b1, b2):
     return max(a1, b1) < min(a2, b2)
 
 
-def validate_no_interval_overlap(partitions, errors):
-    intervals = []
-    for p in partitions:
-        if "csvw-safe:lowerBound" in p:
-            intervals.append((p["csvw-safe:lowerBound"],
-                              p["csvw-safe:upperBound"]))
-    for i in range(len(intervals)):
-        for j in range(i+1, len(intervals)):
-            if intervals_overlap(*intervals[i], *intervals[j]):
-                errors.append("Overlapping numeric partitions detected")
+# ============================================================
+# Table Validation
+# ============================================================
 
+def validate_table(metadata: Dict[str, Any], errors: List[str]):
 
-def validate_dp_consistency(node, errors):
+    # Privacy unit required
+    if "csvw-safe:public.privacyUnit" not in metadata:
+        error("Missing csvw-safe:public.privacyUnit at table level", errors)
 
-    l0 = node.get("csvw-safe:maxInfluencedPartitions")
-    linf = node.get("csvw-safe:maxContribution")
-    l1 = node.get("csvw-safe:maxLength")
+    # Bounds
+    bounds_max_len = metadata.get("csvw-safe:bounds.maxLength")
+    public_len = metadata.get("csvw-safe:public.length")
 
-    if l0 and linf and l1:
-        if l0 * linf < l1:
-            errors.append("Inconsistent DP bounds: l1 exceeds l0 * l∞")
+    if bounds_max_len is not None and public_len is not None:
+        if public_len > bounds_max_len:
+            error("public.length exceeds bounds.maxLength", errors)
 
-    if linf and l1 and linf > l1:
-        errors.append("maxContribution > maxLength")
+    if "csvw-safe:bounds.maxContributions" in metadata:
+        if metadata["csvw-safe:bounds.maxContributions"] < 1:
+            error("bounds.maxContributions must be >= 1", errors)
 
-    if l0 and "csvw-safe:maxNumPartitions" in node:
-        if l0 > node["csvw-safe:maxNumPartitions"]:
-            errors.append("maxInfluencedPartitions > maxNumPartitions")
 
 # ============================================================
-# Column validation
+# Column Validation
 # ============================================================
 
 def validate_column(col: Dict[str, Any], errors: List[str]):
+
     name = col.get("name")
     dtype = col.get("datatype")
 
@@ -82,20 +72,16 @@ def validate_column(col: Dict[str, Any], errors: List[str]):
     if dtype not in VALID_TYPES:
         error(f"Column '{name}' invalid datatype '{dtype}'", errors)
 
-    # nullableProportion
-    nullable = col.get("csvw-safe:nullableProportion", 0)
-    if not (0 <= nullable <= 1):
-        error(f"Column '{name}' nullableProportion must be in [0,1]", errors)
+    # privacyId must be boolean
+    if "csvw-safe:public.privacyId" in col:
+        if not isinstance(col["csvw-safe:public.privacyId"], bool):
+            error(f"Column '{name}' privacyId must be boolean", errors)
 
-    # privacyId columns must not declare DP bounds
-    if col.get("csvw-safe:privacyId", False):
-        for dp in ["csvw-safe:maxLength",
-                   "csvw-safe:maxContribution",
-                   "csvw-safe:maxInfluencedPartitions"]:
-            if dp in col:
-                error(f"privacyId column '{name}' must not declare {dp}", errors)
+    # Required consistency
+    if col.get("required") and col.get("csvw-safe:synth.nullableProportion", 0) != 0:
+        error(f"Column '{name}' is required but nullableProportion != 0", errors)
 
-    # Numeric columns must declare min/max
+    # Numeric domain validation
     if is_numeric(dtype):
         if "minimum" not in col or "maximum" not in col:
             error(f"Numeric column '{name}' must declare minimum and maximum", errors)
@@ -103,236 +89,123 @@ def validate_column(col: Dict[str, Any], errors: List[str]):
             if col["minimum"] > col["maximum"]:
                 error(f"Column '{name}' minimum > maximum", errors)
 
-        col_min = col.get("minimum")
-        col_max = col.get("maximum")
+    # Partition validation
+    if "csvw-safe:public.partitions" in col:
+        partitions = col["csvw-safe:public.partitions"]
 
-        if col.get("csvw-safe:publicPartitions", 0):
-            for p in col["csvw-safe:publicPartitions"]:
-                if "csvw-safe:lowerBound" in p:
-                    if p["csvw-safe:lowerBound"] < col_min or \
-                       p["csvw-safe:upperBound"] > col_max:
-                        error(f"Partition outside column domain in '{name}'", errors)
+        if not isinstance(partitions, list):
+            error(f"Column '{name}' public.partitions must be list", errors)
+        else:
+            validate_partitions(col, partitions, errors)
 
-    # Validate partitions if present
-    if "csvw-safe:publicPartitions" in col:
-        partitions = col["csvw-safe:publicPartitions"]
-        validate_partitions(
-            col,
-            partitions,
-            parent_bounds=extract_dp_bounds(col),
-            column_lookup={name: col},
-            errors=errors
-        )
-        validate_no_interval_overlap(partitions, errors)
+        # maxNumPartitions consistency
+        if "csvw-safe:public.maxNumPartitions" in col:
+            if len(partitions) > col["csvw-safe:public.maxNumPartitions"]:
+                error(
+                    f"Column '{name}' exceeds declared public.maxNumPartitions",
+                    errors
+                )
 
-    # required implies nullableProportion == 0
-    if col.get("required") is True:
-        if col.get("csvw-safe:nullableProportion", 0) != 0:
-            error(f"Column '{name}' is required but nullableProportion != 0", errors)
-    
-    # maxNumPartitions consistency
-    if "csvw-safe:maxNumPartitions" in col and \
-       "csvw-safe:publicPartitions" in col:
-        if len(col["csvw-safe:publicPartitions"]) > col["csvw-safe:maxNumPartitions"]:
-            error(f"Column '{name}' has more publicPartitions than maxNumPartitions", errors)
-
-    validate_dp_consistency(col, errors)
 
 # ============================================================
-# Partition validation (recursive)
+# Partition Validation
 # ============================================================
 
-def validate_partitions(parent,
-                        partitions,
-                        parent_bounds,
-                        column_lookup,
-                        errors):
+def validate_partitions(parent, partitions, errors):
 
-    if not isinstance(partitions, list):
-        error("publicPartitions must be a list", errors)
-        return
+    intervals = []
 
     for p in partitions:
-        validate_partition_key(
-            parent,
-            p,
-            parent_bounds,
-            column_lookup,
-            errors
-        )
 
+        if p.get("@type") != "csvw-safe:Partition":
+            error("Partition must declare @type csvw-safe:Partition", errors)
 
-def validate_partition_key(parent,
-                           p,
-                           parent_bounds,
-                           column_lookup,
-                           errors):
+        predicate = p.get("csvw-safe:predicate")
+        if not isinstance(predicate, dict):
+            error("Partition missing predicate object", errors)
+            continue
 
-    has_value = "csvw-safe:partitionValue" in p
-    has_bounds = "csvw-safe:lowerBound" in p or "csvw-safe:upperBound" in p
-    has_components = "csvw-safe:components" in p
+        has_value = "partitionValue" in predicate
+        has_bounds = "lowerBound" in predicate or "upperBound" in predicate
+        has_components = "components" in predicate
 
-    if not (has_value or has_bounds or has_components):
-        error("PartitionKey must define value OR bounds OR components", errors)
+        if not (has_value or has_bounds or has_components):
+            error("Partition predicate must define value, bounds, or components", errors)
 
-    # Numeric bounds validation
-    if has_bounds:
-        lb = p.get("csvw-safe:lowerBound")
-        ub = p.get("csvw-safe:upperBound")
+        # Numeric bounds validation
+        if has_bounds:
+            lb = predicate.get("lowerBound")
+            ub = predicate.get("upperBound")
 
-        if lb is None or ub is None:
-            error("Numeric partition must define both lowerBound and upperBound", errors)
-        elif lb > ub:
-            error("Partition lowerBound > upperBound", errors)
+            if lb is None or ub is None:
+                error("Numeric partition must define lowerBound and upperBound", errors)
+            elif lb > ub:
+                error("Partition lowerBound > upperBound", errors)
+            else:
+                intervals.append((lb, ub))
 
-    # Recursive components
-    if has_components:
-        comps = p["csvw-safe:components"]
-        if not isinstance(comps, dict):
-            error("components must be a dict", errors)
-            return
+        # Recursive components (ColumnGroup)
+        if has_components:
+            comps = predicate["components"]
+            if not isinstance(comps, dict):
+                error("Partition components must be dict", errors)
 
-        for col_name, subpart in comps.items():
-            if col_name not in column_lookup:
-                error(f"Partition references unknown column '{col_name}'", errors)
-                continue
+    # Overlap detection
+    for i in range(len(intervals)):
+        for j in range(i + 1, len(intervals)):
+            if intervals_overlap(*intervals[i], *intervals[j]):
+                error("Overlapping numeric partitions detected", errors)
 
-            validate_partition_key(
-                parent,
-                subpart,
-                parent_bounds,
-                column_lookup,
-                errors
-            )
-
-    # DP override checks
-    for bound in ["csvw-safe:maxLength",
-                  "csvw-safe:maxContribution"]:
-        if bound in p and bound in parent_bounds:
-            if p[bound] > parent_bounds[bound]:
-                error(f"Partition override {bound} exceeds parent bound", errors)
-
-    # publicLength ≤ maxLength
-    if "csvw-safe:publicLength" in p and "csvw-safe:maxLength" in p:
-        if p["csvw-safe:publicLength"] > p["csvw-safe:maxLength"]:
-            error("Partition publicLength > maxLength", errors)
 
 # ============================================================
-# ColumnGroup validation
+# ColumnGroup Validation
 # ============================================================
 
 def validate_column_groups(metadata, columns_by_name, errors):
 
-    groups = metadata.get("csvw-safe:columnGroups", [])
+    groups = metadata.get("csvw-safe:additionalInformation", [])
+
     if not isinstance(groups, list):
         return
 
     for g in groups:
 
-        cols = g.get("csvw-safe:columns", [])
-        if len(cols) < 2:
-            error("ColumnGroup must contain at least two columns", errors)
+        if g.get("@type") != "csvw-safe:ColumnGroup":
+            continue
 
-        # Check columns exist
+        cols = g.get("csvw-safe:columns", [])
+
+        if len(cols) < 2:
+            error("ColumnGroup must reference at least two columns", errors)
+
         for col_name in cols:
             if col_name not in columns_by_name:
                 error(f"ColumnGroup references unknown column '{col_name}'", errors)
-            else:
-                if columns_by_name[col_name].get("csvw-safe:privacyId"):
-                    error(f"ColumnGroup contains privacyId column '{col_name}'", errors)
+            elif columns_by_name[col_name].get("csvw-safe:public.privacyId"):
+                error(f"ColumnGroup cannot include privacyId column '{col_name}'", errors)
 
-        parent_bounds = extract_dp_bounds(g)
-
-        # Validate partitions
-        if "csvw-safe:publicPartitions" in g:
-            validate_partitions(
-                g,
-                g["csvw-safe:publicPartitions"],
-                parent_bounds,
-                columns_by_name,
-                errors
-            )
+        # Partition validation
+        if "csvw-safe:public.partitions" in g:
+            validate_partitions(g, g["csvw-safe:public.partitions"], errors)
 
         # maxNumPartitions consistency
-        if "csvw-safe:maxNumPartitions" in g:
-            for col_name in cols:
-                if "csvw-safe:maxNumPartitions" not in columns_by_name[col_name]:
-                    error("ColumnGroup declares maxNumPartitions but a column does not", errors)
-
-        # Group bounds must not exceed column bounds
-        for bound in ["csvw-safe:maxLength",
-                      "csvw-safe:maxContribution",
-                      "csvw-safe:maxInfluencedPartitions"]:
-        
-            if bound in g:
-                col_bounds = []
-                for col_name in cols:
-                    if bound in columns_by_name[col_name]:
-                        col_bounds.append(columns_by_name[col_name][bound])
-        
-                if col_bounds and g[bound] > min(col_bounds):
-                    error(f"ColumnGroup {bound} exceeds column bound", errors)
-
-        # Cartesion subset enforcement
-        if "csvw-safe:publicPartitions" in g:
-            seen = []
-            for p in g["csvw-safe:publicPartitions"]:
-                key_tuple = tuple(sorted(p.get("csvw-safe:components", {}).keys()))
-                seen.append(key_tuple)
-            check_unique(seen, "ColumnGroup partition combinations", errors)
-
-            for p in g.get("csvw-safe:publicPartitions", []):
-                comps = p.get("csvw-safe:components", {})
-                if set(comps.keys()) != set(cols):
-                    error("Partition components do not match ColumnGroup columns", errors)
-
-        validate_dp_consistency(g, errors)
-
-# ============================================================
-# Table validation
-# ============================================================
-
-def validate_table(table, errors):
-
-    if table.get("csvw-safe:maxInfluencedPartitions", 1) != 1:
-        error("Table-level maxInfluencedPartitions must equal 1", errors)
-
-    if "csvw-safe:publicLength" in table and "csvw-safe:maxLength" in table:
-        if table["csvw-safe:publicLength"] > table["csvw-safe:maxLength"]:
-            error("Table publicLength > maxLength", errors)
-
-    if "csvw-safe:maxContribution" in table and "csvw-safe:maxLength" in table:
-        if table["csvw-safe:maxContribution"] > table["csvw-safe:maxLength"]:
-            error("Table maxContribution > maxLength", errors)
-
-    validate_dp_consistency(table, errors)
-
-# ============================================================
-# DP Bound extraction
-# ============================================================
-
-def extract_dp_bounds(node):
-    bounds = {}
-    for key in ["csvw-safe:maxLength",
-                "csvw-safe:maxContribution",
-                "csvw-safe:maxInfluencedPartitions"]:
-        if key in node:
-            bounds[key] = node[key]
-    return bounds
+        if "csvw-safe:public.maxNumPartitions" in g:
+            if len(g.get("csvw-safe:public.partitions", [])) > \
+               g["csvw-safe:public.maxNumPartitions"]:
+                error("ColumnGroup exceeds public.maxNumPartitions", errors)
 
 
 # ============================================================
-# Main metadata validation
+# Main Validation Entry
 # ============================================================
 
 def validate_metadata(metadata):
 
     errors = []
 
-    table = metadata
-    validate_table(table, errors)
+    validate_table(metadata, errors)
 
-    table_schema = metadata.get("tableSchema", {})
+    table_schema = metadata.get("csvw:tableSchema", {})
     columns = table_schema.get("columns", [])
 
     columns_by_name = {}
@@ -352,7 +225,11 @@ def validate_metadata(metadata):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="Validate CSVW-SAFE metadata JSON")
+
+    parser = argparse.ArgumentParser(
+        description="Validate CSVW-SAFE metadata (aligned vocabulary)"
+    )
+
     parser.add_argument("metadata_file", type=str)
     args = parser.parse_args()
 
@@ -373,7 +250,7 @@ def main():
             print(f" - {e}")
         sys.exit(1)
     else:
-        print("VALIDATION SUCCESS: Metadata satisfies CSVW-SAFE rules")
+        print("VALIDATION SUCCESS: Metadata satisfies CSVW-SAFE specification")
 
 
 if __name__ == "__main__":

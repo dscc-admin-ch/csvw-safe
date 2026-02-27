@@ -376,8 +376,95 @@ This is an example when there is only one known privacy unit: penguin_id.
   ]
 }
 ```
+NOTE: if any of `bounds.maxContributions`, `rec.maxContributions`, `bounds.maxLength`, `public.length` is given at a column level, it applies to an upper bound on all partition when grouping by this column.
 
-
+For instance,
+```
+{
+    "@type": "csvw:Column",
+    "name": "species",
+    "datatype": "string",
+    
+    "csvw-safe:bounds.maxGroupsPerUnit": 2,
+    "csvw-safe:public.maxNumPartitions": 3,
+    "csvw-safe:public.exhaustivePartitions": true,
+    
+    "csvw-safe:public.partitions": [
+      {
+        "@type": "csvw-safe:Partition",
+        "csvw-safe:predicate": {"partitionValue": "Adelie"},
+        "csvw-safe:bounds.maxContributions": 2,
+        "csvw-safe:bounds.maxLength": 200
+      },
+      {
+        "@type": "csvw-safe:Partition",
+        "csvw-safe:predicate": {"partitionValue": "Gentoo"},
+        "csvw-safe:bounds.maxContributions": 2,
+        "csvw-safe:bounds.maxLength": 200
+      },
+      {
+        "@type": "csvw-safe:Partition",
+        "csvw-safe:predicate": {"partitionValue": "Chinstrap"},
+        "csvw-safe:bounds.maxContributions": 1,
+        "csvw-safe:bounds.maxLength": 200
+      }
+    ]
+}
+```
+is similar to
+```
+{
+    "@type": "csvw:Column",
+    "name": "species",
+    "datatype": "string",
+    
+    "csvw-safe:bounds.maxGroupsPerUnit": 2,
+    "csvw-safe:public.maxNumPartitions": 3,
+    "csvw-safe:public.exhaustivePartitions": true,
+     "csvw-safe:bounds.maxContributions": 2,
+    "csvw-safe:bounds.maxLength": 200
+    
+    "csvw-safe:public.partitions": [
+      {
+        "@type": "csvw-safe:Partition",
+        "csvw-safe:predicate": {"partitionValue": "Adelie"},
+      },
+      {
+        "@type": "csvw-safe:Partition",
+        "csvw-safe:predicate": {"partitionValue": "Gentoo"},
+      },
+      {
+        "@type": "csvw-safe:Partition",
+        "csvw-safe:predicate": {"partitionValue": "Chinstrap"},
+        "csvw-safe:bounds.maxContributions": 1,
+      }
+    ]
+}
+```
+Moreover, if no additional properties are given than the partition predicate, it is possible to list them as 
+```
+{
+    "@type": "csvw:Column",
+    "name": "species",
+    "datatype": "string",
+    
+    "csvw-safe:bounds.maxGroupsPerUnit": 2,
+    "csvw-safe:public.maxNumPartitions": 3,
+    "csvw-safe:public.exhaustivePartitions": true,
+     "csvw-safe:bounds.maxContributions": 2,
+    "csvw-safe:bounds.maxLength": 200
+    
+    "csvw-safe:public.partitions": [
+      "Adelie",  
+      "Gentoo",
+      {
+        "@type": "csvw-safe:Partition",
+        "csvw-safe:predicate": {"partitionValue": "Chinstrap"},
+        "csvw-safe:bounds.maxContributions": 1,
+      }
+    ]
+}
+```
 
 ### 2.2 Contribution with respect to an privacy unit
 Differential privacy guarantees are defined relative to a privacy unit.

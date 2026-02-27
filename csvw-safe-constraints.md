@@ -19,6 +19,10 @@ The following properties are required if the dataset is intended for DP calibrat
 | `csvw-safe:bounds.maxLength`        | MUST be declared                          |
 | `csvw-safe:bounds.maxContributions` | MUST be declared and ≤ `bounds.maxLength` |
 
+If there is no groupy, then these fields are compulsory at the table level.
+If there is a groupby, then these fields are compulsory at the partition level. 
+
+
 ### 4.1.2 Optional but validated
 
 | Property                            | Constraint                                                               |
@@ -160,7 +164,7 @@ If omitted: Values inherit from parent scope.
 
 A dataset is DP-calibratable if:
 
-1. Table declares:
+1. Table (or Partition if groupby query) declares:
     - public.privacyUnit
     - bounds.maxLength
     - bounds.maxContributions
