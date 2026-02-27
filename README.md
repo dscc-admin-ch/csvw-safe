@@ -135,9 +135,9 @@ with the JSON
 }
 ```
 
-A `csvw-safe:GroupingKey` would by for instance based on columns ["species", "island"]. And the resulting partitions would be
-- `csvw-safe:GroupingKey` ["species", "island"] → categorical `csvw-safe:Partition` by species and island values: (Adelie, Torgerson), (Adelie, Biscoe), (Chinstrap, Dream), (Gentoo, Biscoe).
-- `csvw-safe:GroupingKey` ["species", "flipper_length_mm"] → `csvw-safe:Partition` by species and island values: (Adelie, [150–200]), (Chinstrap, [150–200]), (Gentoo, [200–250]).
+A `csvw-safe:ColumnGroup` would by for instance based on columns ["species", "island"]. And the resulting partitions would be
+- `csvw-safe:Partition` ["species", "island"] →  by species and island values: (Adelie, Torgerson), (Adelie, Biscoe), (Chinstrap, Dream), (Gentoo, Biscoe).
+- `csvw-safe:Partition` ["species", "flipper_length_mm"] → by species and flipper length values: (Adelie, [150–200]), (Chinstrap, [150–200]), (Gentoo, [200–250]).
 
 Adding to the JSON
 ```
@@ -178,11 +178,12 @@ Adding to the JSON
 ![Overview](images/csvw-safe_structure.png)
 
 CSVW-SAFE properties belong to three categories:
-| Aspect                                 | Describes                                             | Namespace prefix    |
-| -------------------------------------- | ----------------------------------------------------- | ------------------- |
-| **Public invariant facts**             | True structural facts about the data universe         | `csvw-safe:public.` |
-| **Model assumptions (privacy bounds)** | Worst-case assumptions used to compute DP sensitivity | `csvw-safe:bounds.` |
-| **Synthetic modeling hints**           | Information for generating realistic dummy data       | `csvw-safe:synth.`  |
+| Aspect                                 | Describes                                                | Namespace prefix     |
+| -------------------------------------- | -------------------------------------------------------- | -------------------- |
+| **Public invariant facts**             | True structural facts about the data universe            | `csvw-safe:public.`  |
+| **Data assumptions (privacy bounds)**  | Worst-case assumptions on data to compute DP sensitivity | `csvw-safe:bounds.`  |
+| **Preprocessing recommandation**       | Preprocessing recommandation to limit/compute DP sensitivity | `csvw-safe:rec.` |
+| **Synthetic modeling hints**           | Information for generating realistic dummy data          | `csvw-safe:synth.`   |
 
 These properties should only be in the metadata if their release does not consume privacy budget.
 The should not depend on the observed dataset instance (not specific empirical observations) and should hold for all neighbouring datasets.
@@ -191,15 +192,18 @@ The should not depend on the observed dataset instance (not specific empirical o
 These describe facts that are true for every dataset in the adjacency relation.
 If a statement is declared as `csvw-safe:public.`, it is assumed to be universally valid and safe to disclose.
 
-**Model assumptions**: `csvw-safe:bounds.`
+**Data assumptions**: `csvw-safe:bounds.`
 A privacy unit identifies the entity whose participation defines dataset adjacency. Two datasets are neighbours if and only if all rows associated with one privacy unit are added or removed.
 `csvw-safe:bounds.` define worst-case contribution bounds required for DP calibration (maximum influence one privacy unit may have on a query result).
 They must hold for all datasets consistent with the declared public constraints and are guarantees about the possible universe of neighbouring datasets.
 
+**Preprocessing recommandation**: `csvw-safe:rec.`
+Preprocessing recommendations provide guidance on transformations that can be applied during a DP pipeline to better control the privacy budget. For example, they may suggest truncating contributions per privacy unit to ensure limits are respected. These recommendations can be used in place of, or alongside, `csvw-safe:bounds.`, provided the dataset includes a column identifying privacy units. Importantly, they are not derived from observed data but are general guidance about worst-case scenarios, helping maintain privacy guarantees while avoiding unnecessary consumption of the privacy budget. Typically, they would be used in the `truncate` steps of opendp-polars.
+
 **Synthetic modeling hints**: `csvw-safe:synth.`
 These properties are optional and serve dummy data generation.
 
-They improve the realism of synthetic datasetsa and dummy dataset but should not affect DP guarantees. They may be approximate proportions.
+They improve the realism of synthetic datasets and dummy dataset but should not affect DP guarantees. They may be approximate proportions.
 
 ---
 
@@ -213,26 +217,24 @@ A privacy unit is an identifier representing an individual or entity whose data 
 
 Contribution bounds describe how much influence one privacy unit can have on the output.
 
-### 2.0 Application of properties (TODO, WIP)
-Properties described below for DP can be viewed as preprocessing suggestions and/or actual data descriptors. (credit to Mike)
-- Preprocessing suggestions: When a privacy unit id is present in the data, then this option is preferred. For instance, it is suggested that the maximum number of privacy unit contribution should be maximum four and thus, when processing, truncate rows if more than this. This does not leak privacy and simplifies usability. 
-- Observed or publicly known properties of the data: This is more dangerous and in this case, should be done carefully. For instance, it has been observed that the maximum number of contribution of any privacy unit is 5. This may leak privacy information but is the only solution when the privacy unit column is not present.
-
 ### 2.1 All Levels
 
 We define 6 properties that can be used to infer DP noise. 
 
+Three apply at table and partition level and three apply at a grouping key level (column or group of column).
 
 | Term                      | Definition                                                             |      Table     |  Partition  | GroupingKey |
 | ------------------------- | ---------------------------------------------------------------------- | :------------: | :---------: | :---------: |
 | `bounds.maxContributions` | Max rows a privacy unit can contribute in a region ($l_\infty$)        |     Yes (1)    |   Yes (3)   |      No     |
-| `bounds.maxGroupsPerUnit` | Max groups / partitions a privacy unit can appear in ($l_0$)           |        1       |      1      |     Yes     |
+| `rec.maxContributions`    | Max rows a privacy unit should contribute in a region ($l_\infty$)     |     Yes (1)    |   Yes (3)   |      No     |
 | `bounds.maxLength`        | Max rows in table / partition (theoretical upper bound)                |     Yes (2)    |   Yes (4)   |      No     |
-| `bounds.maxNumPartitions` | Max number of non-empty output partitions for a column or grouping key |       No       |      No     |     Yes     |
 | `public.length`           | Exact number of rows if public                                         |       Yes      |     Yes     |      No     |
+| `bounds.maxGroupsPerUnit` | Max groups / partitions a privacy unit can appear in ($l_0$)           |       No       |      No     |     Yes     |
+| `rec.maxGroupsPerUnit`    | Max groups / partitions a privacy unit should appear in ($l_0$)        |       No       |      No     |     Yes     |
+| `public.maxNumPartitions` | Max number of non-empty output partitions for a column or grouping key |       No       |      No     |     Yes     |
 | `public.partitions`       | List of known partitions (publicly known regions)                      |       No       |      No     |     Yes     |
 
-Required values are mandatory for DP calibration. 
+Required values are mandatory for DP calibration (on table and partition levels). 
 - `Yes (1)` concerns all query at table level.  -->  Nb contribution in data.
 - `Yes (2)` concerns all query at table level (except counts). -->  Nb records in data.
 - `Yes (3)` concerns all query after a groupby. It may be set as the maximum of all individual partitions. -->  Nb contribution in group.
@@ -243,15 +245,7 @@ Others improve tightness and avoid unnecessary noise but are all optinal.
 `csvw-safe:bounds.maxContributions` ($l_\infty$) maximum number of rows contributed by a single privacy unit to any one grouping region.
 - At the table level, it is the maximum number of rows a privacy unit may contribute to the entire dataset. This bound governs sensitivity of queries without grouping.
 - At the partition level, it is the maximum number of rows in the partition which concern the privacy unit.
-
-`csvw-safe:bounds.maxGroupsPerUnit` ($l_0$) is the maximum number of groups produced by a grouping operation on this key in which a single privacy unit may appear. The grouping key is the `csvw:Column` or `csvw-safe:GroupingKey` on which the property is declared.
-- At the table level, it does not make sense and is 1.
-- At the partition level, it does not make sense and is 1.
-- At the grouping key level (column level or multiple column level), it is the number of partitions of the column (after a groupby) that can be affected by an individual.
-- At the multiple column level, it is the number of partitions of the group of columns (after a groupby) that can be affected by an individual. In the worst case, the product of the number of partitions of all individual columns.
-
-**Note**:These parameters allow systems to determine the maximum number of rows that may change if one privacy unit is added or removed. 
-The total number of rows a privacy unit may influence $l_1 = l_0 \cdot l_\infty$ is not defined as a new word as it depends on the query and $l_\infty$ and $l_0$.
+`rec.maxContributions` is similar to `csvw-safe:bounds.maxContributions` but it is not a guarantee on the data. It is a preprocessing recommandation (to truncate to this number of maximum privacy unit contributions) when applying DP pipelines.
 
 `csvw-safe:bounds.maxLength` is the maximum theoretical number of rows. It also enables to compute additional noise requirements in case of overflow when doing some operations. See reference: [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708).
 - At the table level, it is the maximum theoretical number of rows in the table. It is compulsory to apply DP.
@@ -262,7 +256,18 @@ The total number of rows a privacy unit may influence $l_1 = l_0 \cdot l_\infty$
 - At the partition level, it is the number of rows in the partition.
 - It does not make sense at `csvw-safe:Column` and `csvw-safe:GroupingKey` level as it is the same as at `csvw:Table` level.
 
-`csvw-safe:bounds.maxNumPartitions` refers to the maximum number of non-empty groups that may appear in a query result, not the size of the value domain.
+`csvw-safe:bounds.maxGroupsPerUnit` ($l_0$) is the maximum number of groups produced by a grouping operation on this key in which a single privacy unit may appear. The grouping key is the `csvw:Column` or `csvw-safe:GroupingKey` on which the property is declared.
+- At the table level, it does not make sense and is 1.
+- At the partition level, it does not make sense and is 1.
+- At the grouping key level (column level or multiple column level), it is the number of partitions of the column (after a groupby) that can be affected by an individual.
+- At the multiple column level, it is the number of partitions of the group of columns (after a groupby) that can be affected by an individual. In the worst case, the product of the number of partitions of all individual columns.
+`rec.maxGroupsPerUnit` is similar to `csvw-safe:bounds.maxGroupsPerUnit` but it is not a guarantee on the data. It is a preprocessing recommandation (to truncate to this number of contribution in groups) when applying DP pipelines.
+
+
+**Note**:These parameters allow systems to determine the maximum number of rows that may change if one privacy unit is added or removed. 
+The total number of rows a privacy unit may influence $l_1 = l_0 \cdot l_\infty$ is not defined as a new word as it depends on the query and $l_\infty$ and $l_0$.
+
+`csvw-safe:public.maxNumPartitions` refers to the maximum number of non-empty groups that may appear in a query result, not the size of the value domain.
 - At the column level, it is the number of different categories in the column. For instance, a column with 3 categories has `maxNumPartitions=3`.
 - At the group of columns level, it is the number of different partitions that can be produced by grouping multiple columns (cartesian product of the partitions of each column in the simplest case).
 If `public.partitions` is declared and `exhaustivePartitions=true`, then maxNumPartitions equals the number of declared partitions. Otherwise, `maxNumPartitions` must be explicitly declared.
@@ -296,7 +301,7 @@ This is an example when there is only one known privacy unit: penguin_id.
         "datatype": "string",
 
         "csvw-safe:bounds.maxGroupsPerUnit": 2,
-        "csvw-safe:bounds.maxNumPartitions": 3,
+        "csvw-safe:public.maxNumPartitions": 3,
         "csvw-safe:public.exhaustivePartitions": true,
 
         "csvw-safe:public.partitions": [
@@ -329,7 +334,7 @@ This is an example when there is only one known privacy unit: penguin_id.
         "maximum": 250,
 
         "csvw-safe:bounds.maxGroupsPerUnit": 2,
-        "csvw-safe:bounds.maxNumPartitions": 2,
+        "csvw-safe:public.maxNumPartitions": 2,
 
         "csvw-safe:public.partitions": [
           {
@@ -353,7 +358,7 @@ This is an example when there is only one known privacy unit: penguin_id.
       "csvw-safe:columns":["species","flipper_length_mm"],
 
       "csvw-safe:bounds.maxGroupsPerUnit":3,
-      "csvw-safe:bounds.maxNumPartitions":6,
+      "csvw-safe:public.maxNumPartitions":6,
 
       "csvw-safe:public.partitions":[
         {
