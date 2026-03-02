@@ -1,14 +1,3 @@
-"""
-CSVW-SAFE Metadata Validator (Aligned with new vocabulary)
-
-Validates:
-- Structural correctness
-- Partition schema
-- ColumnGroup logic
-- Bound consistency (bounds.*)
-- Public facts consistency (public.*)
-"""
-
 import json
 import sys
 from pathlib import Path
@@ -114,6 +103,7 @@ def validate_column(col: Dict[str, Any], errors: List[str]):
 def validate_partitions(parent, partitions, errors):
 
     intervals = []
+    is_column_group = parent.get("@type") == "csvw-safe:ColumnGroup"
 
     for p in partitions:
 
@@ -121,41 +111,88 @@ def validate_partitions(parent, partitions, errors):
             error("Partition must declare @type csvw-safe:Partition", errors)
 
         predicate = p.get("csvw-safe:predicate")
+
         if not isinstance(predicate, dict):
             error("Partition missing predicate object", errors)
             continue
 
-        has_value = "partitionValue" in predicate
-        has_bounds = "lowerBound" in predicate or "upperBound" in predicate
-        has_components = "components" in predicate
+        if not predicate:
+            error("Partition predicate cannot be empty", errors)
+            continue
 
-        if not (has_value or has_bounds or has_components):
-            error("Partition predicate must define value, bounds, or components", errors)
+        # ============================================================
+        # COLUMN GROUP CASE (multiple columns inside predicate)
+        # ============================================================
+        if is_column_group:
 
-        # Numeric bounds validation
-        if has_bounds:
-            lb = predicate.get("lowerBound")
-            ub = predicate.get("upperBound")
+            for col_name, value in predicate.items():
 
-            if lb is None or ub is None:
-                error("Numeric partition must define lowerBound and upperBound", errors)
-            elif lb > ub:
-                error("Partition lowerBound > upperBound", errors)
-            else:
-                intervals.append((lb, ub))
+                if not isinstance(value, dict):
+                    error(
+                        f"ColumnGroup partition predicate for '{col_name}' must be object",
+                        errors,
+                    )
+                    continue
 
-        # Recursive components (ColumnGroup)
-        if has_components:
-            comps = predicate["components"]
-            if not isinstance(comps, dict):
-                error("Partition components must be dict", errors)
+                has_value = "partitionValue" in value
+                has_bounds = "lowerBound" in value or "upperBound" in value
 
-    # Overlap detection
-    for i in range(len(intervals)):
-        for j in range(i + 1, len(intervals)):
-            if intervals_overlap(*intervals[i], *intervals[j]):
-                error("Overlapping numeric partitions detected", errors)
+                if not (has_value or has_bounds):
+                    error(
+                        f"ColumnGroup partition for '{col_name}' must define partitionValue or bounds",
+                        errors,
+                    )
 
+                if has_bounds:
+                    lb = value.get("lowerBound")
+                    ub = value.get("upperBound")
+
+                    if lb is None or ub is None:
+                        error(
+                            f"Continuous partition for '{col_name}' must define lowerBound and upperBound",
+                            errors,
+                        )
+                    elif lb > ub:
+                        error(
+                            f"Partition for '{col_name}' has lowerBound > upperBound",
+                            errors,
+                        )
+
+        # ============================================================
+        # SINGLE COLUMN CASE
+        # ============================================================
+        else:
+            has_value = "partitionValue" in predicate
+            has_bounds = "lowerBound" in predicate or "upperBound" in predicate
+
+            if not (has_value or has_bounds):
+                error(
+                    "Partition predicate must define partitionValue or bounds",
+                    errors,
+                )
+
+            if has_bounds:
+                lb = predicate.get("lowerBound")
+                ub = predicate.get("upperBound")
+
+                if lb is None or ub is None:
+                    error(
+                        "Numeric partition must define lowerBound and upperBound",
+                        errors,
+                    )
+                elif lb > ub:
+                    error("Partition lowerBound > upperBound", errors)
+                else:
+                    intervals.append((lb, ub))
+
+    # ============================================================
+    # Overlap detection ONLY for single numeric column partitions
+    # ============================================================
+    if not is_column_group:
+        for i in range(len(intervals)):
+            for j in range(i + 1, len(intervals)):
+                if intervals_overlap(*intervals[i], *intervals[j]):
+                    error("Overlapping numeric partitions detected", errors)
 
 # ============================================================
 # ColumnGroup Validation
@@ -227,7 +264,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Validate CSVW-SAFE metadata (aligned vocabulary)"
+        description="Validate CSVW-SAFE metadata"
     )
 
     parser.add_argument("metadata_file", type=str)

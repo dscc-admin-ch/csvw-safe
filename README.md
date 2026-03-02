@@ -363,11 +363,9 @@ This is an example when there is only one known privacy unit: penguin_id.
       "csvw-safe:public.partitions":[
         {
           "@type":"csvw-safe:Partition",
-          "csvw-safe:predicate":{
-            "components":{
-              "species":{"partitionValue":"Adelie"},
-              "flipper_length_mm":{"lowerBound":150,"upperBound":200}
-            }
+          "csvw-safe:predicate": {
+            "species":{"partitionValue":"Adelie"},
+            "flipper_length_mm":{"lowerBound":150,"upperBound":200}
           },
           "csvw-safe:bounds.maxContributions":1
         }
@@ -376,6 +374,7 @@ This is an example when there is only one known privacy unit: penguin_id.
   ]
 }
 ```
+#### 2.1.1 How to write when redundant information
 NOTE: if any of `bounds.maxContributions`, `rec.maxContributions`, `bounds.maxLength`, `public.length` is given at a column level, it applies to an upper bound on all partition when grouping by this column.
 
 For instance,
@@ -463,6 +462,125 @@ Moreover, if no additional properties are given than the partition predicate, it
         "csvw-safe:bounds.maxContributions": 1,
       }
     ]
+}
+```
+
+#### 2.1.1 How to write when too large information
+
+Of course, if the JSON-LD becomes too large due to the number of partitions, it is possible to reference another JSON (or JSON-LD) file instead of embedding everything inline. The recommended way is to use `@id` to point to an external file. For instance, 
+```
+{
+  "@context": {
+    "csvw": "http://www.w3.org/ns/csvw#",
+    "csvw-safe": "https://example.org/csvw-safe#"
+  },
+
+  "@type": "csvw:Table",
+  "name": "penguins",
+
+  "csvw-safe:public.privacyUnit": "penguin_id",
+
+  "csvw-safe:bounds.maxContributions": 3,
+  "csvw-safe:bounds.maxLength": 1000,
+  "csvw-safe:public.length": 342,
+
+  "csvw:tableSchema": {
+    "columns": [
+
+      {
+        "@type": "csvw:Column",
+        "name": "species",
+        "datatype": "string",
+
+        "csvw-safe:bounds.maxGroupsPerUnit": 2,
+        "csvw-safe:public.maxNumPartitions": 3,
+        "csvw-safe:public.exhaustivePartitions": true,
+
+        "csvw-safe:public.partitions": {
+          "@id": "https://example.org/partitions/species-partitions.jsonld"
+        }
+      },
+
+      {
+        "@type": "csvw:Column",
+        "name": "flipper_length_mm",
+        "datatype": "double",
+        "minimum": 150,
+        "maximum": 250,
+
+        "csvw-safe:bounds.maxGroupsPerUnit": 2,
+        "csvw-safe:public.maxNumPartitions": 2,
+
+        "csvw-safe:public.partitions": {
+          "@id": "https://example.org/partitions/flipper-length-partitions.jsonld"
+        }
+      }
+
+    ]
+  }
+}
+```
+with a file `species_partitions.jsonld`:
+```
+{
+  "@context": {
+    "csvw-safe": "https://example.org/csvw-safe#"
+  },
+
+  "@graph": [
+
+    {
+      "@type": "csvw-safe:Partition",
+      "csvw-safe:predicate": { "partitionValue": "Adelie" },
+      "csvw-safe:bounds.maxContributions": 1,
+      "csvw-safe:bounds.maxLength": 200
+    },
+
+    {
+      "@type": "csvw-safe:Partition",
+      "csvw-safe:predicate": { "partitionValue": "Gentoo" },
+      "csvw-safe:bounds.maxContributions": 1,
+      "csvw-safe:bounds.maxLength": 200
+    },
+
+    {
+      "@type": "csvw-safe:Partition",
+      "csvw-safe:predicate": { "partitionValue": "Chinstrap" },
+      "csvw-safe:bounds.maxContributions": 1,
+      "csvw-safe:bounds.maxLength": 200
+    }
+
+  ]
+}
+```
+and a file `flipper_length_partitions.jsonld`:
+```
+{
+  "@context": {
+    "csvw-safe": "https://example.org/csvw-safe#"
+  },
+
+  "@graph": [
+
+    {
+      "@type": "csvw-safe:Partition",
+      "csvw-safe:predicate": {
+        "lowerBound": 150,
+        "upperBound": 200
+      },
+      "csvw-safe:bounds.maxContributions": 1
+    },
+
+    {
+      "@type": "csvw-safe:Partition",
+      "csvw-safe:predicate": {
+        "lowerBound": 200,
+        "upperBound": 250
+      },
+      "csvw-safe:bounds.maxContributions": 1
+    }
+
+  ]
 }
 ```
 

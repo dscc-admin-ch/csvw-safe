@@ -71,7 +71,7 @@ def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0):
     used_columns = set()
 
     # --------------------------------------------------------
-    # 1️⃣ Handle ColumnGroups (additionalInformation)
+    # 1️⃣ Handle ColumnGroups (NEW FORMAT)
     # --------------------------------------------------------
     for group in metadata.get("csvw-safe:additionalInformation", []):
         if group.get("@type") != "csvw-safe:ColumnGroup":
@@ -85,12 +85,30 @@ def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0):
 
         sampled_partitions = rng.choice(partitions, size=nb_rows)
 
+        # Prepare container for each column
+        group_data = {col: [] for col in cols}
+
+        for p in sampled_partitions:
+            predicate = p.get("csvw-safe:predicate", {})
+
+            for col in cols:
+                col_pred = predicate.get(col, {})
+
+                # CATEGORICAL
+                if "partitionValue" in col_pred:
+                    group_data[col].append(col_pred["partitionValue"])
+
+                # CONTINUOUS
+                elif "lowerBound" in col_pred:
+                    low = col_pred["lowerBound"]
+                    high = col_pred["upperBound"]
+                    group_data[col].append(rng.uniform(low, high))
+
+                else:
+                    group_data[col].append(pd.NA)
+
         for col in cols:
-            values = []
-            for p in sampled_partitions:
-                comp = p["csvw-safe:predicate"]["components"][col]
-                values.append(comp.get("partitionValue", pd.NA))
-            data_dict[col] = pd.Series(values)
+            data_dict[col] = pd.Series(group_data[col])
             used_columns.add(col)
 
     # --------------------------------------------------------
