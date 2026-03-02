@@ -47,7 +47,7 @@ csvw-safe:ColumnShape
     # synth.nullableProportion between 0 and 1
     sh:property [
         sh:path csvw-safe:synth.nullableProportion ;
-        sh:datatype xsd:decimal ;
+        sh:datatype xsd:double  ;
         sh:minInclusive 0 ;
         sh:maxInclusive 1 ;
     ] ;
