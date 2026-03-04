@@ -11,7 +11,33 @@ import pandas as pd
 # ============================================================
 # Utilities
 # ============================================================
+def make_hashable(obj):
+    """
+    Recursively convert dicts/lists into tuples for hashing.
+    """
+    if isinstance(obj, dict):
+        return tuple(sorted((k, make_hashable(v)) for k, v in obj.items()))
+    elif isinstance(obj, list):
+        return tuple(make_hashable(e) for e in obj)
+    else:
+        return obj
 
+
+def sanitize(obj):
+    if isinstance(obj, dict):
+        return {k: sanitize(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize(v) for v in obj]
+    elif isinstance(obj, np.generic):
+        return obj.item()
+    else:
+        return obj
+
+
+
+# ============================================================
+# Types
+# ============================================================
 def is_small_categorical_integer(series: pd.Series, max_unique: int = 20) -> bool:
     """
     Detect whether a numeric column should be modeled as
@@ -33,14 +59,6 @@ def is_small_datetime(series: pd.Series, max_unique: int = 20) -> bool:
         return False
     return series.dropna().nunique() <= max_unique
 
-def is_continuous_column(series: pd.Series) -> bool:
-    if pd.api.types.is_datetime64_any_dtype(series):
-        return True
-
-    if pd.api.types.is_numeric_dtype(series):
-        return not is_small_categorical_integer(series)
-
-    return False
 
 def infer_csvw_datatype(series: pd.Series) -> str:
     if pd.api.types.is_bool_dtype(series):
@@ -52,259 +70,263 @@ def infer_csvw_datatype(series: pd.Series) -> str:
     return "string"
 
 
-def get_categorical_values(df, categorical_cols):
-    """
-    Compute unique values for each categorical column in a DataFrame.
-    """
-    return {col: df[col].dropna().unique().tolist() for col in categorical_cols}
-
-
-def generate_categorical_combinations(categorical_cols, column_values):
-    """
-    Generate all combinations of categorical columns.
-    column_values: dict mapping categorical column to its unique values
-    """
-    if not categorical_cols:
-        return [{}]  # no categorical columns
-    # Get list of values per column
-    values_list = [column_values[col] for col in categorical_cols]
-    combinations = []
-    for combo in product(*values_list):
-        combinations.append(dict(zip(categorical_cols, combo)))
-    return combinations
-
-def make_hashable(obj):
-    """
-    Recursively convert dicts/lists into tuples for hashing.
-    """
-    if isinstance(obj, dict):
-        return tuple(sorted((k, make_hashable(v)) for k, v in obj.items()))
-    elif isinstance(obj, list):
-        return tuple(make_hashable(e) for e in obj)
-    else:
-        return obj
-
-def sanitize(obj):
-    import numpy as np
-
-    if isinstance(obj, dict):
-        return {k: sanitize(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [sanitize(v) for v in obj]
-    elif isinstance(obj, np.generic):
-        return obj.item()
-    else:
-        return obj
-
-# ============================================================
-# Partition Builders
-# ============================================================
-
-def make_categorical_partitions(df, privacy_unit, column_name, partition_level_contribution: bool):
-    partitions_values = sorted(df[column_name].dropna().unique())
-    
-    partitions_meta = []
-    for v in partitions_values:
-        partition_meta = {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {"partitionValue": v}
-        }
-        if partition_level_contribution:
-            df_part = df[df[column_name] == v]
-            partition_meta["csvw-safe:maxPartitionLength"] = df_part.shape[0]
-            partition_meta["csvw-safe:maxInfluencedPartitions"] = int(
-                df_part.groupby(privacy_unit)[column_name].nunique(dropna=True).max()
-            )
-            partition_meta["csvw-safe:maxPartitionContribution"] = int(
-                df_part.groupby([privacy_unit, column_name], observed=True).size().max()
-            )
-    return partitions_meta
-
-
-def make_numeric_partitions(
-    df, privacy_unit, column_name,
-    bounds: list, is_datetime: bool = False, partition_level_contribution: bool = False
-):
-    """
-    Build continuous partitions from ordered bounds.
-    Example:
-        [30, 40, 50, 60] -> [30,40), [40,50), [50,60]
-    """
-
-    if len(bounds) < 2:
-        return []
-
-    partitions = []
-
-    for i in range(len(bounds) - 1):
-        lower = bounds[i]
-        upper = bounds[i + 1]
-
-        if is_datetime:
-            lower = pd.to_datetime(lower).isoformat()
-            upper = pd.to_datetime(upper).isoformat()
-        else:
-            lower = float(lower)
-            upper = float(upper)
-
-        partition_meta = {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "lowerBound": lower,
-                "upperBound": upper,
-                "lowerInclusive": True,
-                "upperInclusive": i == len(bounds) - 2
-            }
-        }
-        if partition_level_contribution:
-            lower_inclusive = True
-            upper_inclusive = i == len(bounds) - 2
-            
-            if lower_inclusive:
-                lower_mask = df[column_name] >= lower
-            else:
-                lower_mask = df[column_name] > lower
-            
-            if upper_inclusive:
-                upper_mask = df[column_name] <= upper
-            else:
-                upper_mask = df[column_name] < upper
-
-            df_part = df[lower_mask & upper_mask]
-            
-            partition_meta["csvw-safe:maxPartitionLength"] = df_part.shape[0]
-            partition_meta["csvw-safe:maxInfluencedPartitions"] = int(
-                df_part.groupby(privacy_unit)[column_name].nunique(dropna=True).max()
-            )
-            partition_meta["csvw-safe:maxPartitionContribution"] = int(
-                df_part.groupby([privacy_unit, column_name], observed=True).size().max()
-            )
-
-        partitions.append(partition_meta)
-    return partitions
-
-
-# ----------------------------
-# Categorical Column
-# ----------------------------
 def is_categorical(series):
     if pd.api.types.is_bool_dtype(series):
         return True
-    
+
     if is_small_categorical_integer(series):
         return True
-    
+
     if is_small_datetime(series):
         return True
-        
-    if pd.api.types.is_numeric_dtype(series):
-        return False
 
-    if pd.api.types.is_datetime64_any_dtype(series):
-        return False
-
-    return True
-    
-def compute_categorical_column_contribution(df, privacy_unit , col):
-    col_data = df[col].dropna()
-
-    return {
-        "csvw-safe:maxPartitionLength": int(col_data.value_counts().max() if len(col_data) else 0),
-        "csvw-safe:maxInfluencedPartitions": int(
-            df.groupby(privacy_unit)[col].nunique(dropna=True).max()
-        ),
-        "csvw-safe:maxPartitionContribution": int(
-            df.groupby([privacy_unit, col], observed=True).size().max()
-        ),
-    }
-
-def compute_continuous_column_contribution(df, privacy_unit , col):
-    col_data = df[col].dropna()
-
-    return {
-        "csvw-safe:maxPartitionLength": int(col_data.value_counts().max() if len(col_data) else 0),
-        "csvw-safe:maxInfluencedPartitions": int(
-            df.groupby(privacy_unit)[col].nunique(dropna=True).max()
-        ),
-        "csvw-safe:maxPartitionContribution": int(
-            df.groupby([privacy_unit, col], observed=True).size().max()
-        ),
-    }
-
+    return not (
+        pd.api.types.is_numeric_dtype(series)
+        or pd.api.types.is_datetime64_any_dtype(series)
+    )
 
 # ============================================================
-# Column Group
+# Make Partitions
+# ============================================================
+def make_categorical_partitions(df, privacy_unit, column_name):
+    return build_partitions(
+        df,
+        privacy_unit,
+        [{"name": column_name, "kind": "categorical"}]
+    )
+
+def make_numeric_partitions(df, privacy_unit, column_name, bounds):
+    return build_partitions(
+        df,
+        privacy_unit,
+        [{
+            "name": column_name,
+            "kind": "numeric",
+            "bins": bounds
+        }]
+    )
+
+def get_multi_group_partitions(df, col_group, continuous_partitions, privacy_unit):
+    specs = []
+    for col in col_group:
+        if col in continuous_partitions:
+            specs.append({
+                "name": col,
+                "kind": "numeric",
+                "bins": continuous_partitions[col]
+            })
+        else:
+            specs.append({
+                "name": col,
+                "kind": "categorical"
+            })
+    return build_partitions(df, privacy_unit, specs)
+
+# ============================================================
+# Partitions
 # ============================================================
 
-def build_column_group_from_df(df, group_columns, continuous_partitions, 
-                               max_groups_per_unit=3, max_contributions=1):
+def build_partitions(
+    df: pd.DataFrame,
+    privacy_unit: str,
+    column_specs: list,
+):
     """
-    Create CSVW-SAFE column group using data from a DataFrame, with categorical grouping
-    and pre-specified continuous partitions.
+    Unified partition builder.
 
-    Args:
-        df: pandas DataFrame
-        group_columns: list of columns in the group
-        continuous_partitions: dict {col_name: list of bin edges}, continuous columns only
-        max_groups_per_unit: max groups per unit
-        max_contributions: max contributions per partition
-
-    Returns:
-        dict ready to insert as a CSVW-SAFE column group
+    column_specs:
+        [
+            {"name": col, "kind": "categorical"},
+            {"name": col, "kind": "numeric", "bins": [...]}
+        ]
     """
-    # Separate categorical and continuous columns
-    cat_cols = df.select_dtypes(include=['object', 'category']).columns.intersection(group_columns).tolist()
-    cont_cols = df.select_dtypes(include=['number']).columns.intersection(group_columns).tolist()
 
-    # Verify all continuous columns have specified partitions
-    for col in cont_cols:
-        if col not in continuous_partitions:
-            if is_small_categorical_integer(df[col]) or is_small_datetime(df[col]):
-                # Treat it as categorical; can derive partitions
-                cont_cols.remove(col) 
-                cat_cols.append(col)
-            else:
-                raise ValueError(f"Cannot derive partitions for continuous column '{col}' without bin info.")
-
-    # Bin continuous columns
     df_copy = df.copy()
-    for col in cont_cols:
-        bins = continuous_partitions[col]
-        df_copy[col+'_bin'] = pd.cut(df_copy[col], bins=bins, right=False)
+    grouping_columns = []
+    single_column = len(column_specs) == 1
 
-    # Group by categorical + binned continuous columns
-    group_by_cols = cat_cols + [c+'_bin' for c in cont_cols]
-    grouped = df_copy.groupby(group_by_cols)
+    # -------------------------------------------------
+    # Prepare grouping columns (bin numeric columns)
+    # -------------------------------------------------
+    for spec in column_specs:
+        col = spec["name"]
 
-    partitions = []
-    for name, group in grouped:
-        predicate = {}
-        # Handle categorical columns
-        for i, col in enumerate(cat_cols):
-            val = name[i] if len(cat_cols) > 1 else name
-            predicate[col] = {"partitionValue": val}
+        if spec["kind"] == "categorical":
+            grouping_columns.append(col)
+        elif spec["kind"] == "numeric":
+            if pd.api.types.is_datetime64_any_dtype(df_copy[col]):
+                bins = pd.to_datetime(spec["bins"])
+            else:
+                bins = sorted(spec["bins"])
+            binned_col = f"{col}__bin"
+            df_copy[binned_col] = pd.cut(df_copy[col], bins=bins, right=False)
+            grouping_columns.append(binned_col)
+        else:
+            raise ValueError(f"Unknown column kind {spec['kind']}")
 
-        # Handle continuous columns
-        for i, col in enumerate(cont_cols):
-            bin_val = name[len(cat_cols)+i] if len(group_by_cols) > len(cat_cols) else name
-            predicate[col] = {"lowerBound": bin_val.left, "upperBound": bin_val.right}
+    # -------------------------------------------------
+    # Group
+    # -------------------------------------------------
+    grouped = df_copy.groupby(grouping_columns, dropna=True, observed=True)
 
-        partitions.append({
+    partitions_meta = []
+
+    for group_key, group_df in grouped:
+        # Normalize pandas group_key
+        if not isinstance(group_key, tuple):
+            group_key_tuple = (group_key,)
+        else:
+            group_key_tuple = group_key
+            
+        if single_column:
+            spec = column_specs[0]
+            col = spec["name"]
+            value = group_key_tuple[0]
+
+            # ---- Flat predicate style ----
+            if spec["kind"] == "categorical":
+                predicate = {"partitionValue": value}
+
+            else:  # numeric
+                interval = value
+                if pd.api.types.is_datetime64_any_dtype(df[spec["name"]]):
+                    lower = pd.to_datetime(interval.left).isoformat()
+                    upper = pd.to_datetime(interval.right).isoformat()
+                else:
+                    lower = float(interval.left)
+                    upper = float(interval.right)
+            
+                predicate = {
+                    "lowerBound": lower,
+                    "upperBound": upper,
+                }
+
+            # ---- Preserve original single-column contributions ----
+            if spec["kind"] == "categorical":
+                max_influenced = int(
+                    df.groupby(privacy_unit)[col]
+                      .nunique(dropna=True)
+                      .max()
+                )
+                max_partition_contribution = int(
+                    df.groupby([privacy_unit, col], observed=True)
+                      .size()
+                      .max()
+                )
+            else:
+                max_influenced = int(
+                    group_df.groupby(privacy_unit)
+                            .size()
+                            .groupby(level=0)
+                            .size()
+                            .max()
+                )
+                max_partition_contribution = int(
+                    group_df.groupby(privacy_unit, observed=True)
+                            .size()
+                            .max()
+                )
+
+        else:
+            # ---- Nested predicate style ----
+            predicate = {}
+
+            if not isinstance(group_key, tuple):
+                group_key = (group_key,)
+
+            for i, spec in enumerate(column_specs):
+                col = spec["name"]
+                value = group_key[i]
+
+                if spec["kind"] == "categorical":
+                    predicate[col] = {"partitionValue": value}
+                else:
+                    predicate[col] = {
+                        "lowerBound": float(value.left),
+                        "upperBound": float(value.right),
+                    }
+
+            max_influenced = int(
+                group_df.groupby(privacy_unit)
+                        .size()
+                        .groupby(level=0)
+                        .size()
+                        .max()
+            )
+
+            max_partition_contribution = int(
+                group_df.groupby(privacy_unit, observed=True)
+                        .size()
+                        .max()
+            )
+
+        partitions_meta.append({
             "@type": "csvw-safe:Partition",
             "csvw-safe:predicate": predicate,
-            "csvw-safe:bounds.maxContributions": max_contributions
+            "csvw-safe:maxPartitionLength": group_df.shape[0],
+            "csvw-safe:maxInfluencedPartitions": max_influenced,
+            "csvw-safe:maxPartitionContribution": max_partition_contribution,
         })
 
-    column_group = {
-        "@type": "csvw-safe:ColumnGroup",
-        "csvw-safe:columns": group_columns,
-        "csvw-safe:bounds.maxGroupsPerUnit": max_groups_per_unit,
-        "csvw-safe:public.maxNumPartitions": len(partitions),
-        "csvw-safe:public.partitions": partitions
+    return partitions_meta
+
+# ============================================================
+# Partitions on Column dependign of level
+# ============================================================
+
+def column_level_continuous_partition(partitions):
+    max_partition_length = 0
+    max_influenced_partitions = 0
+    max_partition_contribution = 0
+    for partition in partitions:
+        if partition["csvw-safe:maxPartitionLength"] >= max_partition_length:
+            max_partition_length = partition["csvw-safe:maxPartitionLength"]
+        if partition["csvw-safe:maxInfluencedPartitions"] >= max_influenced_partitions:
+            max_influenced_partitions = partition["csvw-safe:maxInfluencedPartitions"]
+        if partition["csvw-safe:maxPartitionContribution"] >= max_partition_contribution:
+            max_partition_contribution = partition["csvw-safe:maxPartitionContribution"]
+    
+    column_meta = {
+        "csvw-safe:maxPartitionLength": max_partition_length,
+        "csvw-safe:maxInfluencedPartitions": max_influenced_partitions,
+        "csvw-safe:maxPartitionContribution": max_partition_contribution
     }
 
-    return column_group
+    return column_meta
 
+
+def remove_contrib_from_partitions(partitions):
+    keys_to_remove = {
+        "csvw-safe:maxPartitionLength",
+        "csvw-safe:maxInfluencedPartitions",
+        "csvw-safe:maxPartitionContribution",
+    }
+
+    return [
+        {k: v for k, v in p.items() if k not in keys_to_remove}
+        for p in partitions
+    ]
+
+
+def attach_partitions_to_column(
+    column_meta: dict,
+    partitions_meta: list,
+    column_contributions_level: str,
+):
+    """
+    Attach partitions to a column and optionally lift
+    partition-level contributions to column level.
+    """
+
+    if column_contributions_level == "column":
+        col_contrib = column_level_continuous_partition(partitions_meta)
+        column_meta.update(col_contrib)
+        partitions_meta = remove_contrib_from_partitions(partitions_meta)
+
+    column_meta["csvw-safe:public.partitions"] = partitions_meta
+    column_meta["csvw-safe:public.maxNumPartitions"] = len(partitions_meta)
+
+    return column_meta
 
 # ============================================================
 # Metadata Generator
@@ -317,7 +339,7 @@ def make_metadata_from_data(
     continuous_partitions: dict | None = None,
     column_groups: list | None = None,
     default_contributions_level: str = 'table', # 'table', 'column', 'partition'
-    fine_contributions_level: list | None = None,
+    fine_contributions_level: dict | None = None,
 ):
 
     if privacy_unit not in df.columns:
@@ -331,8 +353,6 @@ def make_metadata_from_data(
 
     if fine_contributions_level is None:
         fine_contributions_level = {}
-
-    partition_level_contribution = default_contributions_level == "partition"
 
     metadata = {
         "@context": [
@@ -352,6 +372,10 @@ def make_metadata_from_data(
     
     for column_name in df.columns:
         series = df[column_name]
+        column_contributions_level = fine_contributions_level.get(
+            column_name,
+            default_contributions_level
+        )
 
         column_meta = {
             "@type": "csvw:Column",
@@ -363,14 +387,8 @@ def make_metadata_from_data(
         }
 
         if is_categorical(series):
-            partitions_meta = make_categorical_partitions(
-                df, privacy_unit, column_name, partition_level_contribution
-            )
-            column_meta["csvw-safe:public.partitions"] = partitions_meta
-            column_meta["csvw-safe:public.maxNumPartitions"] = len(partitions_meta)
-            if default_contributions_level == "column":
-                col_contribution = compute_categorical_column_contribution(df, privacy_unit, column_name)
-                column_meta.update(col_contribution)
+            partitions_meta = make_categorical_partitions(df, privacy_unit, column_name)
+            column_meta = attach_partitions_to_column(column_meta, partitions_meta, column_contributions_level)
         else:
             value_min = series.dropna().min()
             value_max = series.dropna().max()
@@ -382,37 +400,29 @@ def make_metadata_from_data(
                 column_meta["minimum"] = float(value_min)
                 column_meta["maximum"] = float(value_max)
 
-            partitions = []
             if column_name in continuous_partitions:
+                assert column_contributions_level in ["column", "partition"] # no point otherwise
                 bounds = sorted(continuous_partitions[column_name])
-                partitions_meta = make_numeric_partitions(
-                    df, privacy_unit, column_name,
-                    bounds,
-                    is_datetime=pd.api.types.is_datetime64_any_dtype(series),
-                    partition_level_contribution=partition_level_contribution
-                )
-                column_meta["csvw-safe:public.partitions"] = partitions_meta
-                column_meta["csvw-safe:public.maxNumPartitions"] = len(partitions_meta)
-                if default_contributions_level == "column":
-                    col_contribution = compute_continuous_column_contribution(df, privacy_unit, column_name)
-                    column_meta.update(col_contribution)
+                partitions_meta = make_numeric_partitions(df, privacy_unit, column_name, bounds)
+                column_meta = attach_partitions_to_column(column_meta, partitions_meta, column_contributions_level)
 
             metadata["csvw:tableSchema"]["columns"].append(column_meta)
 
 
     if column_groups:
         additional_info = []
+        for col_group in column_groups:
+            column_meta = {
+                "@type": "csvw-safe:ColumnGroup",
+                "csvw-safe:columns": column_groups
+            }
+            partitions_meta = get_multi_group_partitions(df, col_group, continuous_partitions, privacy_unit)
+            column_meta = attach_partitions_to_column(column_meta, partitions_meta, column_contributions_level)
+            additional_info.append(column_meta)
     
-        for group in column_groups:
-            column_group = build_column_group_from_df(df, group, continuous_partitions)
-            additional_info.append(column_group)
-    
-        if additional_info:
-            metadata["csvw-safe:additionalInformation"] = additional_info
+        metadata["csvw-safe:additionalInformation"] = additional_info
 
-    metadata = sanitize(metadata)
-
-    return metadata
+    return sanitize(metadata)
 
 
 # ============================================================
