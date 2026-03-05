@@ -6,6 +6,7 @@ from typing import Tuple, List
 
 import numpy as np
 import pandas as pd
+import pandas.api.types as ptypes
 
 
 # ============================================================
@@ -86,6 +87,105 @@ def get_continuous_bounds(series):
     if pd.api.types.is_datetime64_any_dtype(series):
         return value_min.isoformat(), value_max.isoformat()
     return value_min, value_max
+
+def identify_fixed_fields(df, column_name, threshold=1):
+    grouped = df.groupby(column_name, dropna=False)
+
+    nunique = grouped.nunique(dropna=False)
+    fixed_columns = nunique.columns[(nunique <= threshold).all()].tolist()
+    if len(fixed_columns) == len(df.columns) - 1:
+        return []
+    return fixed_columns
+
+def identify_dependance(
+    column_name,
+    df,
+    mapping_threshold=0.95,
+    coverage_threshold=0.8,
+    max_mapping_size=25
+):
+    """
+    Detect dependencies between columns and produce csvw-safe metadata.
+    """
+
+    results = []
+    s = df[column_name]
+
+    for col in df.columns:
+        if col == column_name:
+            continue
+
+        # remove rows with NA in either column
+        valid = df[[column_name, col]].dropna()
+
+        if valid.empty:
+            continue
+
+        s_valid = valid[column_name]
+        o_valid = valid[col]
+
+        # 1. Numeric dependency (bigger / smaller / monotonic)
+        if ptypes.is_numeric_dtype(s_valid) and ptypes.is_numeric_dtype(o_valid):
+
+            if (s_valid >= o_valid).all():
+                results.append({
+                    "csvw-safe:synth.dependsOn": col,
+                    "csvw-safe:synth.how": "bigger"
+                })
+                continue
+
+            if (s_valid <= o_valid).all():
+                results.append({
+                    "csvw-safe:synth.dependsOn": col,
+                    "csvw-safe:synth.how": "smaller"
+                })
+                continue
+
+            corr = s_valid.corr(o_valid, method="spearman")
+            if abs(corr) > 0.95:
+                results.append({
+                    "csvw-safe:synth.dependsOn": col,
+                    "csvw-safe:synth.how": "monotonic",
+                    "csvw-safe:synth.correlation": round(corr, 3)
+                })
+                continue
+
+        # 2. Candidate mapping (only for reasonable cardinality)
+        if valid[col].nunique() > max_mapping_size:
+            continue
+
+        # build mapping
+        grouped = valid.groupby(col)[column_name].agg(lambda x: list(pd.unique(x)))
+        mapping = grouped.to_dict()
+
+        if not mapping:
+            continue
+
+        # determinism check
+        deterministic_ratio = sum(len(v) == 1 for v in mapping.values()) / len(mapping)
+
+        if deterministic_ratio < mapping_threshold:
+            continue
+
+        # coverage check
+        covered_rows = valid[col].isin(mapping.keys()).sum()
+        coverage = covered_rows / len(df)
+
+        if coverage < coverage_threshold:
+            continue
+
+        clean_mapping = {
+            k: v[0] if len(v) == 1 else v
+            for k, v in mapping.items()
+        }
+
+        results.append({
+            "csvw-safe:synth.dependsOn": col,
+            "csvw-safe:synth.how": "mapping",
+            "csvw-safe:synth.mapping": clean_mapping
+        })
+
+    return results
 
 
 # ============================================================
@@ -306,7 +406,14 @@ def make_metadata_from_data(
             "csvw-safe:public.privacyId": column_name == privacy_unit,
             "csvw-safe:synth.nullableProportion": np.ceil(series.isna().mean() * 1000) / 1000
         }
+        deps = identify_dependance(column_name, df, mapping_threshold=0.95)
+        if deps:
+            column_meta["csvw-safe:synth.dependencies"] = deps
         
+        fixed_fields = identify_fixed_fields(df, column_name, threshold=1)
+        if fixed_fields:
+            column_meta["csvw-safe:synth.fixedFields"] = fixed_fields
+
         if datatype != 'string':
             minimum, maximum = get_continuous_bounds(series)
             column_meta["minimum"] = minimum
