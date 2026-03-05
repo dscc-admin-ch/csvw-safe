@@ -10,6 +10,7 @@ VALID_TYPES = {"string", "boolean", "integer", "double", "dateTime"}
 # Utilities
 # ============================================================
 
+
 def error(msg, errors):
     errors.append(msg)
 
@@ -25,6 +26,7 @@ def intervals_overlap(a1, a2, b1, b2):
 # ============================================================
 # Table Validation
 # ============================================================
+
 
 def validate_table(metadata: Dict[str, Any], errors: List[str]):
 
@@ -48,6 +50,7 @@ def validate_table(metadata: Dict[str, Any], errors: List[str]):
 # ============================================================
 # Column Validation
 # ============================================================
+
 
 def validate_column(col: Dict[str, Any], errors: List[str]):
 
@@ -91,14 +94,14 @@ def validate_column(col: Dict[str, Any], errors: List[str]):
         if "csvw-safe:public.maxNumPartitions" in col:
             if len(partitions) > col["csvw-safe:public.maxNumPartitions"]:
                 error(
-                    f"Column '{name}' exceeds declared public.maxNumPartitions",
-                    errors
+                    f"Column '{name}' exceeds declared public.maxNumPartitions", errors
                 )
 
 
 # ============================================================
 # Partition Validation
 # ============================================================
+
 
 def validate_partitions(parent, partitions, errors):
 
@@ -194,9 +197,11 @@ def validate_partitions(parent, partitions, errors):
                 if intervals_overlap(*intervals[i], *intervals[j]):
                     error("Overlapping numeric partitions detected", errors)
 
+
 # ============================================================
 # ColumnGroup Validation
 # ============================================================
+
 
 def validate_column_groups(metadata, columns_by_name, errors):
 
@@ -219,7 +224,9 @@ def validate_column_groups(metadata, columns_by_name, errors):
             if col_name not in columns_by_name:
                 error(f"ColumnGroup references unknown column '{col_name}'", errors)
             elif columns_by_name[col_name].get("csvw-safe:public.privacyId"):
-                error(f"ColumnGroup cannot include privacyId column '{col_name}'", errors)
+                error(
+                    f"ColumnGroup cannot include privacyId column '{col_name}'", errors
+                )
 
         # Partition validation
         if "csvw-safe:public.partitions" in g:
@@ -227,14 +234,17 @@ def validate_column_groups(metadata, columns_by_name, errors):
 
         # maxNumPartitions consistency
         if "csvw-safe:public.maxNumPartitions" in g:
-            if len(g.get("csvw-safe:public.partitions", [])) > \
-               g["csvw-safe:public.maxNumPartitions"]:
+            if (
+                len(g.get("csvw-safe:public.partitions", []))
+                > g["csvw-safe:public.maxNumPartitions"]
+            ):
                 error("ColumnGroup exceeds public.maxNumPartitions", errors)
 
 
 # ============================================================
 # Main Validation Entry
 # ============================================================
+
 
 def validate_metadata(metadata):
 
@@ -260,12 +270,11 @@ def validate_metadata(metadata):
 # CLI
 # ============================================================
 
+
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Validate CSVW-SAFE metadata"
-    )
+    parser = argparse.ArgumentParser(description="Validate CSVW-SAFE metadata")
 
     parser.add_argument("metadata_file", type=str)
     args = parser.parse_args()

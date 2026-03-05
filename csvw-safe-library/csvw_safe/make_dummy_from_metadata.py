@@ -5,10 +5,10 @@ import json
 from pathlib import Path
 import argparse
 
-
 # ============================================================
 # Helpers
 # ============================================================
+
 
 def sample_from_partitions(partitions, nb_rows, rng):
     """
@@ -60,6 +60,7 @@ def apply_nulls(series, nullable_prop, dtype, rng):
 # ============================================================
 # Main Generator
 # ============================================================
+
 
 def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0):
     rng = np.random.default_rng(seed)
@@ -126,7 +127,9 @@ def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0):
         # DateTime
         if dtype == "dateTime":
             if "minimum" in col_meta and "maximum" in col_meta:
-                dates = pd.date_range(start=col_meta["minimum"], end=col_meta["maximum"])
+                dates = pd.date_range(
+                    start=col_meta["minimum"], end=col_meta["maximum"]
+                )
                 series = pd.Series(rng.choice(dates, size=nb_rows))
             else:
                 series = pd.Series([pd.NaT] * nb_rows)
@@ -138,9 +141,13 @@ def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0):
                 high = col_meta["maximum"]
 
                 if dtype == "integer":
-                    series = pd.Series(rng.integers(int(low), int(high) + 1, size=nb_rows))
+                    series = pd.Series(
+                        rng.integers(int(low), int(high) + 1, size=nb_rows)
+                    )
                 else:
-                    series = pd.Series(rng.uniform(float(low), float(high), size=nb_rows))
+                    series = pd.Series(
+                        rng.uniform(float(low), float(high), size=nb_rows)
+                    )
             else:
                 series = pd.Series([pd.NA] * nb_rows)
 
@@ -163,8 +170,11 @@ def make_dummy_from_metadata(metadata: dict, nb_rows: int = 100, seed: int = 0):
 # CLI
 # ============================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Generate dummy dataset from CSVW-SAFE metadata")
+    parser = argparse.ArgumentParser(
+        description="Generate dummy dataset from CSVW-SAFE metadata"
+    )
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("--rows", type=int, default=100)
     parser.add_argument("--output", type=str, default="dummy.csv")
@@ -183,7 +193,9 @@ def main():
     df_dummy = make_dummy_from_metadata(metadata, nb_rows=args.rows, seed=args.seed)
     df_dummy.to_csv(args.output, index=False)
 
-    print(f"Dummy dataset written to {args.output} ({len(df_dummy)} rows, {len(df_dummy.columns)} columns)")
+    print(
+        f"Dummy dataset written to {args.output} ({len(df_dummy)} rows, {len(df_dummy.columns)} columns)"
+    )
 
 
 if __name__ == "__main__":

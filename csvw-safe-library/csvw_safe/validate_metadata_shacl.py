@@ -20,17 +20,21 @@ def validate_metadata_shacl(metadata_file: Path, shacl_file: Path):
     conforms, results_graph, results_text = shacl_validate(
         data_graph,
         shacl_graph=shacl_graph,
-        inference='rdfs',
+        inference="rdfs",
         abort_on_first=False,
         meta_shacl=False,
-        debug=False
+        debug=False,
     )
 
     return conforms, results_text
 
+
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="SHACL validation for CSVW-SAFE metadata")
+
+    parser = argparse.ArgumentParser(
+        description="SHACL validation for CSVW-SAFE metadata"
+    )
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("shacl_file", type=str, help="SHACL TTL file")
     args = parser.parse_args()
@@ -57,6 +61,7 @@ def main():
         print("SHACL validation FAILED ❌ Metadata violates SHACL constraints")
         print(results_text)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
