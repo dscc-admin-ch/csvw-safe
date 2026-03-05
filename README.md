@@ -450,7 +450,7 @@ Moreover, if no additional properties are given than the partition predicate, it
     "csvw-safe:bounds.maxGroupsPerUnit": 2,
     "csvw-safe:public.maxNumPartitions": 3,
     "csvw-safe:public.exhaustivePartitions": true,
-     "csvw-safe:bounds.maxContributions": 2,
+    "csvw-safe:bounds.maxContributions": 2,
     "csvw-safe:bounds.maxLength": 200
     
     "csvw-safe:public.partitions": [
