@@ -126,27 +126,26 @@ def identify_dependance(
 
         # 1. Numeric dependency (bigger / smaller / monotonic)
         if ptypes.is_numeric_dtype(s_valid) and ptypes.is_numeric_dtype(o_valid):
-
-            if (s_valid >= o_valid).all():
-                results.append({
-                    "csvw-safe:synth.dependsOn": col,
-                    "csvw-safe:synth.how": "bigger"
-                })
-                continue
-
-            if (s_valid <= o_valid).all():
-                results.append({
-                    "csvw-safe:synth.dependsOn": col,
-                    "csvw-safe:synth.how": "smaller"
-                })
-                continue
-
             corr = s_valid.corr(o_valid, method="spearman")
             if abs(corr) > 0.95:
                 results.append({
                     "csvw-safe:synth.dependsOn": col,
                     "csvw-safe:synth.how": "monotonic",
                     "csvw-safe:synth.correlation": round(corr, 3)
+                })
+                continue
+        
+            if (s_valid >= o_valid).all():
+                results.append({
+                    "csvw-safe:synth.dependsOn": col,
+                    "csvw-safe:synth.how": "bigger"
+                })
+                continue
+        
+            if (s_valid <= o_valid).all():
+                results.append({
+                    "csvw-safe:synth.dependsOn": col,
+                    "csvw-safe:synth.how": "smaller"
                 })
                 continue
 

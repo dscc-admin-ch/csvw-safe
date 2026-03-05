@@ -799,6 +799,7 @@ For structural purposes, other fields exist on the `csvw:Column`:
 | `csvw-safe:synth.dependsOn`           | column reference                      | Declares dependency on another column               |
 | `csvw-safe:synth.how`                 | enum (`bigger`, `smaller`, `mapping`) | Type of dependency                                  |
 | `csvw-safe:synth.mapping`             | object                                | Required if `how = mapping`                         |
+| `csvw-safe:synth.fixed_fields`        | list                                  | Columns whose value is constant wrt column.                           |
 
 `csvw-safe:public.privacyId` is actually very important for DP privacy contribution and the properties are defined as preprocessing suggestions.
 
