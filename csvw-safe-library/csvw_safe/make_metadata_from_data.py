@@ -1,8 +1,18 @@
+"""
+CSVW-SAFE Metadata Generator
+
+This module generates CSVW-SAFE metadata from a CSV dataset. It automatically
+infers column datatypes, detects dependencies, builds partitions for categorical
+and numeric attributes, and computes contribution bounds relative to a defined
+privacy unit.
+
+The output metadata follows the CSVW and CSVW-SAFE conventions used for
+privacy-preserving data synthesis and differential privacy pipelines.
+"""
+
 import argparse
 import json
-from pathlib import Path
-from itertools import combinations, product
-from typing import Tuple, List
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -12,15 +22,29 @@ import pandas.api.types as ptypes
 # ============================================================
 # Utilities
 # ============================================================
-def sanitize(obj):
+def sanitize(obj: Any) -> Any:
+    """
+    Recursively convert NumPy scalar values into native Python types.
+
+    This ensures the final metadata structure is JSON serializable.
+
+    Parameters
+    ----------
+    obj : Any
+        Input object possibly containing NumPy scalars.
+
+    Returns
+    -------
+    Any
+        Object with NumPy scalars converted to Python primitives.
+    """
     if isinstance(obj, dict):
         return {k: sanitize(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         return [sanitize(v) for v in obj]
-    elif isinstance(obj, np.generic):
+    if isinstance(obj, np.generic):
         return obj.item()
-    else:
-        return obj
+    return obj
 
 
 # ============================================================
@@ -28,8 +52,22 @@ def sanitize(obj):
 # ============================================================
 def is_small_categorical_integer(series: pd.Series, max_unique: int = 20) -> bool:
     """
-    Detect whether a numeric column should be modeled as
-    categorical integer partitions.
+    Determine whether a numeric column should be treated as categorical.
+
+    Numeric columns with integer values and small cardinality are often
+    better modeled as categorical partitions.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Input column.
+    max_unique : int, default=20
+        Maximum number of unique values to consider categorical.
+
+    Returns
+    -------
+    bool
+        True if the column should be modeled as categorical.
     """
     if not pd.api.types.is_numeric_dtype(series):
         return False
@@ -39,16 +77,43 @@ def is_small_categorical_integer(series: pd.Series, max_unique: int = 20) -> boo
         return False
 
     is_integer = (non_null % 1 == 0).all()
-    return is_integer and non_null.nunique() <= max_unique
+    return bool(is_integer and non_null.nunique() <= max_unique)
 
 
 def is_small_datetime(series: pd.Series, max_unique: int = 20) -> bool:
+    """
+    Detect whether a datetime column has low cardinality.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Datetime column.
+    max_unique : int, default=20
+        Maximum unique values to treat as categorical-like.
+
+    Returns
+    -------
+    bool
+        True if datetime column has few unique values.
+    """
     if not pd.api.types.is_datetime64_any_dtype(series):
         return False
-    return series.dropna().nunique() <= max_unique
+    return bool(series.dropna().nunique() <= max_unique)
 
 
 def infer_csvw_datatype(series: pd.Series) -> str:
+    """
+    Infer the CSVW datatype for a column.
+
+    Parameters
+    ----------
+    series : pd.Series
+
+    Returns
+    -------
+    str
+        CSVW datatype string.
+    """
     if pd.api.types.is_bool_dtype(series):
         return "boolean"
     if pd.api.types.is_datetime64_any_dtype(series):
@@ -58,7 +123,19 @@ def infer_csvw_datatype(series: pd.Series) -> str:
     return "string"
 
 
-def is_categorical(series):
+def is_categorical(series: pd.Series) -> bool:
+    """
+    Determine whether a column should be modeled as categorical.
+
+    Parameters
+    ----------
+    series : pd.Series
+
+    Returns
+    -------
+    bool
+        True if the column should be treated as categorical.
+    """
     if pd.api.types.is_bool_dtype(series):
         return True
 
@@ -68,16 +145,25 @@ def is_categorical(series):
     if is_small_datetime(series):
         return True
 
-    return not (
-        pd.api.types.is_numeric_dtype(series)
-        or pd.api.types.is_datetime64_any_dtype(series)
-    )
+    return not (pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series))
 
 
 # ============================================================
 # Column level
 # ============================================================
-def get_continuous_bounds(series):
+def get_continuous_bounds(series: pd.Series) -> Tuple[Optional[Any], Optional[Any]]:
+    """
+    Compute minimum and maximum values for continuous columns.
+
+    Parameters
+    ----------
+    series : pd.Series
+
+    Returns
+    -------
+    tuple
+        (min_value, max_value)
+    """
     non_null = series.dropna()
     if non_null.empty:
         return None, None
@@ -90,25 +176,70 @@ def get_continuous_bounds(series):
     return value_min, value_max
 
 
-def identify_fixed_fields(df, column_name, threshold=1):
+def identify_fixed_fields(df: pd.DataFrame, column_name: str, threshold: int = 1) -> List[str]:
+    """
+    Identify columns that are constant within each value of a target column.
+
+    These columns can be treated as deterministic attributes.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    column_name : str
+        Column used as grouping reference.
+    threshold : int
+        Maximum allowed unique values to consider fixed.
+
+    Returns
+    -------
+    list
+        Names of fixed columns.
+    """
     grouped = df.groupby(column_name, dropna=False)
 
     nunique = grouped.nunique(dropna=False)
-    fixed_columns = nunique.columns[(nunique <= threshold).all()].tolist()
+    fixed_columns = cast(
+        List[str],  # for the linter
+        nunique.columns[(nunique <= threshold).all()].tolist(),
+    )
     if len(fixed_columns) == len(df.columns) - 1:
         return []
     return fixed_columns
 
 
 def identify_dependance(
-    column_name, df, mapping_threshold=0.95, coverage_threshold=0.8, max_mapping_size=25
-):
+    column_name: str,
+    df: pd.DataFrame,
+    mapping_threshold: float = 0.95,
+    coverage_threshold: float = 0.8,
+    max_mapping_size: int = 25,
+) -> List[Dict[str, Any]]:
     """
-    Detect dependencies between columns and produce csvw-safe metadata.
-    """
+    Detect dependencies between columns.
 
+    This includes:
+    - monotonic numeric relationships
+    - inequality relationships
+    - deterministic mappings
+
+    Parameters
+    ----------
+    column_name : str
+        Target column.
+    df : pd.DataFrame
+    mapping_threshold : float
+        Minimum deterministic ratio required.
+    coverage_threshold : float
+        Minimum dataset coverage required.
+    max_mapping_size : int
+        Maximum allowed mapping size.
+
+    Returns
+    -------
+    list
+        Dependency descriptions.
+    """
     results = []
-    s = df[column_name]
 
     for col in df.columns:
         if col == column_name:
@@ -137,15 +268,11 @@ def identify_dependance(
                 continue
 
             if (s_valid >= o_valid).all():
-                results.append(
-                    {"csvw-safe:synth.dependsOn": col, "csvw-safe:synth.how": "bigger"}
-                )
+                results.append({"csvw-safe:synth.dependsOn": col, "csvw-safe:synth.how": "bigger"})
                 continue
 
             if (s_valid <= o_valid).all():
-                results.append(
-                    {"csvw-safe:synth.dependsOn": col, "csvw-safe:synth.how": "smaller"}
-                )
+                results.append({"csvw-safe:synth.dependsOn": col, "csvw-safe:synth.how": "smaller"})
                 continue
 
         # 2. Candidate mapping (only for reasonable cardinality)
@@ -188,30 +315,52 @@ def identify_dependance(
 # ============================================================
 # Make Partitions
 # ============================================================
-def make_predicate(spec, value):
+def make_predicate(spec: Dict[str, Any], value: Any) -> Dict[str, Any]:
+    """
+    Build a partition predicate from a column specification.
+
+    Parameters
+    ----------
+    spec : dict
+        Column specification.
+    value : Any
+        Partition value.
+
+    Returns
+    -------
+    dict
+        Partition predicate.
+    """
     if spec["kind"] == "categorical":
         return {"partitionValue": value}
     interval = value
-    lower = (
-        pd.to_datetime(interval.left).isoformat()
-        if spec.get("is_datetime")
-        else float(interval.left)
-    )
-    upper = (
-        pd.to_datetime(interval.right).isoformat()
-        if spec.get("is_datetime")
-        else float(interval.right)
-    )
+    lower = pd.to_datetime(interval.left).isoformat() if spec.get("is_datetime") else float(interval.left)
+    upper = pd.to_datetime(interval.right).isoformat() if spec.get("is_datetime") else float(interval.right)
     return {"lowerBound": lower, "upperBound": upper}
 
 
-def make_categorical_partitions(df, privacy_unit, column_name):
+def make_categorical_partitions(
+    df: pd.DataFrame, privacy_unit: str, column_name: str
+) -> List[Dict[str, Any]]:
+    """
+    Generate partitions for a categorical column.
+    """
     return build_partitions(
-        df, privacy_unit, [{"name": column_name, "kind": "categorical"}]
+        df,
+        privacy_unit,
+        [{"name": column_name, "kind": "categorical"}],
     )
 
 
-def make_numeric_partitions(df, privacy_unit, column_name, bounds):
+def make_numeric_partitions(
+    df: pd.DataFrame,
+    privacy_unit: str,
+    column_name: str,
+    bounds: List[Any],
+) -> List[Dict[str, Any]]:
+    """
+    Generate partitions for a numeric column using provided bins.
+    """
     return build_partitions(
         df,
         privacy_unit,
@@ -226,7 +375,15 @@ def make_numeric_partitions(df, privacy_unit, column_name, bounds):
     )
 
 
-def get_multi_group_partitions(df, col_group, continuous_partitions, privacy_unit):
+def get_multi_group_partitions(
+    df: pd.DataFrame,
+    col_group: List[str],
+    continuous_partitions: Dict[str, List[Any]],
+    privacy_unit: str,
+) -> List[Dict[str, Any]]:
+    """
+    Generate partitions when grouping by multiple columns.
+    """
     specs = []
     for col in col_group:
         if col in continuous_partitions:
@@ -249,19 +406,56 @@ def get_multi_group_partitions(df, col_group, continuous_partitions, privacy_uni
     return build_partitions(df, privacy_unit, specs)
 
 
-def build_partitions(df: pd.DataFrame, privacy_unit: str, column_specs: list):
+def build_partitions(
+    df: pd.DataFrame,
+    privacy_unit: str,
+    column_specs: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
     """
-    Build CSVW-SAFE partitions with per-partition contribution values.
+    Build CSVW-SAFE partitions and compute contribution bounds per partition.
 
-    column_specs example:
+    This function groups the dataset according to the provided column
+    specifications and calculates metadata required by CSVW-SAFE, including
+    maximum partition size and per-privacy-unit contribution bounds.
+
+    Numeric columns are first discretized into bins before grouping.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataset.
+    privacy_unit : str
+        Column name representing the privacy unit (e.g., patient_id).
+    column_specs : list of dict
+        Specifications describing how each column should be partitioned.
+
+        Each specification must contain:
+        - "name": column name
+        - "kind": either "categorical" or "numeric"
+
+        Optional keys:
+        - "bins": list of numeric or datetime boundaries (for numeric columns)
+        - "is_datetime": bool indicating datetime values
+
+        Example
+        -------
         [
-            {"name": col, "kind": "categorical", "is_datetime": False},
-            {"name": col, "kind": "numeric", "bins": [...], "is_datetime": False}
+            {"name": "species", "kind": "categorical"},
+            {"name": "age", "kind": "numeric", "bins": [0, 10, 20, 30]}
         ]
+
+    Returns
+    -------
+    list of dict
+        A list of CSVW-SAFE partition metadata objects. Each entry contains:
+
+        - "@type": Partition type
+        - "csvw-safe:predicate": partition condition
+        - "csvw-safe:bounds.maxLength": maximum rows in partition
+        - "csvw-safe:bounds.maxGroupsPerUnit": maximum rows per privacy unit
+        - "csvw-safe:bounds.maxContributions": maximum partitions per unit
     """
-    df_work = (
-        df.copy() if any(spec["kind"] == "numeric" for spec in column_specs) else df
-    )
+    df_work = df.copy() if any(spec["kind"] == "numeric" for spec in column_specs) else df
 
     # Prepare grouping columns and privacy-unit influenced counts
     grouping_columns = []
@@ -274,33 +468,22 @@ def build_partitions(df: pd.DataFrame, privacy_unit: str, column_specs: list):
             influenced_counts[col] = df.groupby(privacy_unit)[col].nunique(dropna=True)
 
         elif spec["kind"] == "numeric":
-            bins = (
-                pd.to_datetime(spec["bins"])
-                if spec.get("is_datetime", False)
-                else sorted(spec["bins"])
-            )
+            bins = pd.to_datetime(spec["bins"]) if spec.get("is_datetime", False) else sorted(spec["bins"])
             binned_col = f"{col}__bin"
             df_work[binned_col] = pd.cut(df_work[col], bins=bins, right=False)
             grouping_columns.append(binned_col)
             binned_col = f"{col}__bin"
-            influenced_counts[col] = df_work.groupby(privacy_unit)[binned_col].nunique(
-                dropna=True
-            )
+            influenced_counts[col] = df_work.groupby(privacy_unit)[binned_col].nunique(dropna=True)
         else:
             raise ValueError(f"Unknown column kind {spec['kind']}")
 
     # Group data and get partitions information
     partitions_meta = []
-    for group_key, group_df in df_work.groupby(
-        grouping_columns, dropna=True, observed=True
-    ):
+    for group_key, group_df in df_work.groupby(grouping_columns, dropna=True, observed=True):
         if not isinstance(group_key, tuple):
             group_key = (group_key,)
 
-        predicate = {
-            spec["name"]: make_predicate(spec, group_key[i])
-            for i, spec in enumerate(column_specs)
-        }
+        predicate = {spec["name"]: make_predicate(spec, group_key[i]) for i, spec in enumerate(column_specs)}
         if len(predicate) == 1:  # single column
             predicate = next(iter(predicate.values()))
 
@@ -310,15 +493,9 @@ def build_partitions(df: pd.DataFrame, privacy_unit: str, column_specs: list):
                 "@type": "csvw-safe:Partition",
                 "csvw-safe:predicate": predicate,
                 "csvw-safe:bounds.maxLength": int(group_df.shape[0]),
-                "csvw-safe:bounds.maxGroupsPerUnit": int(
-                    per_privacy_unit_contrib.max()
-                ),
+                "csvw-safe:bounds.maxGroupsPerUnit": int(per_privacy_unit_contrib.max()),
                 "csvw-safe:bounds.maxContributions": max(
-                    int(
-                        influenced_counts[spec["name"]]
-                        .loc[per_privacy_unit_contrib.index]
-                        .max()
-                    )
+                    int(influenced_counts[spec["name"]].loc[per_privacy_unit_contrib.index].max())
                     for spec in column_specs
                 ),
             }
@@ -327,7 +504,26 @@ def build_partitions(df: pd.DataFrame, privacy_unit: str, column_specs: list):
     return partitions_meta
 
 
-def column_level_continuous_partition(partitions):
+def column_level_continuous_partition(partitions: List[Dict[str, Any]]) -> Dict[str, int]:
+    """
+    Aggregate partition-level contribution bounds to column-level bounds.
+
+    This function computes the maximum contribution metrics across all
+    partitions of a column.
+
+    Parameters
+    ----------
+    partitions : list of dict
+        List of partition metadata objects generated by `build_partitions`.
+
+    Returns
+    -------
+    dict
+        Dictionary containing the maximum values across partitions for:
+        - "csvw-safe:bounds.maxLength"
+        - "csvw-safe:bounds.maxGroupsPerUnit"
+        - "csvw-safe:bounds.maxContributions"
+    """
     keys = [
         "csvw-safe:bounds.maxLength",
         "csvw-safe:bounds.maxGroupsPerUnit",
@@ -336,20 +532,41 @@ def column_level_continuous_partition(partitions):
     return {k: max(p[k] for p in partitions) for k in keys}
 
 
-def keep_predicate_only(partitions):
+def keep_predicate_only(partitions: List[Dict[str, Any]]) -> List[Any]:
     """
-    Extract the partition keys:
-    - For categorical partitions: the actual category value
-    - For numeric partitions: the lower/upper bounds dict
+    Extract only the predicate definitions from partition metadata.
 
-    partitions = [
-        {"csvw-safe:predicate": {"partitionValue": "Adelie"}},
-        {"csvw-safe:predicate": {"partitionValue": "Gentoo"}},
-        {"csvw-safe:predicate": {"lowerBound": 0.0, "upperBound": 10.0}},
-    ]
-    to partition_keys = [
-        "Adelie", "Gentoo", {"lowerBound": 0.0, "upperBound": 10.0}
-    ]
+    This is used when partition-level metadata is not required and only
+    the partition identifiers should be exposed.
+
+    For categorical partitions, the category value is returned.
+    For numeric partitions, the lower/upper bounds dictionary is returned.
+
+    Parameters
+    ----------
+    partitions : list of dict
+        Partition metadata objects containing a "csvw-safe:predicate" field.
+
+    Returns
+    -------
+    list
+        List of partition identifiers.
+
+        Example
+        -------
+        Input partitions:
+        [
+            {"csvw-safe:predicate": {"partitionValue": "Adelie"}},
+            {"csvw-safe:predicate": {"partitionValue": "Gentoo"}},
+            {"csvw-safe:predicate": {"lowerBound": 0.0, "upperBound": 10.0}}
+        ]
+
+        Output:
+        [
+            "Adelie",
+            "Gentoo",
+            {"lowerBound": 0.0, "upperBound": 10.0}
+        ]
     """
     partition_keys = []
 
@@ -365,8 +582,10 @@ def keep_predicate_only(partitions):
 
 
 def attach_partitions_to_column(
-    column_meta: dict, partitions_meta: list, col_contrib_level: str
-):
+    column_meta: Dict[str, Any],
+    partitions_meta: List[Dict[str, Any]],
+    col_contrib_level: str,
+) -> Dict[str, Any]:
     """
     Attach partitions to a column and optionally lift
     partition-level contributions to column level.
@@ -382,15 +601,100 @@ def attach_partitions_to_column(
     return column_meta
 
 
+def make_column_groups(
+    df: pd.DataFrame,
+    column_groups: List[List[str]],
+    fine_contributions_level: Dict[str, str],
+    default_contributions_level: str,
+    continuous_partitions: Dict[str, List[Any]],
+    privacy_unit: str,
+) -> List[Dict[str, Any]]:
+    """
+    Build CSVW-SAFE metadata for column groups.
+
+    A column group represents a set of columns that should be treated jointly
+    when defining contribution bounds and partitions. Partitions are computed
+    over the joint values of the columns in the group.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Input dataset.
+
+    column_groups : list[list[str]]
+        List of column groups. Each group is a list of column names that
+        should be treated jointly.
+
+    fine_contributions_level : dict[str, str]
+        Mapping specifying contribution bound levels for specific columns.
+        Values must be either ``"column"`` or ``"partition"``.
+
+    default_contributions_level : str
+        Default contribution bound level used when a column is not present
+        in ``fine_contributions_level``.
+
+    continuous_partitions : dict[str, list[Any]]
+        Mapping of numeric column names to bin boundaries used for generating
+        partitions.
+
+    privacy_unit : str
+        Name of the column representing the privacy unit (e.g., user_id).
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        A list of CSVW-SAFE column group metadata dictionaries including
+        partition definitions and contribution bounds.
+    """
+    column_groups_metadata = []
+    for col_group in column_groups:
+        for col in col_group:
+            col_contrib_level = fine_contributions_level.get(col, default_contributions_level)
+            assert col_contrib_level in ["column", "partition"]
+        column_meta = {
+            "@type": "csvw-safe:ColumnGroup",
+            "csvw-safe:columns": col_group,
+        }
+        partitions_meta = get_multi_group_partitions(df, col_group, continuous_partitions, privacy_unit)
+        column_meta = attach_partitions_to_column(column_meta, partitions_meta, col_contrib_level)
+        column_groups_metadata.append(column_meta)
+    return column_groups_metadata
+
+
 def make_metadata_from_data(
     df: pd.DataFrame,
     privacy_unit: str,
     max_contributions: int = 2,
-    continuous_partitions: dict | None = None,
-    column_groups: list | None = None,
-    default_contributions_level: str = "table",  # 'table', 'column', 'partition'
-    fine_contributions_level: dict | None = None,
-):
+    continuous_partitions: Optional[Dict[str, List[Any]]] = None,
+    column_groups: Optional[List[List[str]]] = None,
+    default_contributions_level: str = "table",
+    fine_contributions_level: Optional[Dict[str, str]] = None,
+) -> Any:
+    """
+    Generate CSVW-SAFE metadata from a dataset.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataset.
+    privacy_unit : str
+        Column identifying the privacy unit.
+    max_contributions : int
+        Maximum number of contributions per unit.
+    continuous_partitions : dict, optional
+        Numeric partition boundaries.
+    column_groups : list, optional
+        Column groups to generate joint partitions.
+    default_contributions_level : str
+        Default contribution level ("table", "column", "partition").
+    fine_contributions_level : dict, optional
+        Per-column override for contribution level.
+
+    Returns
+    -------
+    dict
+        CSVW-SAFE metadata structure.
+    """
     if privacy_unit not in df.columns:
         raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
 
@@ -403,7 +707,7 @@ def make_metadata_from_data(
     if fine_contributions_level is None:
         fine_contributions_level = {}
 
-    metadata = {
+    metadata: Dict[str, Any] = {
         "@context": [
             "http://www.w3.org/ns/csvw",
             "../../../csvw-safe-context.jsonld",  # local path for dev (TODO later)
@@ -419,9 +723,7 @@ def make_metadata_from_data(
 
     for column_name in df.columns:
         series = df[column_name]
-        col_contrib_level = fine_contributions_level.get(
-            column_name, default_contributions_level
-        )
+        col_contrib_level = fine_contributions_level.get(column_name, default_contributions_level)
 
         datatype = infer_csvw_datatype(series)
         column_meta = {
@@ -430,8 +732,7 @@ def make_metadata_from_data(
             "datatype": infer_csvw_datatype(series),
             "required": bool(series.isna().sum() == 0),
             "csvw-safe:public.privacyId": column_name == privacy_unit,
-            "csvw-safe:synth.nullableProportion": np.ceil(series.isna().mean() * 1000)
-            / 1000,
+            "csvw-safe:synth.nullableProportion": np.ceil(series.isna().mean() * 1000) / 1000,
         }
         deps = identify_dependance(column_name, df, mapping_threshold=0.95)
         if deps:
@@ -448,45 +749,25 @@ def make_metadata_from_data(
 
         if col_contrib_level != "table":
             if is_categorical(series):
-                partitions_meta = make_categorical_partitions(
-                    df, privacy_unit, column_name
-                )
-                column_meta = attach_partitions_to_column(
-                    column_meta, partitions_meta, col_contrib_level
-                )
+                partitions_meta = make_categorical_partitions(df, privacy_unit, column_name)
+                column_meta = attach_partitions_to_column(column_meta, partitions_meta, col_contrib_level)
             else:
                 if column_name in continuous_partitions:
                     bounds = sorted(continuous_partitions[column_name])
-                    partitions_meta = make_numeric_partitions(
-                        df, privacy_unit, column_name, bounds
-                    )
-                    column_meta = attach_partitions_to_column(
-                        column_meta, partitions_meta, col_contrib_level
-                    )
+                    partitions_meta = make_numeric_partitions(df, privacy_unit, column_name, bounds)
+                    column_meta = attach_partitions_to_column(column_meta, partitions_meta, col_contrib_level)
 
         metadata["csvw:tableSchema"]["columns"].append(column_meta)
 
     if column_groups:
-        additional_info = []
-        for col_group in column_groups:
-            for col in col_group:
-                col_contrib_level = fine_contributions_level.get(
-                    col, default_contributions_level
-                )
-                assert col_contrib_level in ["column", "partition"]
-            column_meta = {
-                "@type": "csvw-safe:ColumnGroup",
-                "csvw-safe:columns": col_group,
-            }
-            partitions_meta = get_multi_group_partitions(
-                df, col_group, continuous_partitions, privacy_unit
-            )
-            column_meta = attach_partitions_to_column(
-                column_meta, partitions_meta, col_contrib_level
-            )
-            additional_info.append(column_meta)
-
-        metadata["csvw-safe:additionalInformation"] = additional_info
+        metadata["csvw-safe:additionalInformation"] = make_column_groups(
+            df,
+            column_groups,
+            fine_contributions_level,
+            default_contributions_level,
+            continuous_partitions,
+            privacy_unit,
+        )
 
     return sanitize(metadata)
 
@@ -494,10 +775,54 @@ def make_metadata_from_data(
 # ============================================================
 # CLI
 # ============================================================
-def main():
-    parser = argparse.ArgumentParser(
-        description="Generate CSVW-SAFE metadata from a CSV dataset."
-    )
+def main() -> None:
+    """
+    Command-line entry point for generating CSVW-SAFE metadata.
+
+    This function parses command-line arguments, loads the input CSV dataset,
+    performs basic datatype inference (including datetime detection), and
+    generates CSVW-SAFE metadata describing the dataset structure, privacy
+    unit, contribution bounds, and optional partitions.
+
+    The resulting metadata is written as a JSON file.
+
+    Command-line arguments
+    ----------------------
+    csv_file : str
+        Path to the input CSV dataset.
+
+    --privacy-unit : str
+        Name of the column representing the privacy unit (e.g., patient_id).
+
+    --output : str, optional
+        Output JSON file where the generated metadata will be written.
+        Default is "metadata.json".
+
+    --max-contributions : int, optional
+        Declared global maximum number of contributions per privacy unit
+        (L-infinity bound). Default is 2.
+
+    --continuous_partitions : str, optional
+        JSON string specifying bin boundaries for continuous columns.
+
+    --column_groups : str, optional
+        JSON string specifying groups of columns for joint partitioning.
+
+    --default_contributions_level : {"table", "column", "partition"}, optional
+        Default contribution bound level applied to columns.
+
+    --fine_contributions_level : str, optional
+        JSON string specifying column-specific contribution levels.
+
+    Notes
+    -----
+    Datetime inference is attempted automatically for all columns by
+    attempting to parse values using ``pandas.to_datetime``.
+
+    The generated metadata conforms to the CSVW-SAFE specification and
+    can be used by downstream privacy-preserving data synthesis systems.
+    """
+    parser = argparse.ArgumentParser(description="Generate CSVW-SAFE metadata from a CSV dataset.")
 
     parser.add_argument("csv_file", help="Path to input CSV file")
 
@@ -507,9 +832,7 @@ def main():
         help="Column defining the privacy unit (e.g., patient_id)",
     )
 
-    parser.add_argument(
-        "--output", default="metadata.json", help="Output metadata JSON file"
-    )
+    parser.add_argument("--output", default="metadata.json", help="Output metadata JSON file")
 
     parser.add_argument(
         "--max-contributions",
@@ -525,9 +848,7 @@ def main():
         help="JSON string of bounds per continuous column",
     )
 
-    parser.add_argument(
-        "--column_groups", type=str, default=None, help="JSON string of column groups"
-    )
+    parser.add_argument("--column_groups", type=str, default=None, help="JSON string of column groups")
 
     parser.add_argument(
         "--default_contributions_level",
@@ -551,9 +872,7 @@ def main():
         except (ValueError, TypeError):
             pass
 
-    continuous_partitions = (
-        json.loads(args.continuous_partitions) if args.continuous_partitions else {}
-    )
+    continuous_partitions = json.loads(args.continuous_partitions) if args.continuous_partitions else {}
     column_groups = json.loads(args.column_groups) if args.column_groups else []
 
     metadata = make_metadata_from_data(

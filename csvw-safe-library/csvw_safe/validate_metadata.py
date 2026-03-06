@@ -1,7 +1,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 VALID_TYPES = {"string", "boolean", "integer", "double", "dateTime"}
 
@@ -93,9 +93,7 @@ def validate_column(col: Dict[str, Any], errors: List[str]):
         # maxNumPartitions consistency
         if "csvw-safe:public.maxNumPartitions" in col:
             if len(partitions) > col["csvw-safe:public.maxNumPartitions"]:
-                error(
-                    f"Column '{name}' exceeds declared public.maxNumPartitions", errors
-                )
+                error(f"Column '{name}' exceeds declared public.maxNumPartitions", errors)
 
 
 # ============================================================
@@ -224,9 +222,7 @@ def validate_column_groups(metadata, columns_by_name, errors):
             if col_name not in columns_by_name:
                 error(f"ColumnGroup references unknown column '{col_name}'", errors)
             elif columns_by_name[col_name].get("csvw-safe:public.privacyId"):
-                error(
-                    f"ColumnGroup cannot include privacyId column '{col_name}'", errors
-                )
+                error(f"ColumnGroup cannot include privacyId column '{col_name}'", errors)
 
         # Partition validation
         if "csvw-safe:public.partitions" in g:
@@ -234,10 +230,7 @@ def validate_column_groups(metadata, columns_by_name, errors):
 
         # maxNumPartitions consistency
         if "csvw-safe:public.maxNumPartitions" in g:
-            if (
-                len(g.get("csvw-safe:public.partitions", []))
-                > g["csvw-safe:public.maxNumPartitions"]
-            ):
+            if len(g.get("csvw-safe:public.partitions", [])) > g["csvw-safe:public.maxNumPartitions"]:
                 error("ColumnGroup exceeds public.maxNumPartitions", errors)
 
 

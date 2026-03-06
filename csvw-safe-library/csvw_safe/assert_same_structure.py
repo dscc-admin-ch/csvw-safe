@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import argparse
 import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 
 # ----------------------------
@@ -12,9 +13,7 @@ import sys
 def infer_dtype(series: pd.Series) -> str:
     if pd.api.types.is_bool_dtype(series):
         return "boolean"
-    elif pd.api.types.is_integer_dtype(
-        series
-    ) or pd.api.types.is_nullable_integer_dtype(series):
+    elif pd.api.types.is_integer_dtype(series) or pd.api.types.is_nullable_integer_dtype(series):
         return "integer"
     elif pd.api.types.is_float_dtype(series):
         return "double"
@@ -27,9 +26,7 @@ def infer_dtype(series: pd.Series) -> str:
 # ----------------------------
 # Structural comparison
 # ----------------------------
-def assert_same_structure(
-    csv1_path: Path, csv2_path: Path, check_categories: bool = True
-):
+def assert_same_structure(csv1_path: Path, csv2_path: Path, check_categories: bool = True):
     df1 = pd.read_csv(csv1_path, parse_dates=True)
     df2 = pd.read_csv(csv2_path, parse_dates=True)
 
@@ -48,9 +45,7 @@ def assert_same_structure(
         dtype1 = infer_dtype(df1[col])
         dtype2 = infer_dtype(df2[col])
         if dtype1 != dtype2:
-            raise AssertionError(
-                f"Column '{col}' dtype mismatch: original={dtype1}, dummy={dtype2}"
-            )
+            raise AssertionError(f"Column '{col}' dtype mismatch: original={dtype1}, dummy={dtype2}")
 
     # ----------------------------
     # Nullability
@@ -86,14 +81,10 @@ def assert_same_structure(
 # CLI
 # ----------------------------
 def main():
-    parser = argparse.ArgumentParser(
-        description="Assert that two CSVs match CSVW-SAFE structure"
-    )
+    parser = argparse.ArgumentParser(description="Assert that two CSVs match CSVW-SAFE structure")
     parser.add_argument("original_csv", type=str, help="Original CSV file")
     parser.add_argument("dummy_csv", type=str, help="Dummy CSV file")
-    parser.add_argument(
-        "--no-categories", action="store_true", help="Skip checking categorical values"
-    )
+    parser.add_argument("--no-categories", action="store_true", help="Skip checking categorical values")
     args = parser.parse_args()
 
     try:

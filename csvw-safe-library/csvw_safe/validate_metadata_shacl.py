@@ -6,8 +6,9 @@ Requires pySHACL.
 
 import sys
 from pathlib import Path
-from rdflib import Graph
+
 from pyshacl import validate as shacl_validate
+from rdflib import Graph
 
 
 def validate_metadata_shacl(metadata_file: Path, shacl_file: Path):
@@ -32,9 +33,7 @@ def validate_metadata_shacl(metadata_file: Path, shacl_file: Path):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="SHACL validation for CSVW-SAFE metadata"
-    )
+    parser = argparse.ArgumentParser(description="SHACL validation for CSVW-SAFE metadata")
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("shacl_file", type=str, help="SHACL TTL file")
     args = parser.parse_args()
