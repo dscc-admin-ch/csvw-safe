@@ -64,15 +64,22 @@ csvw-safe:ColumnShape
         sh:path csvw-safe:public.maxNumPartitions ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
+    ] ;
+
+    # contributionLevel must be valid string
+    sh:property [
+        sh:path csvw-safe:public.contributionLevel ;
+        sh:datatype xsd:string ;
+        sh:in ("table" "column" "partition") ;
     ] .
 
 #################################################################
-# GROUPING KEY LEVEL
+# COLUMN GROUP / GROUPING KEY LEVEL
 #################################################################
 
 csvw-safe:GroupingKeyShape
     a sh:NodeShape ;
-    sh:targetClass csvw-safe:GroupingKey ;
+    sh:targetClass csvw-safe:ColumnGroup ;
 
     # must reference at least 2 columns
     sh:property [
@@ -135,14 +142,14 @@ csvw-safe:PartitionShape
     ] .
 
 #################################################################
-# PREDICATE LEVEL (Numeric interval correctness)
+# PREDICATE / INTERVAL LEVEL
 #################################################################
 
 csvw-safe:PredicateShape
     a sh:NodeShape ;
     sh:targetClass csvw-safe:Predicate ;
 
-    # lowerBound ≤ upperBound
+    # lowerBound ≤ upperBound (for numeric partitions)
     sh:sparql [
         sh:message "lowerBound must be ≤ upperBound." ;
         sh:select """

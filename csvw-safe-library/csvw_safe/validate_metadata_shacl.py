@@ -1,9 +1,17 @@
 """
 SHACL validation for CSVW-SAFE metadata.
 
-Requires pySHACL.
+This module validates CSVW-SAFE metadata files against a SHACL schema
+using the pySHACL engine. The metadata is expected to be in JSON-LD
+format and the SHACL shapes in Turtle format.
+
+Requires
+--------
+pyshacl
+rdflib
 """
 
+import argparse
 import sys
 from pathlib import Path
 from typing import Tuple
@@ -13,13 +21,30 @@ from rdflib import Graph
 
 
 def validate_metadata_shacl(metadata_file: Path, shacl_file: Path) -> Tuple[bool, str]:
+    """
+    Validate CSVW-SAFE metadata against a SHACL schema.
+
+    Parameters
+    ----------
+    metadata_file : Path
+        Path to the metadata file in JSON-LD format.
+    shacl_file : Path
+        Path to the SHACL shapes file in Turtle format.
+
+    Returns
+    -------
+    Tuple[bool, str]
+        A tuple containing:
+        - bool : Whether the metadata conforms to the SHACL schema.
+        - str : Textual validation report produced by pySHACL.
+    """
     data_graph = Graph()
     data_graph.parse(metadata_file, format="json-ld")
 
     shacl_graph = Graph()
     shacl_graph.parse(shacl_file, format="turtle")
 
-    conforms, results_graph, results_text = shacl_validate(
+    conforms, _, results_text = shacl_validate(
         data_graph,
         shacl_graph=shacl_graph,
         inference="rdfs",
@@ -31,9 +56,17 @@ def validate_metadata_shacl(metadata_file: Path, shacl_file: Path) -> Tuple[bool
     return conforms, results_text
 
 
-def main():
-    import argparse
+def main() -> None:
+    """
+    Command-line interface for SHACL validation of CSVW-SAFE metadata.
 
+    This function parses command-line arguments specifying the metadata
+    JSON-LD file and the SHACL shapes file, then runs SHACL validation.
+
+    If validation succeeds, a success message is printed. If validation
+    fails, the validation report is printed and the program exits with
+    a non-zero status code.
+    """
     parser = argparse.ArgumentParser(description="SHACL validation for CSVW-SAFE metadata")
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("shacl_file", type=str, help="SHACL TTL file")
@@ -56,9 +89,9 @@ def main():
         sys.exit(1)
 
     if conforms:
-        print("SHACL validation SUCCESS ✅ Metadata satisfies SHACL constraints")
+        print("SHACL validation SUCCESSFUL")
     else:
-        print("SHACL validation FAILED ❌ Metadata violates SHACL constraints")
+        print("SHACL validation FAILED")
         print(results_text)
         sys.exit(1)
 

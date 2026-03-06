@@ -12,6 +12,7 @@ privacy-preserving data synthesis and differential privacy pipelines.
 
 import argparse
 import json
+import math
 from enum import IntEnum
 from typing import Any, Dict, List, Optional, Tuple, cast
 
@@ -25,27 +26,28 @@ import pandas.api.types as ptypes
 # ============================================================
 def sanitize(obj: Any) -> Any:
     """
-    Recursively convert NumPy scalar values into native Python types.
+    Recursively convert objects into JSON/CSVW-SAFE serializable types.
 
-    This ensures the final metadata structure is JSON serializable.
-
-    Parameters
-    ----------
-    obj : Any
-        Input object possibly containing NumPy scalars.
-
-    Returns
-    -------
-    Any
-        Object with NumPy scalars converted to Python primitives.
+    - NumPy scalars → Python scalars
+    - NaN or Inf → None
+    - Other types remain unchanged
     """
     if isinstance(obj, dict):
         return {k: sanitize(v) for k, v in obj.items()}
     if isinstance(obj, list):
         return [sanitize(v) for v in obj]
     if isinstance(obj, np.generic):
-        return obj.item()
-    return obj
+        obj = obj.item()  # convert NumPy scalar to native Python
+
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj  # keep as float
+
+    if isinstance(obj, int):
+        return obj  # keep as int
+
+    return obj  # leave everything else unchanged
 
 
 class ContributionLevel(IntEnum):
@@ -184,11 +186,11 @@ def infer_xmlschema_datatype(series: pd.Series) -> str:
     elif pd.api.types.is_datetime64_any_dtype(s):
         dtype = "dateTime"
     elif pd.api.types.is_integer_dtype(s):
-        dtype = "decimal"
+        dtype = "integer"
     elif pd.api.types.is_float_dtype(s):
-        dtype = "decimal" if (s % 1 == 0).all() else "double"
+        dtype = "integer" if (s % 1 == 0).all() else "double"
     elif pd.api.types.is_numeric_dtype(s):
-        dtype = "decimal"
+        dtype = "integer"
     else:
         dtype = "string"
 
@@ -412,7 +414,7 @@ def make_predicate(spec: Dict[str, Any], value: Any) -> Dict[str, Any]:
     interval = value
     lower = pd.to_datetime(interval.left).isoformat() if spec.get("is_datetime") else float(interval.left)
     upper = pd.to_datetime(interval.right).isoformat() if spec.get("is_datetime") else float(interval.right)
-    return {"lowerBound": lower, "upperBound": upper}
+    return {"csvw-safe:lowerBound": lower, "csvw-safe:upperBound": upper}
 
 
 def make_categorical_partitions(

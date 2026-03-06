@@ -162,7 +162,7 @@ def validate_partitions(parent: Dict[str, Any], partitions: List[Dict[str, Any]]
                     continue
 
                 has_value = "partitionValue" in value_raw
-                has_bounds = "lowerBound" in value_raw or "upperBound" in value_raw
+                has_bounds = "csvw-safe:lowerBound" in value_raw or "csvw-safe:upperBound" in value_raw
 
                 if not (has_value or has_bounds):
                     error(
@@ -170,8 +170,8 @@ def validate_partitions(parent: Dict[str, Any], partitions: List[Dict[str, Any]]
                     )
 
                 if has_bounds:
-                    lb = value_raw.get("lowerBound")
-                    ub = value_raw.get("upperBound")
+                    lb = value_raw.get("csvw-safe:lowerBound")
+                    ub = value_raw.get("csvw-safe:upperBound")
                     if lb is None or ub is None:
                         error(
                             f"Continuous partition for '{col_name}' must define lowerBound and upperBound",
@@ -186,7 +186,7 @@ def validate_partitions(parent: Dict[str, Any], partitions: List[Dict[str, Any]]
 
             if isinstance(predicate, dict):
                 has_value = "partitionValue" in predicate
-                has_bounds = "lowerBound" in predicate or "upperBound" in predicate
+                has_bounds = "csvw-safe:lowerBound" in predicate or "csvw-safe:upperBound" in predicate
             else:
                 has_value = True  # primitive values count as partitionValue
                 has_bounds = False
@@ -195,8 +195,8 @@ def validate_partitions(parent: Dict[str, Any], partitions: List[Dict[str, Any]]
                 error("Partition predicate must define partitionValue or bounds", errors)
 
             if has_bounds:
-                lb = predicate.get("lowerBound") if isinstance(predicate, dict) else None
-                ub = predicate.get("upperBound") if isinstance(predicate, dict) else None
+                lb = predicate.get("csvw-safe:lowerBound") if isinstance(predicate, dict) else None
+                ub = predicate.get("csvw-safe:upperBound") if isinstance(predicate, dict) else None
 
                 if lb is None or ub is None:
                     error("Numeric partition must define lowerBound and upperBound", errors)
