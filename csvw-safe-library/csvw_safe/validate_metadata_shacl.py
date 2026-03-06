@@ -6,12 +6,13 @@ Requires pySHACL.
 
 import sys
 from pathlib import Path
+from typing import Tuple
 
 from pyshacl import validate as shacl_validate
 from rdflib import Graph
 
 
-def validate_metadata_shacl(metadata_file: Path, shacl_file: Path):
+def validate_metadata_shacl(metadata_file: Path, shacl_file: Path) -> Tuple[bool, str]:
     data_graph = Graph()
     data_graph.parse(metadata_file, format="json-ld")
 
