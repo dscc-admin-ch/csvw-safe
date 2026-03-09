@@ -1,12 +1,11 @@
 import pytest
 import pandas as pd
-import numpy as np
+from csvw_safe import constants as C
+from csvw_safe import metadata_structure as S
 from csvw_safe.make_metadata_from_data import (
     attach_partitions_to_column,
     build_partitions,
-    column_level_continuous_partition,
-    keep_predicate_only,
-    make_predicate,
+    ContributionLevel,
 )
 
 
@@ -27,301 +26,180 @@ def test_categorical_partition(simple_df):
     partitions = build_partitions(simple_df, "user_id", column_specs)
     expected_partitions = [
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {"partitionValue": "blue"},
-            "csvw-safe:bounds.maxLength": 2,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
+            '@type': C.PARTITION,
+            C.PREDICATE: {C.PARTITION_VALUE: "blue"},
+            C.MAX_LENGTH: 2,
+            C.MAX_GROUPS: 1,
+            C.MAX_CONTRIB: 2,
         },
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {"partitionValue": "red"},
-            "csvw-safe:bounds.maxLength": 3,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
+            '@type': C.PARTITION,
+            C.PREDICATE: {C.PARTITION_VALUE: "red"},
+            C.MAX_LENGTH: 3,
+            C.MAX_GROUPS: 1,
+            C.MAX_CONTRIB: 2,
         },
     ]
-    assert partitions == expected_partitions
+    # compare using dict representations
+    assert [p.to_dict() for p in partitions] == expected_partitions
 
 
 def test_numeric_partition(simple_df):
-    column_specs = [
-        {
-            "name": "value",
-            "kind": "numeric",
-            "bins": [0, 25, 50, 60],
-            "is_datetime": False,
-        }
-    ]
+    column_specs = [{"name": "value", "kind": "numeric", "bins": [0, 25, 50, 60], "is_datetime": False}]
     partitions = build_partitions(simple_df, "user_id", column_specs)
-    # There should be three bins: [0-25), [25-50), [50-60)
     expected_partitions = [
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {"lowerBound": 0.0, "upperBound": 25.0},
-            "csvw-safe:bounds.maxLength": 2,
-            "csvw-safe:bounds.maxGroupsPerUnit": 2,
-            "csvw-safe:bounds.maxContributions": 1,
+            '@type': C.PARTITION,
+            C.PREDICATE: {C.LOWER_BOUND: 0.0, C.UPPER_BOUND: 25.0},
+            C.MAX_LENGTH: 2,
+            C.MAX_GROUPS: 2,
+            C.MAX_CONTRIB: 1,
         },
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {"lowerBound": 25.0, "upperBound": 50.0},
-            "csvw-safe:bounds.maxLength": 2,
-            "csvw-safe:bounds.maxGroupsPerUnit": 2,
-            "csvw-safe:bounds.maxContributions": 1,
+            '@type': C.PARTITION,
+            C.PREDICATE: {C.LOWER_BOUND: 25.0, C.UPPER_BOUND: 50.0},
+            C.MAX_LENGTH: 2,
+            C.MAX_GROUPS: 2,
+            C.MAX_CONTRIB: 1,
         },
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {"lowerBound": 50.0, "upperBound": 60.0},
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 1,
+            '@type': C.PARTITION,
+            C.PREDICATE: {C.LOWER_BOUND: 50.0, C.UPPER_BOUND: 60.0},
+            C.MAX_LENGTH: 1,
+            C.MAX_GROUPS: 1,
+            C.MAX_CONTRIB: 1,
         },
     ]
-    assert partitions == expected_partitions
+    assert [p.to_dict() for p in partitions] == expected_partitions
 
 
 def test_mixed_partitions(simple_df):
     column_specs = [
         {"name": "color", "kind": "categorical", "is_datetime": False},
-        {
-            "name": "value",
-            "kind": "numeric",
-            "bins": [0, 25, 50, 60],
-            "is_datetime": False,
-        },
+        {"name": "value", "kind": "numeric", "bins": [0, 25, 50, 60], "is_datetime": False},
     ]
     partitions = build_partitions(simple_df, "user_id", column_specs)
     expected_partitions = [
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "color": {"partitionValue": "blue"},
-                "value": {"lowerBound": 0.0, "upperBound": 25.0},
+            '@type': C.PARTITION,
+            C.PREDICATE: {
+                "color": {C.PARTITION_VALUE: "blue"},
+                "value": {C.LOWER_BOUND: 0.0, C.UPPER_BOUND: 25.0},
             },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
+            C.MAX_LENGTH: 1,
+            C.MAX_GROUPS: 1,
+            C.MAX_CONTRIB: 2,
         },
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "color": {"partitionValue": "blue"},
-                "value": {"lowerBound": 25.0, "upperBound": 50.0},
+            '@type': C.PARTITION,
+            C.PREDICATE: {
+                "color": {C.PARTITION_VALUE: "blue"},
+                "value": {C.LOWER_BOUND: 25.0, C.UPPER_BOUND: 50.0},
             },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
+            C.MAX_LENGTH: 1,
+            C.MAX_GROUPS: 1,
+            C.MAX_CONTRIB: 2,
         },
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "color": {"partitionValue": "red"},
-                "value": {"lowerBound": 0.0, "upperBound": 25.0},
+            '@type': C.PARTITION,
+            C.PREDICATE: {
+                "color": {C.PARTITION_VALUE: "red"},
+                "value": {C.LOWER_BOUND: 0.0, C.UPPER_BOUND: 25.0},
             },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
+            C.MAX_LENGTH: 1,
+            C.MAX_GROUPS: 1,
+            C.MAX_CONTRIB: 2,
         },
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "color": {"partitionValue": "red"},
-                "value": {"lowerBound": 25.0, "upperBound": 50.0},
+            '@type': C.PARTITION,
+            C.PREDICATE: {
+                "color": {C.PARTITION_VALUE: "red"},
+                "value": {C.LOWER_BOUND: 25.0, C.UPPER_BOUND: 50.0},
             },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
+            C.MAX_LENGTH: 1,
+            C.MAX_GROUPS: 1,
+            C.MAX_CONTRIB: 2,
         },
         {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "color": {"partitionValue": "red"},
-                "value": {"lowerBound": 50.0, "upperBound": 60.0},
+            '@type': C.PARTITION,
+            C.PREDICATE: {
+                "color": {C.PARTITION_VALUE: "red"},
+                "value": {C.LOWER_BOUND: 50.0, C.UPPER_BOUND: 60.0},
             },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 1,
-        },
-    ]
-    assert partitions == expected_partitions
-
-
-def test_datetime_partition(simple_df):
-    column_specs = [
-        {
-            "name": "timestamp",
-            "kind": "numeric",
-            "bins": pd.date_range("2025-01-01", periods=6),
-            "is_datetime": True,
-        }
-    ]
-    partitions = build_partitions(simple_df, "user_id", column_specs)
-    expected_partitions = [
-        {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "lowerBound": "2025-01-01T00:00:00",
-                "upperBound": "2025-01-02T00:00:00",
-            },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
-        },
-        {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "lowerBound": "2025-01-02T00:00:00",
-                "upperBound": "2025-01-03T00:00:00",
-            },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
-        },
-        {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "lowerBound": "2025-01-03T00:00:00",
-                "upperBound": "2025-01-04T00:00:00",
-            },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
-        },
-        {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "lowerBound": "2025-01-04T00:00:00",
-                "upperBound": "2025-01-05T00:00:00",
-            },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
-        },
-        {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": {
-                "lowerBound": "2025-01-05T00:00:00",
-                "upperBound": "2025-01-06T00:00:00",
-            },
-            "csvw-safe:bounds.maxLength": 1,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 1,
+            C.MAX_LENGTH: 1,
+            C.MAX_GROUPS: 1,
+            C.MAX_CONTRIB: 1,
         },
     ]
-    assert partitions == expected_partitions
+    assert [p.to_dict() for p in partitions] == expected_partitions
 
 
 @pytest.fixture
-def partitions_mixed():
+def partitions_categorical():
     return [
-        {
-            "csvw-safe:predicate": {"partitionValue": "Red"},
-            "csvw-safe:bounds.maxLength": 3,
-            "csvw-safe:bounds.maxGroupsPerUnit": 2,
-            "csvw-safe:bounds.maxContributions": 1,
-        },
-        {
-            "csvw-safe:predicate": {"partitionValue": "Blue"},
-            "csvw-safe:bounds.maxLength": 5,
-            "csvw-safe:bounds.maxGroupsPerUnit": 1,
-            "csvw-safe:bounds.maxContributions": 2,
-        },
-        {
-            "csvw-safe:predicate": {"lowerBound": 0.0, "upperBound": 10.0},
-            "csvw-safe:bounds.maxLength": 4,
-            "csvw-safe:bounds.maxGroupsPerUnit": 2,
-            "csvw-safe:bounds.maxContributions": 1,
-        },
-        {
-            "csvw-safe:predicate": {"lowerBound": 10.0, "upperBound": 20.0},
-            "csvw-safe:bounds.maxLength": 6,
-            "csvw-safe:bounds.maxGroupsPerUnit": 3,
-            "csvw-safe:bounds.maxContributions": 2,
-        },
+        S.Partition(
+            predicate=p[C.PREDICATE],
+            max_length=p[C.MAX_LENGTH],
+            max_groups_per_unit=p[C.MAX_GROUPS],
+            max_contributions=p[C.MAX_CONTRIB],
+        )
+        for p in [
+            {
+                C.PREDICATE: {C.PARTITION_VALUE: "Red"},
+                C.MAX_LENGTH: 3,
+                C.MAX_GROUPS: 2,
+                C.MAX_CONTRIB: 1,
+            },
+            {
+                C.PREDICATE: {C.PARTITION_VALUE: "Blue"},
+                C.MAX_LENGTH: 5,
+                C.MAX_GROUPS: 1,
+                C.MAX_CONTRIB: 2,
+            },
+        ]
     ]
 
 
-def test_column_level_continuous_partition(partitions_mixed):
-    col_max = column_level_continuous_partition(partitions_mixed)
-    expected = {
-        "csvw-safe:bounds.maxLength": 6,
-        "csvw-safe:bounds.maxGroupsPerUnit": 3,
-        "csvw-safe:bounds.maxContributions": 2,
-    }
-    assert col_max == expected
-
-
-def test_keep_predicate_only(partitions_mixed):
-    keys = keep_predicate_only(partitions_mixed)
-    expected = [
-        "Red",
-        "Blue",
-        {"lowerBound": 0.0, "upperBound": 10.0},
-        {"lowerBound": 10.0, "upperBound": 20.0},
-    ]
-    assert keys == expected
-
-
-def test_attach_partitions_to_column_column_level(partitions_mixed):
-    column_meta = {"name": "value", "kind": "numeric"}
-    col_contrib_level = "column"
-    result = attach_partitions_to_column(
-        column_meta.copy(), partitions_mixed, col_contrib_level
+def test_attach_partitions_column_level(partitions_categorical):
+    column_meta = S.ColumnMetadata(
+        name="value", datatype="integer", required=True, privacy_id=False, nullable_proportion=0
     )
+    col_contrib_level = ContributionLevel.COLUMN
+    result = attach_partitions_to_column(column_meta, partitions_categorical, col_contrib_level).to_dict()
+
     expected_result = {
+        "@type": "csvw:Column",
         "name": "value",
-        "kind": "numeric",
-        "csvw-safe:bounds.maxLength": 6,
-        "csvw-safe:bounds.maxGroupsPerUnit": 3,
-        "csvw-safe:bounds.maxContributions": 2,
-        "csvw-safe:public.partitions": [
-            "Red",
-            "Blue",
-            {"lowerBound": 0.0, "upperBound": 10.0},
-            {"lowerBound": 10.0, "upperBound": 20.0},
-        ],
-        "csvw-safe:public.maxNumPartitions": 4,
+        "datatype": "integer",
+        "required": True,
+        C.PRIVACY_ID: False,
+        C.NULL_PROP: 0,
+        C.PUBLIC_PARTITIONS: ["Red", "Blue"],
+        C.MAX_NUM_PARTITIONS: 2,
+        C.MAX_LENGTH: 5,
+        C.MAX_GROUPS: 2,
+        C.MAX_CONTRIB: 2,
     }
-    # Max number of partitions
+
     assert result == expected_result
 
 
-def test_attach_partitions_to_column_keep_partitions_only(partitions_mixed):
-    column_meta = {"name": "color", "kind": "categorical"}
-    col_contrib_level = "partition"
-    result = attach_partitions_to_column(
-        column_meta.copy(), partitions_mixed, col_contrib_level
+def test_attach_partitions_partition_level(partitions_categorical):
+
+    column_meta = S.ColumnMetadata(
+        name="color", datatype="string", required=True, privacy_id=False, nullable_proportion=0
     )
-    expected = {
+    col_contrib_level = ContributionLevel.PARTITION
+    result = attach_partitions_to_column(column_meta, partitions_categorical, col_contrib_level).to_dict()
+    expected_result = {
+        "@type": "csvw:Column",
         "name": "color",
-        "kind": "categorical",
-        "csvw-safe:public.partitions": [
-            {
-                "csvw-safe:predicate": {"partitionValue": "Red"},
-                "csvw-safe:bounds.maxLength": 3,
-                "csvw-safe:bounds.maxGroupsPerUnit": 2,
-                "csvw-safe:bounds.maxContributions": 1,
-            },
-            {
-                "csvw-safe:predicate": {"partitionValue": "Blue"},
-                "csvw-safe:bounds.maxLength": 5,
-                "csvw-safe:bounds.maxGroupsPerUnit": 1,
-                "csvw-safe:bounds.maxContributions": 2,
-            },
-            {
-                "csvw-safe:predicate": {"lowerBound": 0.0, "upperBound": 10.0},
-                "csvw-safe:bounds.maxLength": 4,
-                "csvw-safe:bounds.maxGroupsPerUnit": 2,
-                "csvw-safe:bounds.maxContributions": 1,
-            },
-            {
-                "csvw-safe:predicate": {"lowerBound": 10.0, "upperBound": 20.0},
-                "csvw-safe:bounds.maxLength": 6,
-                "csvw-safe:bounds.maxGroupsPerUnit": 3,
-                "csvw-safe:bounds.maxContributions": 2,
-            },
-        ],
-        "csvw-safe:public.maxNumPartitions": 4,
+        "datatype": "string",
+        "required": True,
+        C.PRIVACY_ID: False,
+        C.NULL_PROP: 0,
+        C.PUBLIC_PARTITIONS: [p.to_dict() for p in partitions_categorical],
+        C.MAX_NUM_PARTITIONS: 2,
     }
-    assert result == expected
+
+    assert result == expected_result

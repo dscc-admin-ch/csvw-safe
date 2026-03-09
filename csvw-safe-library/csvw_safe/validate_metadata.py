@@ -1,5 +1,6 @@
 """
-Validates table-level, column-level, partition-level, and column group metadata
+Validates table-level, column-level, partition-level, and column group metadata.
+
 according to CSVW-SAFE conventions.
 """
 
@@ -7,25 +8,10 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
-# Allowed datatypes
-VALID_TYPES = {"string", "boolean", "decimal", "double", "dateTime"}
-NumericType = Union[int, float]
-PredicateType = Union[Dict[str, Any], int, float, str]
-
-
-# ============================================================
-# Utilities
-# ============================================================
-def error(msg: str, errors: List[str]) -> None:
-    """Append an error message."""
-    errors.append(msg)
-
-
-def is_numeric(dtype: str) -> bool:
-    """Check if a datatype is numeric."""
-    return dtype in ("integer", "double")
+from csvw_safe.datatypes import VALID_TYPES, NumericType, PredicateType
+from csvw_safe.utils import error
 
 
 def intervals_overlap(a1: NumericType, a2: NumericType, b1: NumericType, b2: NumericType) -> bool:
@@ -93,7 +79,7 @@ def validate_column(col: Dict[str, Any], errors: List[str]) -> None:
     if required and nullable_prop != 0:
         error(f"Column '{name}' is required but nullableProportion != 0", errors)
 
-    if is_numeric(dtype):
+    if dtype in ("integer", "double"):
         minimum = col.get("minimum")
         maximum = col.get("maximum")
         if minimum is None or maximum is None:

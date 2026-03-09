@@ -1,4 +1,4 @@
-# CSVW Safe Modeling Extension (CSVW-SAFE) Vocabulary
+# CSVW Safe Vocabulary
 
 THIS IS WORK IN PROGRESS!!!!!!!
 
@@ -14,26 +14,21 @@ These assumptions may include:
 * Logical constraints between columns
 * Bounds on how individuals may contribute to the dataset
 
+WARNING: Some of these assumptions may be safe to share (number of days in a month) but some might not be (how many people have a certain rare desease on a small island). Also if enough statistics are shared about a dataset, the privacy of its contributor is at risk even if the disclosed statistics seem inoffensive (see [Sweeney]). It is the role of the data administrator to make informed decisions on what is public information or not.
+
 Such metadata enables:
 
-* Automatic computation of worst-case sensitivity for Differential Privacy (DP)
-* Generation of structurally valid dummy datasets
-* Safe data discovery without direct access to the underlying data
-* Interoperating with existing CSVW tooling and DP libraries
+* Safe data discovery without direct access to the underlying data (user can see what is available like survey from which year to which year without accessing the data)
+* Generation of structurally valid dummy datasets (replicate the structure of my real dataset but has fake data)
+* Automatic computation of worst-case sensitivity of a query for Differential Privacy (DP)
 
-The core [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/) vocabulary describes tabular structure but cannot express these additional safe modeling assumptions.
+[**CSV on the Web (CSVW)**](https://www.w3.org/TR/tabular-data-model/) vocabulary already describes tabular structure (tables, columns, datatypes) but doesn't express these additional modeling assumptions (DP contributions, dependency between rows, etc).
 
-**CSVW-SAFE** extends CSVW with a declarative, machine-readable vocabulary for describing public, non-sensitive constraints and assumptions about tabular datasets (not measured properties).
-CSVW-SAFE does not describe the dataset itself but the set of datasets considered possible under the privacy model. All bounds must hold for every dataset in this set.
+**CSVW-SAFE** extends CSVW for describing public, non-sensitive constraints and assumptions about tabular datasets- The information is a CSVW-SAFE metadata is not supposed to be not measured properties. It should not describe the dataset itself but the set of datasets considered possible under the privacy model. All bounds must hold for every dataset in this set. (Note: the script `make_metadata_from_data.py` of `csvw-safe-library` is dangerous and should be used with parcimony. It is made to gain time but the resulting metadata should always be thoroughly checked and minimized.) If too much information is shared, then the privacy of contributor of the dataset is at risk.
 
-It does not guarantee privacy by itself. 
-It enables automated computation of query sensitivity for differential privacy mechanisms.
+For DP contributions, an overview of words used by DP library and their correspondance with **CSVW-SAFE** is available in [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/dp_libraries.md).
 
-See:
-
-* [Guidelines and notes](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/guidelines.md)
-* [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/dp_libraries.md)
-* Example metadata: [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json) of the sklearn penguin dataset
+For an example on metadata on the penguin dataset from sklearn, see [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json).
 
 ---
 
@@ -43,6 +38,7 @@ See:
 * **Default namespace:** `https://w3id.org/csvw-safe#`
 * **Vocabulary definitions:** `csvw-safe-vocab.ttl`
 * **JSON-LD context:** `csvw-safe-context.jsonld`
+* **SHACL Constraints:** `csvw-safe-constraints.ttl`
 
 
 ### 1.1 Main classes
@@ -687,7 +683,6 @@ The values can be:
 | -------------- | ------------------------------------------- |
 | `independent`  | guarantees provided separately per unit     |
 | `hierarchical` | units nested (e.g. patient inside hospital) |
-| `joint`        | adjacency defined on combined unit          |
 
 #### 2.2.3 Structural hierarchy for contribution bounds
 ```
@@ -720,7 +715,7 @@ This section defines the minimum metadata required for a system to compute sound
 A dataset is considered DP-calibratable only if all mandatory bounds required by the chosen adjacency definition are present.
 
 Sensitivity is computed relative to:
-- the declared `csvw-safe:adjacencyDefinition`
+- the declared `csvw-safe:adjacencyDefinition` (TODO: is it?)
 - the declared privacy unit(s) `public.privacyUnit`
 - declared contribution bounds
 - range of value for some queries on continuous values
@@ -782,37 +777,78 @@ The adjacency definition does not change the metadata, it changes how the librar
 
 Structural metadata supports:
 
-- Dummy dataset generation (generate a dataset that has the same schema and structure as the original dataset) for functional programming for instance.
-- Public schema discovery (can already answer some questions without requiring private data access).
+- Dummy dataset generation: generate a dataset with the same schema and structure as the original dataset. Useful for functional programming, testing, and development without exposing sensitive data.
+- Public schema discovery: some basic queries can be answered based on the schema alone, without accessing private data.
 
 All standard CSVW column properties (`datatype`, `format`, `minimum`, `maximum`, `required`, `default`) are re-used as is.
-In particular, for continuous columns, `minimum` and `maximum` are compusory to apply DP.
+In particular, for continuous columns, `minimum` and `maximum` are compusory to apply non count DP query on these columns.
+
+Structural metadata includes additional fields beyond standard CSVW column definitions. These describe both the column itself and row-level dependencies.
 
 ### 3.1 Column-Level Structural Properties
-
-For structural purposes, other fields exist on the `csvw:Column`:
 
 | Term                                  | Type                                  | Meaning                                             |
 | ------------------------------------- | ------------------------------------- | --------------------------------------------------- |
 | `csvw-safe:public.privacyId`          | boolean                               | True if column identifies individuals/units         |
 | `csvw-safe:synth.nullableProportion`  | decimal (0–1)                         | Approximate fraction of null values                 |
-| `csvw-safe:synth.dependsOn`           | column reference                      | Declares dependency on another column               |
-| `csvw-safe:synth.how`                 | enum (`bigger`, `smaller`, `mapping`) | Type of dependency                                  |
-| `csvw-safe:synth.mapping`             | object                                | Required if `how = mapping`                         |
-| `csvw-safe:synth.fixed_fields`        | list                                  | Columns whose value is constant wrt column.                           |
 
-`csvw-safe:public.privacyId` is actually very important for DP privacy contribution and the properties are defined as preprocessing suggestions.
-
-**Dependency Rules**
-- `dependsOn` and `how` MUST be provided together.
-- If `how = mapping`, then `mapping` MUST be provided.
-
-**Notes**
+Notes:
+- `csvw-safe:public.privacyId` is necessary for DP privacy contribution.
 - `csvw-safe:synth.nullableProportion` improves modeling beyond csvw:required.
-- maxNumPartitions describes grouping universe size but does not affect sensitivity unless combined with DP bounds.
 - multiple columns may have `csvw-safe:public.privacyId=true`. In these cases, DP contributions (section 3) must be provided per privacy unit.
 
-### 3.2 ColumnGroup-Level Structural Properties
+
+### 3.2 Column Dependencies
+Columns may have row-level or multi-row dependencies that describe relationships between columns and across multiple rows.
+
+#### 3.2.1 Column-Level Single-Row Level Structural Properties
+| Term                                  | Type                                  | Meaning                                             |
+| ------------------------------------- | ------------------------------------- | --------------------------------------------------- |
+| `csvw-safe:synth.dependsOn`           | column reference                      | Declares dependency on another column               |
+| `csvw-safe:synth.dependency_type`     | enum (`bigger`, `smaller`, `mapping`) | Type of dependency                                  |
+| `csvw-safe:synth.value_map`           | object                                | Required if `how = mapping`, defines a mapping from the dependent column to the source column. |
+
+Rules:
+- `dependsOn` and `how` MUST be provided together.
+- If `how = mapping`, then `value_map` MUST be provided.
+
+Examples:
+1. Age -> Adult
+  - Column `age`.
+  - Column `is_adult` depends on `age`, `how = mapping`. 
+  - Mapping: `value_map = {..., 6: False, 7: False, ..., 18: True, 19: True, ...}`.
+
+2. Occupation → Specialization:
+  - Column `occupation` values: `medical`, `engineer`.
+  - Column `specialization` depends on `occupation`:
+    - `medical` → `nurse` or `doctor`
+    - `engineer` → `Mechanical Engineering`, `Microengineering`, or `Civil Engineering`
+  - Mapping: `value_map = {'medical': ['nurse', 'doctor'], 'engineer': ['Mechanical Engineering', 'Microengineering', 'Civil Engineering']}`.
+
+3. Treatment dates:
+  - Column `first_treatment_date` exists.
+  - Column `second_treatment_date` depends on `first_treatment_date`, `how = bigger`.
+
+4. Supplementary information
+  - If there are many `diagnostic_{i}` column with `i`, the number of the diagnostic and there are filled in increasing order, then if `diagnostic_{i}` is Null then `diagnostic_{i+1}` is also Null. So it depends, `how = mapping`. Mapping: `{None: None}`.
+
+
+#### 3.2.2 Column-Level Multi-Rows Level Structural Properties
+| Term                                  | Type             | Meaning                                             |
+| ------------------------------------- | ---------------- | --------------------------------------------------- |
+| `csvw-safe:synth.fixed_per_entity`    | list             | Columns whose values are constant across multiple rows for the same entity. |
+
+Examples:
+1. Person-level data:
+  - Column `person_id` repeats across multiple rows.
+  - Column `name` and `height` remain the same across all rows with the same `person_id`.
+
+2. School data:
+  - Column `student_id` repeats for multiple semesters.
+  - Column `birth_date` is fixed for that student.
+
+
+### 3.3 ColumnGroup-Level Structural Properties
 `csvw-safe:ColumnGroup` represents a grouping key composed of multiple columns
 
 | Property            | Meaning                             |
@@ -823,7 +859,7 @@ If a `csvw-safe:ColumnGroup` is declared, all referenced columns must exist in t
 
 A `GroupingKey` defines a joint grouping space. It does not automatically enumerate all combinations; explicit partitions may optionally restrict this space (see Partitions-Level below).
 
-### 3.3 Partition-Level Structural Properties
+### 3.4 Partition-Level Structural Properties
 
 #### Concept
 
@@ -970,7 +1006,7 @@ Similarly for a `csvw:GroupingKey` with categorical and continuous data, the par
 
 
 
-## 5. CSVW-SAFE Framework
+## 4. CSVW-SAFE Framework
 
 | File                          | Purpose                             |
 | ----------------------------- | ----------------------------------- |

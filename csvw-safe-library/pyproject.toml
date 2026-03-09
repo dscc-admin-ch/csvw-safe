@@ -22,13 +22,19 @@ python_version = "3.11"
 ignore_missing_imports = true
 strict = true
 exclude = "\\.ipynb_checkpoints"
-disable_error_code = ["unused-ignore", "misc"]
+disable_error_code = []
 
 
 [tool.pylint.'MASTER']
 ignore = ["venv", "__pycache__"]
 jobs = 1
-disable = ["missing-module-docstring", "import-error", "too-many-positional-arguments", "too-many-locals", "too-many-arguments", "too-many-function-args", "redefined-outer-name", "too-many-nested-blocks"]
+disable = [
+    "too-many-locals", 
+    "too-many-arguments", 
+    "too-many-positional-arguments", 
+    "too-many-branches", 
+    "too-many-statements"
+]
 max-line-length = 110
 
 [tool.pydocstringformatter]
@@ -36,5 +42,5 @@ max-line-length = 110
 write = true
 
 [tool.pylint."messages control"]
-disable = ["fixme", "duplicate-code", "W1401"]
+disable = []
 ignore = ".ipynb_checkpoints"

@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from csvw_safe.make_metadata_from_data import (
+from csvw_safe.datatypes import (
     is_small_categorical_integer,
     is_small_datetime,
     infer_xmlschema_datatype,
@@ -15,7 +15,7 @@ from csvw_safe.make_metadata_from_data import (
     [
         (pd.Series([1, 2, 3, 4]), True),
         (pd.Series([1, 2, 2, np.nan, 1]), True),
-        (pd.Series(range(20)), True),   # boundary
+        (pd.Series(range(20)), True),  # boundary
         (pd.Series(range(21)), False),  # boundary overflow
         (pd.Series(range(50)), False),
         (pd.Series([1.1, 2.2, 3.3]), False),
@@ -48,12 +48,12 @@ def test_is_small_datetime(series, expected):
     "series,expected",
     [
         (pd.Series([True, False]), "boolean"),
-        (pd.Series([1, 2, 3]), "decimal"),
+        (pd.Series([1, 2, 3]), "integer"),
         (pd.Series([1.2, 3.4]), "double"),
         (pd.Series(["a", "b"]), "string"),
         (pd.Series([1, 2.5, 3]), "double"),
         (pd.Series([1.5, 2, 3]), "double"),
-        (pd.Series([1, 2, np.nan, 3]), "decimal"), # despite pandas
+        (pd.Series([1, 2, np.nan, 3]), "integer"),  # despite pandas
         (pd.Series(pd.date_range("2025-01-01", periods=3)), "dateTime"),
     ],
 )

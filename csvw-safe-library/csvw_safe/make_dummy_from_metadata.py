@@ -1,5 +1,5 @@
 """
-CSVW-SAFE Dummy Dataset Generator
+CSVW-SAFE Dummy Dataset Generator.
 
 This module generates a synthetic dummy dataset from CSVW-SAFE metadata.
 It is intended for testing pipelines and validating metadata structures.

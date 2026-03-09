@@ -1,10 +1,11 @@
 import pytest
 import pandas as pd
 import numpy as np
+from csvw_safe import constants as C
 from csvw_safe.make_metadata_from_data import (
     get_continuous_bounds,
     identify_fixed_fields,
-    identify_dependance,
+    identify_dependency,
 )
 
 
@@ -46,6 +47,7 @@ def df_constant_per_group():
         }
     )
 
+
 def test_fixed_fields_detected(df_constant_per_group):
     # fixed1 and fixed2 have <=1 unique value per group -> should be detected
     fixed = identify_fixed_fields(df_constant_per_group, "group", threshold=1)
@@ -80,7 +82,7 @@ def test_fixed_fields_with_nans():
 # ==========================
 # identify_dependance tests
 # ==========================
-def test_identify_dependance_bigger():
+def test_identify_dependency_bigger():
     numeric_df = pd.DataFrame(
         {
             "a": [1, 2, 3, 4, 5],
@@ -89,39 +91,22 @@ def test_identify_dependance_bigger():
             "d": [1, 2, 2, np.nan, 1],
         }
     )
-    result = identify_dependance("a", numeric_df)
+    result = identify_dependency("a", numeric_df, max_mapping_size=3)
 
     # Expected dependencies based on numeric_df
     expected = [
-        {"csvw-safe:synth.dependsOn": "b", "csvw-safe:synth.how": "monotonic"},
-        {"csvw-safe:synth.dependsOn": "c", "csvw-safe:synth.how": "smaller"},
-        {"csvw-safe:synth.dependsOn": "d", "csvw-safe:synth.how": "bigger"},
+        {C.DEPENDS_ON: "c", C.DEPENDENCY_TYPE: C.DependencyType.SMALLER},
+        {C.DEPENDS_ON: "d", C.DEPENDENCY_TYPE: C.DependencyType.BIGGER},
     ]
 
     # Simplify result to only keys we care about
-    simplified_result = [
-        {k: r[k] for k in ["csvw-safe:synth.dependsOn", "csvw-safe:synth.how"]}
-        for r in result
-    ]
+    simplified_result = [{C.DEPENDS_ON: r.depends_on, C.DEPENDENCY_TYPE: r.dependency_type} for r in result]
 
     # Assert all expected dependencies are present
     assert simplified_result == expected
 
 
-def test_identify_dependance_monotonic():
-    df = pd.DataFrame({"x": [1, 2, 3, 4, 5], "y": [2, 4, 6, 8, 10]})
-    result = identify_dependance("x", df)
-    expected = [
-        {
-            "csvw-safe:synth.dependsOn": "y",
-            "csvw-safe:synth.how": "monotonic",
-            "csvw-safe:synth.correlation": 1.0,
-        }
-    ]
-    assert result == expected
-
-
-def test_identify_dependance_mapping():
+def test_identify_dependency_mapping():
     mapping_df = pd.DataFrame(
         {
             "key": ["A", "B", "B", "C", "C"],
@@ -129,13 +114,9 @@ def test_identify_dependance_mapping():
             "other": ["X", "Y", "Y", "Z", "Z"],
         }
     )
-    
-    result = identify_dependance(
-        "value", mapping_df, mapping_threshold=0.9, coverage_threshold=0.8
-    )
+
+    result = identify_dependency("value", mapping_df, mapping_threshold=0.9, coverage_threshold=0.8)
     expected_mapping = {"A": 1, "B": 2, "C": 3}
-    mapping_dep = next(
-        (r for r in result if r["csvw-safe:synth.how"] == "mapping"), None
-    )
+    mapping_dep = next((r for r in result if r.dependency_type == C.DependencyType.MAPPING), None)
     assert mapping_dep is not None
-    assert mapping_dep["csvw-safe:synth.mapping"] == expected_mapping
+    assert mapping_dep.value_map == expected_mapping

@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
 """
-Utility script to verify that a generated dummy CSV preserves the structural
+Utility script to verify that a generated dummy CSV preserves the structural.
+
 properties of an original CSV dataset.
 
 The script checks:
@@ -19,7 +19,7 @@ from typing import Set
 
 import pandas as pd
 
-from csvw_safe.make_metadata_from_data import infer_xmlschema_datatype
+from csvw_safe.datatypes import infer_xmlschema_datatype
 
 
 # ----------------------------
@@ -108,9 +108,7 @@ def assert_same_structure(
 # CLI
 # ----------------------------
 def main() -> None:
-    """
-    Command-line entry point for the CSV structure validator.
-    """
+    """Command-line entry point for the CSV structure validator."""
     parser = argparse.ArgumentParser(
         description="Assert that two CSV files match CSVW-SAFE structural properties"
     )
@@ -135,7 +133,7 @@ def main() -> None:
     except AssertionError as e:
         print(f"Structure mismatch: {e}")
         sys.exit(1)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"ERROR: {e}")
         sys.exit(2)
 
