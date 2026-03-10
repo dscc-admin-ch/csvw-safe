@@ -168,10 +168,19 @@ class ColumnGroupMetadata:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert column group metadata to JSON-serializable dictionary."""
+        serialized_partitions = []
+        for p in self.partitions:
+            if hasattr(p, "to_dict"):  # MultiColumnPartition
+                serialized_partitions.append(p.to_dict())
+            elif isinstance(p, dict):  # Dict[str, Predicate]
+                serialized_partitions.append({k: v.to_dict() for k, v in p.items()})
+            else:
+                raise TypeError(f"Unsupported partition type: {type(p)}")
+
         result: Dict[str, Any] = {
             "@type": C.COLUMN_GROUP,
             C.COLUMNS: self.columns,
-            C.PUBLIC_PARTITIONS: self.partitions,
+            C.PUBLIC_PARTITIONS: serialized_partitions,
             C.MAX_NUM_PARTITIONS: self.max_num_partitions,
         }
 
