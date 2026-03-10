@@ -8,7 +8,6 @@ import pandas as pd
 VALID_TYPES = {"string", "boolean", "decimal", "double", "dateTime"}
 
 NumericType = Union[int, float]
-PredicateType = Union[Dict[str, Any], int, float, str]
 
 
 def is_small_categorical_integer(series: pd.Series, max_unique: int = 20) -> bool:
@@ -123,3 +122,18 @@ def is_categorical(series: pd.Series) -> bool:
         return True
 
     return not (pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series))
+
+
+def map_validator_type(datatype: Any, col_meta: Dict[str, Any]) -> str:
+    """Map generator datatypes to validator-compatible types."""
+    dtype_str = str(datatype) if datatype is not None else "string"
+    if dtype_str == "decimal":
+        minimum = col_meta.get("minimum")
+        maximum = col_meta.get("maximum")
+        if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
+            if float(minimum).is_integer() and float(maximum).is_integer():
+                return "decimal"
+        return "double"
+    if dtype_str in VALID_TYPES:
+        return dtype_str
+    return "string"

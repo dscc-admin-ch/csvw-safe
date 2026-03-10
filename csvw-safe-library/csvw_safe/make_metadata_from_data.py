@@ -470,17 +470,6 @@ def get_column_level_contribution(
     return max_length, max_groups_per_unit, max_contributions
 
 
-def get_column_keys(partitions_meta: List[SingleColumnPartition]) -> List[str]:
-    """
-    Attach partition metadata to a single column.
-
-      - Aggregate partition bounds to the column level
-      - Remove per-partition bounds
-      - Store only the list of public partition values
-    """
-    return [p.predicate.partition_value for p in partitions_meta if p.predicate.partition_value is not None]
-
-
 def make_column_groups(
     df: pd.DataFrame,
     column_groups: List[List[str]],
@@ -569,6 +558,224 @@ def make_column_groups(
     return column_groups_metadata
 
 
+def prepare_metadata_inputs(
+    fine_contributions_level: Optional[Dict[str, str]],
+    continuous_partitions: Optional[Dict[str, List[Any]]],
+    column_groups: Optional[List[List[str]]],
+) -> Tuple[Dict[str, str], Dict[str, List[Any]], List[List[str]]]:
+    """
+    Normalize optional metadata configuration inputs.
+
+    This helper ensures that optional parameters are initialized with
+    appropriate defaults and applies implicit rules required by the
+    metadata generation process.
+
+    In particular:
+    - Missing dictionaries/lists are replaced with empty structures.
+    - Columns with numeric partitions are automatically treated at
+      partition-level contribution granularity.
+
+    Parameters
+    ----------
+    fine_contributions_level : dict[str, str] or None
+        Optional mapping specifying per-column contribution levels.
+        Values must be one of {"table", "column", "partition"}.
+
+    continuous_partitions : dict[str, list[Any]] or None
+        Mapping of numeric column names to bin boundaries used
+        to generate partitions.
+
+    column_groups : list[list[str]] or None
+        List of column groups used to create joint partitions.
+
+    Returns
+    -------
+    tuple
+        A tuple containing normalized versions of:
+
+        - fine_contributions_level : dict[str, str]
+        - continuous_partitions : dict[str, list[Any]]
+        - column_groups : list[list[str]]
+    """
+
+    if fine_contributions_level is None:
+        fine_contributions_level = {}
+
+    if continuous_partitions is None:
+        continuous_partitions = {}
+
+    for col in continuous_partitions:
+        fine_contributions_level[col] = "partition"
+
+    if column_groups is None:
+        column_groups = []
+
+    return fine_contributions_level, continuous_partitions, column_groups
+
+
+def attach_partitions_to_column(
+    df: pd.DataFrame,
+    column_meta: ColumnMetadata,
+    column_name: str,
+    privacy_unit: str,
+    continuous_partitions: Dict[str, List[Any]],
+    col_contrib_level: ContributionLevel,
+) -> None:
+    """
+    Compute and attach partition metadata for a column.
+
+    Depending on the contribution level, partitions may be stored either
+    as full partition objects (partition-level contributions) or as a
+    simplified list of public partition keys (column-level contributions).
+
+    Categorical columns are partitioned by unique values, while numeric
+    columns are discretized using provided bin boundaries.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataset.
+
+    column_meta : ColumnMetadata
+        Metadata object that will be updated with partition information.
+
+    column_name : str
+        Name of the column being partitioned.
+
+    privacy_unit : str
+        Column representing the privacy unit.
+
+    continuous_partitions : dict[str, list[Any]]
+        Mapping of numeric column names to bin boundaries.
+
+    col_contrib_level : ContributionLevel
+        Contribution granularity applied to the column.
+
+    Returns
+    -------
+    None
+        The function modifies ``column_meta`` in place.
+    """
+    series = df[column_name]
+
+    if is_categorical(series):
+
+        partitions_meta = make_categorical_partitions(df, privacy_unit, column_name)
+        column_meta.max_num_partitions = len(partitions_meta)
+
+        if col_contrib_level == ContributionLevel.COLUMN:
+
+            max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
+                partitions_meta
+            )
+
+            column_meta.max_length = max_length
+            column_meta.max_groups_per_unit = max_groups_per_unit
+            column_meta.max_contributions = max_contributions
+
+            column_meta.partitions = [
+                p.predicate.partition_value
+                for p in partitions_meta
+                if p.predicate.partition_value is not None
+            ]
+        else:
+            column_meta.partitions = partitions_meta
+
+    elif column_name in continuous_partitions:
+
+        bounds = sorted(continuous_partitions[column_name])
+        partitions_meta = make_numeric_partitions(df, privacy_unit, column_name, bounds)
+
+        column_meta.partitions = partitions_meta
+        column_meta.max_num_partitions = len(partitions_meta)
+
+
+def build_column_metadata(
+    df: pd.DataFrame,
+    column_name: str,
+    privacy_unit: str,
+    continuous_partitions: Dict[str, List[Any]],
+    fine_contributions_level: Dict[str, str],
+    default_contributions_level: str,
+) -> ColumnMetadata:
+    """
+    Construct metadata for a single column.
+
+    This function infers column properties and computes metadata fields
+    required by CSVW-SAFE, including datatype inference, nullability,
+    dependencies, fixed-per-entity attributes, and optional contribution
+    partitions.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataset.
+
+    column_name : str
+        Name of the column being processed.
+
+    privacy_unit : str
+        Name of the column representing the privacy unit.
+
+    continuous_partitions : dict[str, list[Any]]
+        Mapping of numeric column names to partition bin boundaries.
+
+    fine_contributions_level : dict[str, str]
+        Mapping specifying per-column contribution levels.
+
+    default_contributions_level : str
+        Default contribution level applied when a column is not explicitly
+        listed in ``fine_contributions_level``.
+
+    Returns
+    -------
+    ColumnMetadata
+        Metadata object describing the column according to the CSVW-SAFE
+        specification.
+    """
+
+    series = df[column_name]
+
+    col_contrib_level = get_effective_contrib_level(
+        column_name, fine_contributions_level, default_contributions_level
+    )
+
+    datatype = infer_xmlschema_datatype(series)
+
+    column_meta = ColumnMetadata(
+        name=column_name,
+        datatype=datatype,
+        required=series.isna().sum() == 0,
+        privacy_id=(column_name == privacy_unit),
+        nullable_proportion=np.ceil(series.isna().mean() * 1000) / 1000,
+    )
+
+    deps = identify_dependency(column_name, df)
+    if deps:
+        column_meta.dependencies = deps
+
+    fixed_fields = identify_fixed_fields(df, column_name)
+    if fixed_fields:
+        column_meta.fixed_per_entity = fixed_fields
+
+    if datatype != "string":
+        minimum, maximum = get_continuous_bounds(series)
+        column_meta.minimum = minimum
+        column_meta.maximum = maximum
+
+    if col_contrib_level != ContributionLevel.TABLE:
+        attach_partitions_to_column(
+            df,
+            column_meta,
+            column_name,
+            privacy_unit,
+            continuous_partitions,
+            col_contrib_level,
+        )
+
+    return column_meta
+
+
 def make_metadata_from_data(
     df: pd.DataFrame,
     privacy_unit: str,
@@ -606,87 +813,25 @@ def make_metadata_from_data(
     if privacy_unit not in df.columns:
         raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
 
-    if fine_contributions_level is None:
-        fine_contributions_level = {}
+    fine_contributions_level, continuous_partitions, column_groups = prepare_metadata_inputs(
+        fine_contributions_level,
+        continuous_partitions,
+        column_groups,
+    )
 
-    if continuous_partitions is None:
-        continuous_partitions = {}
-
-    # Any column with numeric partitions is treated at partition level
-    for col in continuous_partitions:
-        fine_contributions_level[col] = "partition"
-
-    if column_groups is None:
-        column_groups = []
-
-    columns_meta: List[ColumnMetadata] = []
-
-    for column_name in df.columns:
-        series = df[column_name]
-
-        # Determine effective contribution level for this column
-        col_contrib_level = get_effective_contrib_level(
-            column_name, fine_contributions_level, default_contributions_level
+    columns_meta = [
+        build_column_metadata(
+            df,
+            column_name,
+            privacy_unit,
+            continuous_partitions,
+            fine_contributions_level,
+            default_contributions_level,
         )
+        for column_name in df.columns
+    ]
 
-        # Infer datatype
-        datatype = infer_xmlschema_datatype(series)
-
-        column_meta = ColumnMetadata(
-            name=column_name,
-            datatype=datatype,
-            required=series.isna().sum() == 0,
-            privacy_id=(column_name == privacy_unit),
-            nullable_proportion=np.ceil(series.isna().mean() * 1000) / 1000,
-        )
-
-        # Row-level dependencies
-        deps = identify_dependency(column_name, df)
-        if deps:
-            column_meta.dependencies = deps
-
-        # Fixed-per-entity fields
-        fixed_fields = identify_fixed_fields(df, column_name)
-        if fixed_fields:
-            column_meta.fixed_per_entity = fixed_fields
-
-        # Continuous column bounds
-        if datatype != "string":
-            minimum, maximum = get_continuous_bounds(series)
-            column_meta.minimum = minimum
-            column_meta.maximum = maximum
-
-        # Partitions for column- or partition-level contributions
-        if col_contrib_level != ContributionLevel.TABLE:
-            if is_categorical(series):
-                partitions_meta = make_categorical_partitions(df, privacy_unit, column_name)
-                column_meta.partitions = partitions_meta
-                column_meta.max_num_partitions = len(partitions_meta)
-                if col_contrib_level == ContributionLevel.COLUMN:
-
-                    max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
-                        partitions_meta
-                    )
-                    column_meta.max_length = max_length
-                    column_meta.max_groups_per_unit = max_groups_per_unit
-                    column_meta.max_contributions = max_contributions
-
-                    column_meta.partitions = [
-                        p.predicate.partition_value
-                        for p in partitions_meta
-                        if p.predicate.partition_value is not None
-                    ]
-
-            elif column_name in continuous_partitions:
-                bounds = sorted(continuous_partitions[column_name])
-                partitions_meta = make_numeric_partitions(df, privacy_unit, column_name, bounds)
-                column_meta.partitions = partitions_meta  # List[SingleColumnPartition]
-                column_meta.max_num_partitions = len(partitions_meta)
-
-        columns_meta.append(column_meta)
-
-    # Column groups
-    groups_meta: Optional[List[ColumnGroupMetadata]] = None
+    groups_meta = None
     if column_groups:
         groups_meta = make_column_groups(
             df,
@@ -697,7 +842,6 @@ def make_metadata_from_data(
             privacy_unit,
         )
 
-    # Return strongly-typed TableMetadata
     table_metadata = TableMetadata(
         privacy_unit=privacy_unit,
         max_contributions=max_contributions,
@@ -707,9 +851,7 @@ def make_metadata_from_data(
         column_groups=groups_meta,
     )
 
-    # Convert dataclass to dict and sanitize for JSON
-    metadata_dict = table_metadata.to_dict()
-    return sanitize(metadata_dict)
+    return sanitize(table_metadata.to_dict())
 
 
 # ============================================================

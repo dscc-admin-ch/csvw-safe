@@ -136,7 +136,7 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
             d["maximum"] = self.maximum
 
         if self.partitions is not None:
-            d[C.PUBLIC_PARTITIONS] = self.partitions
+            d[C.PUBLIC_PARTITIONS] = [p.to_dict() if hasattr(p, "to_dict") else p for p in self.partitions]
             d[C.MAX_NUM_PARTITIONS] = self.max_num_partitions
 
         if self.max_length is not None:

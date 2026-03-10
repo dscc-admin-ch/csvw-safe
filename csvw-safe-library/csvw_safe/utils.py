@@ -1,7 +1,7 @@
 """Utility files."""
 
 import math
-from typing import Any, List
+from typing import Any
 
 import numpy as np
 
@@ -27,8 +27,3 @@ def sanitize(obj: Any) -> Any:
         return obj  # keep as float
 
     return obj  # leave everything else unchanged
-
-
-def error(msg: str, errors: List[str]) -> None:
-    """Append an error message."""
-    errors.append(msg)

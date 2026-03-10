@@ -25,5 +25,5 @@ python -m pylint csvw_safe/
 python -m pydocstringformatter -w csvw_safe/
 
 python -m isort tests/
-python -m isort tests/
+python -m black tests/
 python -m flake8 --toml-config=./pyproject.toml tests/

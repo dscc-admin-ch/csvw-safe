@@ -159,6 +159,6 @@ def test_partition_level_partitions(simple_df):
     print(color_column)
 
     assert isinstance(color_column[C.PUBLIC_PARTITIONS], list)
-    assert isinstance(color_column[C.PUBLIC_PARTITIONS][0], SingleColumnPartition)
+    assert isinstance(color_column[C.PUBLIC_PARTITIONS][0], dict)
 
     assert color_column[C.MAX_NUM_PARTITIONS] == 2

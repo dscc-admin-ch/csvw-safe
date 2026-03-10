@@ -4,7 +4,6 @@ import pytest
 
 import csvw_safe.constants as C
 from csvw_safe.make_metadata_from_data import make_metadata_from_data
-from csvw_safe.metadata_structure import Predicate, SingleColumnPartition
 
 
 @pytest.fixture
@@ -105,8 +104,8 @@ def test_numeric_partitions_big(big_df):
         {C.LOWER_BOUND: 75.0, C.UPPER_BOUND: 100.0},
     ]
     for p, e in zip(partitions, expected):
-        assert p.predicate.lower_bound == e[C.LOWER_BOUND]
-        assert p.predicate.upper_bound == e[C.UPPER_BOUND]
+        assert p[C.PREDICATE][C.LOWER_BOUND] == e[C.LOWER_BOUND]
+        assert p[C.PREDICATE][C.UPPER_BOUND] == e[C.UPPER_BOUND]
 
 
 def test_partition_contribution_level_big(big_df):
@@ -126,12 +125,13 @@ def test_partition_contribution_level_big(big_df):
     assert len(partitions) > 0
 
     first_partition = partitions[0]
-    expected_first_partition = SingleColumnPartition(
-        predicate=Predicate(lower_bound=0.0, upper_bound=25.0),
-        max_length=15,
-        max_groups_per_unit=3,
-        max_contributions=1,
-    )
+    expected_first_partition = {
+        '@type': 'csvw-safe:Partition',
+        'csvw-safe:part.predicate': {'csvw-safe:part.lowerBound': 0.0, 'csvw-safe:part.upperBound': 25.0},
+        'csvw-safe:dp.maxLength': 15,
+        'csvw-safe:dp.maxGroupsPerUnit': 3,
+        'csvw-safe:dp.maxContributions': 1,
+    }
     assert first_partition == expected_first_partition
 
 
