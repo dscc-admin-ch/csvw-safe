@@ -11,7 +11,7 @@ class Dependency:
     """Row-level dependency between columns."""
 
     depends_on: str
-    dependency_type: str
+    dependency_type: C.DependencyType
     value_map: Optional[Dict[Any, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -104,7 +104,12 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
     max_groups_per_unit: Optional[int] = None
     max_contributions: Optional[int] = None
 
-    partitions: Optional[Union[list[SingleColumnPartition], List[str]]] = None
+    partitions: Optional[
+        Union[
+            List[SingleColumnPartition],  # partition-level
+            List[str],  # column-level
+        ]
+    ] = None
     max_num_partitions: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -151,8 +156,15 @@ class ColumnGroupMetadata:
     """Metadata object describing grouped columns."""
 
     columns: list[str]
-    partitions: list[MultiColumnPartition]
+    partitions: Union[
+        List[MultiColumnPartition],  # partition-level
+        List[Dict[str, Predicate]],  # column-level
+    ]
     max_num_partitions: int
+
+    max_length: Optional[int] = None
+    max_groups_per_unit: Optional[int] = None
+    max_contributions: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert dependency to JSON-serializable dictionary."""

@@ -13,15 +13,24 @@ privacy-preserving data synthesis and differential privacy pipelines.
 import argparse
 import json
 from enum import IntEnum
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
 import pandas.api.types as ptypes
 
-from csvw_safe import constants as C
-from csvw_safe import metadata_structure as S
+from csvw_safe.constants import DependencyType
 from csvw_safe.datatypes import infer_xmlschema_datatype, is_categorical
+from csvw_safe.metadata_structure import (
+    ColumnGroupMetadata,
+    ColumnMetadata,
+    Dependency,
+    MultiColumnPartition,
+    Partition,
+    Predicate,
+    SingleColumnPartition,
+    TableMetadata,
+)
 from csvw_safe.utils import sanitize
 
 
@@ -160,7 +169,7 @@ def identify_dependency(
     mapping_threshold: float = 0.95,
     coverage_threshold: float = 0.8,
     max_mapping_size: int = 25,
-) -> List[S.Dependency]:
+) -> List[Dependency]:
     """
     Detect dependencies between columns.
 
@@ -185,7 +194,7 @@ def identify_dependency(
     list
         Dependency descriptions.
     """
-    results: List[S.Dependency] = []
+    results: List[Dependency] = []
 
     for col in df.columns:
         if col == column_name:
@@ -204,18 +213,18 @@ def identify_dependency(
 
             if (s_valid >= o_valid).all():
                 results.append(
-                    S.Dependency(
+                    Dependency(
                         depends_on=col,
-                        dependency_type=C.DependencyType.BIGGER,
+                        dependency_type=DependencyType.BIGGER,
                     )
                 )
                 continue
 
             if (s_valid <= o_valid).all():
                 results.append(
-                    S.Dependency(
+                    Dependency(
                         depends_on=col,
-                        dependency_type=C.DependencyType.SMALLER,
+                        dependency_type=DependencyType.SMALLER,
                     )
                 )
                 continue
@@ -240,9 +249,9 @@ def identify_dependency(
         clean_mapping = {k: v[0] if len(v) == 1 else v for k, v in mapping.items()}
 
         results.append(
-            S.Dependency(
+            Dependency(
                 depends_on=col,
-                dependency_type=C.DependencyType.MAPPING,
+                dependency_type=DependencyType.MAPPING,
                 value_map=clean_mapping,
             )
         )
@@ -253,7 +262,7 @@ def identify_dependency(
 # ============================================================
 # Make Partitions
 # ============================================================
-def make_predicate(spec: Dict[str, Any], value: Any) -> S.Predicate:
+def make_predicate(spec: Dict[str, Any], value: Any) -> Predicate:
     """
     Build a Predicate object from a column specification and a partition value.
 
@@ -270,25 +279,25 @@ def make_predicate(spec: Dict[str, Any], value: Any) -> S.Predicate:
         Dataclass representing the partition predicate.
     """
     if spec["kind"] == "categorical":
-        return S.Predicate(partition_value=value)
+        return Predicate(partition_value=value)
 
     # Numeric or datetime interval
     interval = value
     lower = pd.to_datetime(interval.left).isoformat() if spec.get("is_datetime") else float(interval.left)
     upper = pd.to_datetime(interval.right).isoformat() if spec.get("is_datetime") else float(interval.right)
-    return S.Predicate(lower_bound=lower, upper_bound=upper)
+    return Predicate(lower_bound=lower, upper_bound=upper)
 
 
 def make_categorical_partitions(
     df: pd.DataFrame, privacy_unit: str, column_name: str
-) -> List[S.SingleColumnPartition]:
+) -> List[SingleColumnPartition]:
     """Generate partitions for a categorical column."""
     partitions_meta = build_partitions(
         df,
         privacy_unit,
         [{"name": column_name, "kind": "categorical"}],
     )
-    return [p for p in partitions_meta if isinstance(p, S.SingleColumnPartition)]
+    return [p for p in partitions_meta if isinstance(p, SingleColumnPartition)]
 
 
 def make_numeric_partitions(
@@ -296,7 +305,7 @@ def make_numeric_partitions(
     privacy_unit: str,
     column_name: str,
     bounds: List[Any],
-) -> List[S.SingleColumnPartition]:
+) -> List[SingleColumnPartition]:
     """Generate partitions for a numeric column using provided bins."""
     partitions_meta = build_partitions(
         df,
@@ -310,7 +319,7 @@ def make_numeric_partitions(
             }
         ],
     )
-    return [p for p in partitions_meta if isinstance(p, S.SingleColumnPartition)]
+    return [p for p in partitions_meta if isinstance(p, SingleColumnPartition)]
 
 
 def get_multi_group_partitions(
@@ -318,7 +327,7 @@ def get_multi_group_partitions(
     col_group: List[str],
     continuous_partitions: Dict[str, List[Any]],
     privacy_unit: str,
-) -> List[S.MultiColumnPartition]:
+) -> List[MultiColumnPartition]:
     """Generate partitions when grouping by multiple columns."""
     specs = []
     for col in col_group:
@@ -340,14 +349,14 @@ def get_multi_group_partitions(
                 }
             )
     partitions = build_partitions(df, privacy_unit, specs)
-    return [p for p in partitions if isinstance(p, S.MultiColumnPartition)]
+    return [p for p in partitions if isinstance(p, MultiColumnPartition)]
 
 
 def build_partitions(
     df: pd.DataFrame,
     privacy_unit: str,
     column_specs: List[Dict[str, Any]],
-) -> List[S.Partition]:
+) -> List[Partition]:
     """
     Build CSVW-SAFE partitions and compute contribution bounds per partition.
 
@@ -398,34 +407,24 @@ def build_partitions(
     influenced_counts = {}
 
     for spec in column_specs:
-
         col = spec["name"]
 
         if spec["kind"] == "categorical":
-
             grouping_columns.append(col)
-
             influenced_counts[col] = df.groupby(privacy_unit)[col].nunique(dropna=True)
 
         elif spec["kind"] == "numeric":
-
             bins = pd.to_datetime(spec["bins"]) if spec.get("is_datetime") else sorted(spec["bins"])
-
             binned_col = f"{col}__bin"
-
             df_work[binned_col] = pd.cut(df_work[col], bins=bins, right=False)
-
             grouping_columns.append(binned_col)
-
             influenced_counts[col] = df_work.groupby(privacy_unit)[binned_col].nunique(dropna=True)
 
         else:
             raise ValueError(f"Unknown column kind {spec['kind']}")
 
-    partitions_meta: List[S.Partition] = []
-
+    partitions_meta: List[Partition] = []
     for group_key, group_df in df_work.groupby(grouping_columns, dropna=True, observed=True):
-
         if not isinstance(group_key, tuple):
             group_key = (group_key,)
 
@@ -437,7 +436,7 @@ def build_partitions(
 
         if len(column_specs) == 1:
             partitions_meta.append(
-                S.SingleColumnPartition(
+                SingleColumnPartition(
                     predicate=make_predicate(column_specs[0], group_key[0]),
                     max_length=int(group_df.shape[0]),
                     max_groups_per_unit=int(per_privacy_unit_contrib.max()),
@@ -446,7 +445,7 @@ def build_partitions(
             )
         else:
             partitions_meta.append(
-                S.MultiColumnPartition(
+                MultiColumnPartition(
                     predicate={
                         spec["name"]: make_predicate(spec, group_key[i])
                         for i, spec in enumerate(column_specs)
@@ -460,48 +459,26 @@ def build_partitions(
     return partitions_meta
 
 
-def attach_partitions_to_column(
-    column_meta: S.ColumnMetadata,
-    partitions_meta: List[S.SingleColumnPartition],
-    col_contrib_level: ContributionLevel,
-) -> S.ColumnMetadata:
-    """
-    Attach partition metadata to a column.
+def get_column_level_contribution(
+    partitions_meta: Union[List[SingleColumnPartition], List[MultiColumnPartition]],
+) -> Tuple[int, int, int]:
+    """Compute maximum contribution over all partition of column."""
+    max_length = max(p.max_length for p in partitions_meta)
+    max_groups_per_unit = max(p.max_groups_per_unit for p in partitions_meta)
+    max_contributions = max(p.max_contributions for p in partitions_meta)
 
-    If the contribution level is COLUMN (only possible for categorical columns):
+    return max_length, max_groups_per_unit, max_contributions
+
+
+def get_column_keys(partitions_meta: List[SingleColumnPartition]) -> List[str]:
+    """
+    Attach partition metadata to a single column.
+
       - Aggregate partition bounds to the column level
       - Remove per-partition bounds
       - Store only the list of public partition values
-
-    Otherwise (PARTITION level):
-      - Keep full partition metadata.
     """
-    if not partitions_meta:
-        return column_meta
-
-    # COLUMN level: collapse partition bounds
-    if col_contrib_level == ContributionLevel.COLUMN:
-        single_partitions = [p for p in partitions_meta if isinstance(p, S.SingleColumnPartition)]
-        column_meta.max_length = max(p.max_length for p in single_partitions)
-        column_meta.max_groups_per_unit = max(p.max_groups_per_unit for p in single_partitions)
-        column_meta.max_contributions = max(p.max_contributions for p in single_partitions)
-
-        # extract categorical values
-        partition_values = []
-        for p in partitions_meta:
-            pred = p.predicate
-            if isinstance(pred, S.Predicate) and pred.partition_value is not None:
-                partition_values.append(pred.partition_value)
-
-        column_meta.partitions = partition_values  # list[str]
-        column_meta.max_num_partitions = len(partition_values)
-
-        return column_meta
-
-    column_meta.partitions = partitions_meta  # List[S.SingleColumnPartition]
-    column_meta.max_num_partitions = len(partitions_meta)
-
-    return column_meta
+    return [p.predicate.partition_value for p in partitions_meta if p.predicate.partition_value is not None]
 
 
 def make_column_groups(
@@ -511,7 +488,7 @@ def make_column_groups(
     default_contributions_level: str,
     continuous_partitions: Dict[str, List[Any]],
     privacy_unit: str,
-) -> List[S.ColumnGroupMetadata]:
+) -> List[ColumnGroupMetadata]:
     """
     Build CSVW-SAFE metadata for column groups.
 
@@ -568,12 +545,24 @@ def make_column_groups(
             continuous_partitions,
             privacy_unit,
         )
-
-        group_meta = S.ColumnGroupMetadata(
-            columns=col_group,
-            partitions=partitions_meta,
-            max_num_partitions=len(partitions_meta),
-        )
+        if col_contrib_level == ContributionLevel.COLUMN:
+            max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
+                partitions_meta
+            )
+            group_meta = ColumnGroupMetadata(
+                columns=col_group,
+                partitions=[p.predicate for p in partitions_meta],
+                max_num_partitions=len(partitions_meta),
+                max_length=max_length,
+                max_groups_per_unit=max_groups_per_unit,
+                max_contributions=max_contributions,
+            )
+        else:
+            group_meta = ColumnGroupMetadata(
+                columns=col_group,
+                partitions=partitions_meta,
+                max_num_partitions=len(partitions_meta),
+            )
 
         column_groups_metadata.append(group_meta)
 
@@ -630,7 +619,7 @@ def make_metadata_from_data(
     if column_groups is None:
         column_groups = []
 
-    columns_meta: List[S.ColumnMetadata] = []
+    columns_meta: List[ColumnMetadata] = []
 
     for column_name in df.columns:
         series = df[column_name]
@@ -643,7 +632,7 @@ def make_metadata_from_data(
         # Infer datatype
         datatype = infer_xmlschema_datatype(series)
 
-        column_meta = S.ColumnMetadata(
+        column_meta = ColumnMetadata(
             name=column_name,
             datatype=datatype,
             required=series.isna().sum() == 0,
@@ -671,16 +660,33 @@ def make_metadata_from_data(
         if col_contrib_level != ContributionLevel.TABLE:
             if is_categorical(series):
                 partitions_meta = make_categorical_partitions(df, privacy_unit, column_name)
-                column_meta = attach_partitions_to_column(column_meta, partitions_meta, col_contrib_level)
+                column_meta.partitions = partitions_meta
+                column_meta.max_num_partitions = len(partitions_meta)
+                if col_contrib_level == ContributionLevel.COLUMN:
+
+                    max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
+                        partitions_meta
+                    )
+                    column_meta.max_length = max_length
+                    column_meta.max_groups_per_unit = max_groups_per_unit
+                    column_meta.max_contributions = max_contributions
+
+                    column_meta.partitions = [
+                        p.predicate.partition_value
+                        for p in partitions_meta
+                        if p.predicate.partition_value is not None
+                    ]
+
             elif column_name in continuous_partitions:
                 bounds = sorted(continuous_partitions[column_name])
                 partitions_meta = make_numeric_partitions(df, privacy_unit, column_name, bounds)
-                column_meta = attach_partitions_to_column(column_meta, partitions_meta, col_contrib_level)
+                column_meta.partitions = partitions_meta  # List[SingleColumnPartition]
+                column_meta.max_num_partitions = len(partitions_meta)
 
         columns_meta.append(column_meta)
 
     # Column groups
-    groups_meta: Optional[List[S.ColumnGroupMetadata]] = None
+    groups_meta: Optional[List[ColumnGroupMetadata]] = None
     if column_groups:
         groups_meta = make_column_groups(
             df,
@@ -692,7 +698,7 @@ def make_metadata_from_data(
         )
 
     # Return strongly-typed TableMetadata
-    table_metadata = S.TableMetadata(
+    table_metadata = TableMetadata(
         privacy_unit=privacy_unit,
         max_contributions=max_contributions,
         max_length=len(df),
