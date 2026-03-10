@@ -7,7 +7,6 @@
 #################################################################
 # TABLE LEVEL
 #################################################################
-
 csvw-safe:TableShape
     a sh:NodeShape ;
     sh:targetClass csvw:Table ;
@@ -17,8 +16,8 @@ csvw-safe:TableShape
         sh:message "public.length must be ≤ bounds.maxLength." ;
         sh:select """
             SELECT $this WHERE {
-                $this csvw-safe:public.length ?pl ;
-                      csvw-safe:bounds.maxLength ?ml .
+                $this csvw-safe:length ?pl ;
+                      csvw-safe:dp.maxLength ?ml .
                 FILTER (?pl > ?ml)
             }
         """ ;
@@ -29,8 +28,8 @@ csvw-safe:TableShape
         sh:message "bounds.maxContributions must be ≤ bounds.maxLength." ;
         sh:select """
             SELECT $this WHERE {
-                $this csvw-safe:bounds.maxContributions ?mc ;
-                      csvw-safe:bounds.maxLength ?ml .
+                $this csvw-safe:dp.maxContributions ?mc ;
+                      csvw-safe:dp.maxLength ?ml .
                 FILTER (?mc > ?ml)
             }
         """ ;
@@ -39,7 +38,6 @@ csvw-safe:TableShape
 #################################################################
 # COLUMN LEVEL
 #################################################################
-
 csvw-safe:ColumnShape
     a sh:NodeShape ;
     sh:targetClass csvw:Column ;
@@ -47,21 +45,21 @@ csvw-safe:ColumnShape
     # synth.nullableProportion between 0 and 1
     sh:property [
         sh:path csvw-safe:synth.nullableProportion ;
-        sh:datatype xsd:double  ;
+        sh:datatype xsd:double ;
         sh:minInclusive 0 ;
         sh:maxInclusive 1 ;
     ] ;
 
     # maxGroupsPerUnit must be non-negative
     sh:property [
-        sh:path csvw-safe:bounds.maxGroupsPerUnit ;
+        sh:path csvw-safe:dp.maxGroupsPerUnit ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
     ] ;
 
     # public.maxNumPartitions must be non-negative
     sh:property [
-        sh:path csvw-safe:public.maxNumPartitions ;
+        sh:path csvw-safe:partitions ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
     ] ;
@@ -76,7 +74,6 @@ csvw-safe:ColumnShape
 #################################################################
 # COLUMN GROUP / GROUPING KEY LEVEL
 #################################################################
-
 csvw-safe:GroupingKeyShape
     a sh:NodeShape ;
     sh:targetClass csvw-safe:ColumnGroup ;
@@ -89,14 +86,14 @@ csvw-safe:GroupingKeyShape
 
     # bounds.maxGroupsPerUnit must be non-negative
     sh:property [
-        sh:path csvw-safe:bounds.maxGroupsPerUnit ;
+        sh:path csvw-safe:dp.maxGroupsPerUnit ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
     ] ;
 
     # public.maxNumPartitions must be non-negative
     sh:property [
-        sh:path csvw-safe:public.maxNumPartitions ;
+        sh:path csvw-safe:partitions ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
     ] .
@@ -104,27 +101,26 @@ csvw-safe:GroupingKeyShape
 #################################################################
 # PARTITION LEVEL
 #################################################################
-
 csvw-safe:PartitionShape
     a sh:NodeShape ;
     sh:targetClass csvw-safe:Partition ;
 
     # must have predicate
     sh:property [
-        sh:path csvw-safe:predicate ;
+        sh:path csvw-safe:part.predicate ;
         sh:minCount 1 ;
     ] ;
 
     # bounds.maxContributions must be non-negative
     sh:property [
-        sh:path csvw-safe:bounds.maxContributions ;
+        sh:path csvw-safe:dp.maxContributions ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
     ] ;
 
     # bounds.maxLength must be non-negative
     sh:property [
-        sh:path csvw-safe:bounds.maxLength ;
+        sh:path csvw-safe:dp.maxLength ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
     ] ;
@@ -134,8 +130,8 @@ csvw-safe:PartitionShape
         sh:message "Partition public.length must be ≤ bounds.maxLength." ;
         sh:select """
             SELECT $this WHERE {
-                $this csvw-safe:public.length ?pl ;
-                      csvw-safe:bounds.maxLength ?ml .
+                $this csvw-safe:length ?pl ;
+                      csvw-safe:dp.maxLength ?ml .
                 FILTER (?pl > ?ml)
             }
         """ ;
@@ -144,7 +140,6 @@ csvw-safe:PartitionShape
 #################################################################
 # PREDICATE / INTERVAL LEVEL
 #################################################################
-
 csvw-safe:PredicateShape
     a sh:NodeShape ;
     sh:targetClass csvw-safe:Predicate ;
@@ -154,8 +149,8 @@ csvw-safe:PredicateShape
         sh:message "lowerBound must be ≤ upperBound." ;
         sh:select """
             SELECT $this WHERE {
-                $this csvw-safe:lowerBound ?l ;
-                      csvw-safe:upperBound ?u .
+                $this csvw-safe:part.lowerBound ?l ;
+                      csvw-safe:part.upperBound ?u .
                 FILTER (?l > ?u)
             }
         """ ;
@@ -164,21 +159,20 @@ csvw-safe:PredicateShape
 #################################################################
 # CONTRIBUTION LEVEL
 #################################################################
-
 csvw-safe:ContributionShape
     a sh:NodeShape ;
     sh:targetClass csvw-safe:Contribution ;
 
     # maxContributions must be non-negative
     sh:property [
-        sh:path csvw-safe:bounds.maxContributions ;
+        sh:path csvw-safe:dp.maxContributions ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
     ] ;
 
     # maxGroupsPerUnit must be non-negative
     sh:property [
-        sh:path csvw-safe:bounds.maxGroupsPerUnit ;
+        sh:path csvw-safe:dp.maxGroupsPerUnit ;
         sh:datatype xsd:integer ;
         sh:minInclusive 0 ;
     ] .

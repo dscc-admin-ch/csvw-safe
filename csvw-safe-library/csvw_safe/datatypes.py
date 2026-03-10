@@ -121,7 +121,9 @@ def is_categorical(series: pd.Series) -> bool:
     if is_small_datetime(series):
         return True
 
-    return not (pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series))
+    return not (
+        pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series)
+    )
 
 
 def map_validator_type(datatype: Any, col_meta: Dict[str, Any]) -> str:

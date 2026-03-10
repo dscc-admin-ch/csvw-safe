@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-line-length = 110
+line-length = 100
 skip-string-normalization = true # Comply with flake8
 preview = true # enables preview features, specifically line wrapping in our case.
 exclude = '''/(\.ipynb_checkpoints)/'''
@@ -13,7 +13,7 @@ profile = "black"
 skip = [".ipynb_checkpoints"]
 
 [tool.flake8]
-max-line-length = 110
+max-line-length = 100
 extend-ignore = ["E203", "W503"]  # Compatible with black
 exclude = ["venv", "__pycache__", ".ipynb_checkpoints"]
 
@@ -29,10 +29,10 @@ disable_error_code = []
 ignore = ["venv", "__pycache__"]
 jobs = 1
 disable = ["too-many-arguments", "too-many-positional-arguments"]
-max-line-length = 110
+max-line-length = 100
 
 [tool.pydocstringformatter]
-max-line-length = 110
+max-line-length = 100
 write = true
 
 [tool.pylint."messages control"]

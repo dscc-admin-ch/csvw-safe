@@ -283,8 +283,16 @@ def make_predicate(spec: Dict[str, Any], value: Any) -> Predicate:
 
     # Numeric or datetime interval
     interval = value
-    lower = pd.to_datetime(interval.left).isoformat() if spec.get("is_datetime") else float(interval.left)
-    upper = pd.to_datetime(interval.right).isoformat() if spec.get("is_datetime") else float(interval.right)
+    lower = (
+        pd.to_datetime(interval.left).isoformat()
+        if spec.get("is_datetime")
+        else float(interval.left)
+    )
+    upper = (
+        pd.to_datetime(interval.right).isoformat()
+        if spec.get("is_datetime")
+        else float(interval.right)
+    )
     return Predicate(lower_bound=lower, upper_bound=upper)
 
 
@@ -930,7 +938,9 @@ def main() -> None:
         help="JSON string of bounds per continuous column",
     )
 
-    parser.add_argument("--column_groups", type=str, default=None, help="JSON string of column groups")
+    parser.add_argument(
+        "--column_groups", type=str, default=None, help="JSON string of column groups"
+    )
 
     parser.add_argument(
         "--default_contributions_level",
@@ -954,7 +964,9 @@ def main() -> None:
         except (ValueError, TypeError):
             pass
 
-    continuous_partitions = json.loads(args.continuous_partitions) if args.continuous_partitions else {}
+    continuous_partitions = (
+        json.loads(args.continuous_partitions) if args.continuous_partitions else {}
+    )
     column_groups = json.loads(args.column_groups) if args.column_groups else []
 
     metadata = make_metadata_from_data(

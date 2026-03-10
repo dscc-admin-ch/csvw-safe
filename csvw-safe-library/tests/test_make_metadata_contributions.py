@@ -45,7 +45,9 @@ def test_categorical_partition(simple_df):
 
 
 def test_numeric_partition(simple_df):
-    column_specs = [{"name": "value", "kind": "numeric", "bins": [0, 25, 50, 60], "is_datetime": False}]
+    column_specs = [
+        {"name": "value", "kind": "numeric", "bins": [0, 25, 50, 60], "is_datetime": False}
+    ]
     partitions = build_partitions(simple_df, "user_id", column_specs)
 
     expected_partitions = [

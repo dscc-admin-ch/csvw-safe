@@ -83,7 +83,11 @@ def validate_column(col: Dict[str, Any]) -> None:
         maximum = col.get("maximum")
         if minimum is None or maximum is None:
             raise ValueError(f"Numeric column '{name}' must declare minimum and maximum")
-        if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)) and minimum > maximum:
+        if (
+            isinstance(minimum, (int, float))
+            and isinstance(maximum, (int, float))
+            and minimum > maximum
+        ):
             raise ValueError(f"Column '{name}' minimum > maximum")
 
     partitions = col.get(PUBLIC_PARTITIONS)
@@ -114,7 +118,9 @@ def validate_partition_predicate(
                 f"must define lowerBound and upperBound"
             )
         if lb > ub:
-            raise ValueError(f"Partition lowerBound > upperBound{f' for {col_name}' if col_name else ''}")
+            raise ValueError(
+                f"Partition lowerBound > upperBound{f' for {col_name}' if col_name else ''}"
+            )
         return lb, ub
 
     return None

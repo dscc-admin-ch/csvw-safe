@@ -23,6 +23,18 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 
+from csvw_safe.constants import (
+    ADD_INFO,
+    COLUMN_GROUP,
+    COLUMNS,
+    LOWER_BOUND,
+    NULL_PROP,
+    PARTITION_VALUE,
+    PREDICATE,
+    PUBLIC_PARTITIONS,
+    UPPER_BOUND,
+)
+
 
 def sample_from_partitions(
     partitions: List[Dict[str, Any]],
@@ -51,25 +63,21 @@ def sample_from_partitions(
     if not partitions:
         return pd.Series([pd.NA] * nb_rows)
 
-    predicate = partitions[0].get("csvw-safe:predicate", {})
+    predicate = partitions[0].get(PREDICATE, {})
 
     # Categorical partitions
-    if "partitionValue" in predicate:
-        values = [p["csvw-safe:predicate"]["partitionValue"] for p in partitions]
+    if PARTITION_VALUE in predicate:
+        values = [p[PREDICATE][PARTITION_VALUE] for p in partitions]
         return pd.Series(rng.choice(values, size=nb_rows))
 
     # Continuous partitions
-    if "lowerBound" in predicate:
+    if LOWER_BOUND in predicate:
         samples = []
 
         for _ in range(nb_rows):
             p = partitions[rng.integers(len(partitions))]
-            pred = p["csvw-safe:predicate"]
-
-            low = pred["lowerBound"]
-            high = pred["upperBound"]
-
-            samples.append(rng.uniform(low, high))
+            pred = p[PREDICATE]
+            samples.append(rng.uniform(pred[LOWER_BOUND], pred[UPPER_BOUND]))
 
         return pd.Series(samples)
 
@@ -118,7 +126,9 @@ def apply_nulls(
     return series
 
 
-def generate_datetime_column(col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
+def generate_datetime_column(
+    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+) -> pd.Series:
     """Generate datetime column between min and max values."""
     if "minimum" in col_meta and "maximum" in col_meta:
         dates = pd.date_range(start=col_meta["minimum"], end=col_meta["maximum"])
@@ -149,8 +159,8 @@ def generate_column_series(
     Handles datetime, numeric, and partitioned columns, applying nulls.
     """
     datatype = col_meta["datatype"]
-    nullable_prop = col_meta.get("csvw-safe:synth.nullableProportion", 0)
-    partitions = col_meta.get("csvw-safe:public.partitions", [])
+    nullable_prop = col_meta.get(NULL_PROP, 0)
+    partitions = col_meta.get(PUBLIC_PARTITIONS, [])
 
     if datatype == "dateTime":
         series = generate_datetime_column(col_meta, nb_rows, rng)
@@ -173,8 +183,8 @@ def process_column_group(
     rng: np.random.Generator,
 ) -> None:
     """Generate data for a column group with joint partitions."""
-    cols = group.get("csvw-safe:columns", [])
-    partitions = group.get("csvw-safe:public.partitions", [])
+    cols = group.get(COLUMNS, [])
+    partitions = group.get(PUBLIC_PARTITIONS, [])
     if not partitions:
         return
 
@@ -184,13 +194,13 @@ def process_column_group(
     group_data: Dict[str, List[Any]] = {col: [] for col in cols}
 
     for p in sampled_partitions:
-        predicate = p.get("csvw-safe:predicate", {})
+        predicate = p.get(PREDICATE, {})
         for col in cols:
             col_pred = predicate.get(col, {})
-            if "partitionValue" in col_pred:
-                group_data[col].append(col_pred["partitionValue"])
-            elif "lowerBound" in col_pred:
-                group_data[col].append(rng.uniform(col_pred["lowerBound"], col_pred["upperBound"]))
+            if PARTITION_VALUE in col_pred:
+                group_data[col].append(col_pred[PARTITION_VALUE])
+            elif LOWER_BOUND in col_pred:
+                group_data[col].append(rng.uniform(col_pred[LOWER_BOUND], col_pred[UPPER_BOUND]))
             else:
                 group_data[col].append(pd.NA)
 
@@ -229,8 +239,8 @@ def make_dummy_from_metadata(
     used_columns: set[str] = set()
 
     # Column groups (joint partitions)
-    for group in metadata.get("csvw-safe:additionalInformation", []):
-        if group.get("@type") != "csvw-safe:ColumnGroup":
+    for group in metadata.get(ADD_INFO, []):
+        if group.get("@type") != COLUMN_GROUP:
             continue
         process_column_group(group, data_dict, used_columns, nb_rows, rng)
 
@@ -265,7 +275,9 @@ def main() -> None:
     --seed : int
         Random seed (default: 0)
     """
-    parser = argparse.ArgumentParser(description="Generate a dummy dataset from CSVW-SAFE metadata.")
+    parser = argparse.ArgumentParser(
+        description="Generate a dummy dataset from CSVW-SAFE metadata."
+    )
 
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("--rows", type=int, default=100)
@@ -291,7 +303,8 @@ def main() -> None:
     df_dummy.to_csv(args.output, index=False)
 
     print(
-        f"Dummy dataset written to {args.output} " f"({len(df_dummy)} rows, {len(df_dummy.columns)} columns)"
+        f"Dummy dataset written to {args.output} "
+        f"({len(df_dummy)} rows, {len(df_dummy.columns)} columns)"
     )
 
 

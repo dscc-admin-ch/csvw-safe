@@ -90,7 +90,9 @@ def test_identify_dependency_bigger():
         {C.DEPENDS_ON: "d", C.DEPENDENCY_TYPE: C.DependencyType.BIGGER},
     ]
 
-    simplified_result = [{C.DEPENDS_ON: r.depends_on, C.DEPENDENCY_TYPE: r.dependency_type} for r in result]
+    simplified_result = [
+        {C.DEPENDS_ON: r.depends_on, C.DEPENDENCY_TYPE: r.dependency_type} for r in result
+    ]
     assert simplified_result == expected
 
 

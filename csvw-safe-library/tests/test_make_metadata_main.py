@@ -69,7 +69,9 @@ def test_nullable_proportion_small():
 
 
 def test_categorical_partitions_small(small_df):
-    metadata = make_metadata_from_data(small_df, privacy_unit="user_id", default_contributions_level="column")
+    metadata = make_metadata_from_data(
+        small_df, privacy_unit="user_id", default_contributions_level="column"
+    )
 
     columns = metadata["csvw:tableSchema"]["columns"]
     color_col = next(c for c in columns if c["name"] == "color")
@@ -127,7 +129,10 @@ def test_partition_contribution_level_big(big_df):
     first_partition = partitions[0]
     expected_first_partition = {
         '@type': 'csvw-safe:Partition',
-        'csvw-safe:part.predicate': {'csvw-safe:part.lowerBound': 0.0, 'csvw-safe:part.upperBound': 25.0},
+        'csvw-safe:part.predicate': {
+            'csvw-safe:part.lowerBound': 0.0,
+            'csvw-safe:part.upperBound': 25.0,
+        },
         'csvw-safe:dp.maxLength': 15,
         'csvw-safe:dp.maxGroupsPerUnit': 3,
         'csvw-safe:dp.maxContributions': 1,

@@ -56,7 +56,8 @@ def assert_same_structure(
     # ----------------------------
     if list(df1.columns) != list(df2.columns):
         raise AssertionError(
-            f"Column names/order differ:\nOriginal: {list(df1.columns)}\nDummy:    {list(df2.columns)}"
+            f"Column names/order differ:"
+            f"\nOriginal: {list(df1.columns)}\nDummy:{list(df2.columns)}"
         )
 
     # ----------------------------
@@ -67,7 +68,9 @@ def assert_same_structure(
         dtype2: str = infer_xmlschema_datatype(df2[col])
 
         if dtype1 != dtype2:
-            raise AssertionError(f"Column '{col}' dtype mismatch: original={dtype1}, dummy={dtype2}")
+            raise AssertionError(
+                f"Column '{col}' dtype mismatch: original={dtype1}, dummy={dtype2}"
+            )
 
     # ----------------------------
     # Nullability
