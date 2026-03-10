@@ -2,11 +2,11 @@ import pandas as pd
 import pytest
 
 from csvw_safe import constants as C
-from csvw_safe import metadata_structure as S
-from csvw_safe.make_metadata_from_data import (
-    ContributionLevel,
-    attach_partitions_to_column,
-    build_partitions,
+from csvw_safe.make_metadata_from_data import build_partitions, make_metadata_from_data
+from csvw_safe.metadata_structure import (
+    MultiColumnPartition,
+    Predicate,
+    SingleColumnPartition,
 )
 
 
@@ -27,14 +27,14 @@ def test_categorical_partition(simple_df):
     partitions = build_partitions(simple_df, "user_id", column_specs)
 
     expected_partitions = [
-        S.SingleColumnPartition(
-            predicate=S.Predicate(partition_value="blue"),
+        SingleColumnPartition(
+            predicate=Predicate(partition_value="blue"),
             max_length=2,
             max_groups_per_unit=1,
             max_contributions=2,
         ),
-        S.SingleColumnPartition(
-            predicate=S.Predicate(partition_value="red"),
+        SingleColumnPartition(
+            predicate=Predicate(partition_value="red"),
             max_length=3,
             max_groups_per_unit=1,
             max_contributions=2,
@@ -49,20 +49,20 @@ def test_numeric_partition(simple_df):
     partitions = build_partitions(simple_df, "user_id", column_specs)
 
     expected_partitions = [
-        S.SingleColumnPartition(
-            predicate=S.Predicate(lower_bound=0.0, upper_bound=25.0),
+        SingleColumnPartition(
+            predicate=Predicate(lower_bound=0.0, upper_bound=25.0),
             max_length=2,
             max_groups_per_unit=2,
             max_contributions=1,
         ),
-        S.SingleColumnPartition(
-            predicate=S.Predicate(lower_bound=25.0, upper_bound=50.0),
+        SingleColumnPartition(
+            predicate=Predicate(lower_bound=25.0, upper_bound=50.0),
             max_length=2,
             max_groups_per_unit=2,
             max_contributions=1,
         ),
-        S.SingleColumnPartition(
-            predicate=S.Predicate(lower_bound=50.0, upper_bound=60.0),
+        SingleColumnPartition(
+            predicate=Predicate(lower_bound=50.0, upper_bound=60.0),
             max_length=1,
             max_groups_per_unit=1,
             max_contributions=1,
@@ -81,46 +81,46 @@ def test_mixed_partitions(simple_df):
     partitions = build_partitions(simple_df, "user_id", column_specs)
 
     expected_partitions = [
-        S.MultiColumnPartition(
+        MultiColumnPartition(
             predicate={
-                "color": S.Predicate(partition_value="blue"),
-                "value": S.Predicate(lower_bound=0.0, upper_bound=25.0),
+                "color": Predicate(partition_value="blue"),
+                "value": Predicate(lower_bound=0.0, upper_bound=25.0),
             },
             max_length=1,
             max_groups_per_unit=1,
             max_contributions=2,
         ),
-        S.MultiColumnPartition(
+        MultiColumnPartition(
             predicate={
-                "color": S.Predicate(partition_value="blue"),
-                "value": S.Predicate(lower_bound=25.0, upper_bound=50.0),
+                "color": Predicate(partition_value="blue"),
+                "value": Predicate(lower_bound=25.0, upper_bound=50.0),
             },
             max_length=1,
             max_groups_per_unit=1,
             max_contributions=2,
         ),
-        S.MultiColumnPartition(
+        MultiColumnPartition(
             predicate={
-                "color": S.Predicate(partition_value="red"),
-                "value": S.Predicate(lower_bound=0.0, upper_bound=25.0),
+                "color": Predicate(partition_value="red"),
+                "value": Predicate(lower_bound=0.0, upper_bound=25.0),
             },
             max_length=1,
             max_groups_per_unit=1,
             max_contributions=2,
         ),
-        S.MultiColumnPartition(
+        MultiColumnPartition(
             predicate={
-                "color": S.Predicate(partition_value="red"),
-                "value": S.Predicate(lower_bound=25.0, upper_bound=50.0),
+                "color": Predicate(partition_value="red"),
+                "value": Predicate(lower_bound=25.0, upper_bound=50.0),
             },
             max_length=1,
             max_groups_per_unit=1,
             max_contributions=2,
         ),
-        S.MultiColumnPartition(
+        MultiColumnPartition(
             predicate={
-                "color": S.Predicate(partition_value="red"),
-                "value": S.Predicate(lower_bound=50.0, upper_bound=60.0),
+                "color": Predicate(partition_value="red"),
+                "value": Predicate(lower_bound=50.0, upper_bound=60.0),
             },
             max_length=1,
             max_groups_per_unit=1,
@@ -131,70 +131,34 @@ def test_mixed_partitions(simple_df):
     assert [p.to_dict() for p in partitions] == [p.to_dict() for p in expected_partitions]
 
 
-@pytest.fixture
-def partitions_categorical():
-    return [
-        S.SingleColumnPartition(
-            predicate=p[C.PREDICATE],
-            max_length=p[C.MAX_LENGTH],
-            max_groups_per_unit=p[C.MAX_GROUPS],
-            max_contributions=p[C.MAX_CONTRIB],
-        )
-        for p in [
-            {
-                C.PREDICATE: S.Predicate(partition_value="Red"),
-                C.MAX_LENGTH: 3,
-                C.MAX_GROUPS: 2,
-                C.MAX_CONTRIB: 1,
-            },
-            {
-                C.PREDICATE: S.Predicate(partition_value="Blue"),
-                C.MAX_LENGTH: 5,
-                C.MAX_GROUPS: 1,
-                C.MAX_CONTRIB: 2,
-            },
-        ]
-    ]
+def test_column_level_partitions(simple_df):
 
-
-def test_attach_partitions_column_level(partitions_categorical):
-    column_meta = S.ColumnMetadata(
-        name="value", datatype="integer", required=True, privacy_id=False, nullable_proportion=0
+    metadata = make_metadata_from_data(
+        df=simple_df,
+        privacy_unit="user_id",
+        fine_contributions_level={"color": "column"},
     )
-    col_contrib_level = ContributionLevel.COLUMN
-    result = attach_partitions_to_column(column_meta, partitions_categorical, col_contrib_level)
+    color_column = next(c for c in metadata["csvw:tableSchema"]["columns"] if c["name"] == "color")
 
-    expected_result = S.ColumnMetadata(
-        name="value",
-        datatype="integer",
-        required=True,
-        privacy_id=False,
-        nullable_proportion=0,
-        partitions=["Red", "Blue"],
-        max_num_partitions=2,
-        max_length=5,
-        max_groups_per_unit=2,
-        max_contributions=2,
+    assert color_column[C.PUBLIC_PARTITIONS] == ["blue", "red"]
+    assert color_column[C.MAX_NUM_PARTITIONS] == 2
+    assert color_column[C.MAX_LENGTH] == 3
+    assert color_column[C.MAX_GROUPS] == 1
+    assert color_column[C.MAX_CONTRIB] == 2
+
+
+def test_partition_level_partitions(simple_df):
+
+    metadata = make_metadata_from_data(
+        df=simple_df,
+        privacy_unit="user_id",
+        fine_contributions_level={"color": "partition"},
     )
 
-    assert result == expected_result
+    color_column = next(c for c in metadata["csvw:tableSchema"]["columns"] if c["name"] == "color")
+    print(color_column)
 
+    assert isinstance(color_column[C.PUBLIC_PARTITIONS], list)
+    assert isinstance(color_column[C.PUBLIC_PARTITIONS][0], SingleColumnPartition)
 
-def test_attach_partitions_partition_level(partitions_categorical):
-
-    column_meta = S.ColumnMetadata(
-        name="color", datatype="string", required=True, privacy_id=False, nullable_proportion=0
-    )
-    col_contrib_level = ContributionLevel.PARTITION
-    result = attach_partitions_to_column(column_meta, partitions_categorical, col_contrib_level)
-    expected_result = S.ColumnMetadata(
-        name="color",
-        datatype="string",
-        required=True,
-        privacy_id=False,
-        nullable_proportion=0,
-        partitions=partitions_categorical,
-        max_num_partitions=2,
-    )
-
-    assert result == expected_result
+    assert color_column[C.MAX_NUM_PARTITIONS] == 2

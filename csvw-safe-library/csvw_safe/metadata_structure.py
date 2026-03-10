@@ -167,13 +167,24 @@ class ColumnGroupMetadata:
     max_contributions: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert dependency to JSON-serializable dictionary."""
-        return {
+        """Convert column group metadata to JSON-serializable dictionary."""
+        result: Dict[str, Any] = {
             "@type": C.COLUMN_GROUP,
             C.COLUMNS: self.columns,
             C.PUBLIC_PARTITIONS: self.partitions,
             C.MAX_NUM_PARTITIONS: self.max_num_partitions,
         }
+
+        if self.max_length is not None:
+            result[C.MAX_LENGTH] = self.max_length
+
+        if self.max_groups_per_unit is not None:
+            result[C.MAX_GROUPS] = self.max_groups_per_unit
+
+        if self.max_contributions is not None:
+            result[C.MAX_CONTRIB] = self.max_contributions
+
+        return result
 
 
 @dataclass
