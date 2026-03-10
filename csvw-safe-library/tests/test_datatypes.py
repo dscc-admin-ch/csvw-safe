@@ -1,12 +1,12 @@
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
 from csvw_safe.datatypes import (
-    is_small_categorical_integer,
-    is_small_datetime,
     infer_xmlschema_datatype,
     is_categorical,
+    is_small_categorical_integer,
+    is_small_datetime,
 )
 
 

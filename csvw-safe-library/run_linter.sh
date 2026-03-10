@@ -23,3 +23,7 @@ python -m flake8 --toml-config=./pyproject.toml csvw_safe/
 python -m mypy csvw_safe/
 python -m pylint csvw_safe/
 python -m pydocstringformatter -w csvw_safe/
+
+python -m isort tests/
+python -m isort tests/
+python -m flake8 --toml-config=./pyproject.toml tests/

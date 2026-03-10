@@ -1,17 +1,15 @@
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+
 from csvw_safe import constants as C
 from csvw_safe.make_metadata_from_data import (
     get_continuous_bounds,
-    identify_fixed_fields,
     identify_dependency,
+    identify_fixed_fields,
 )
 
 
-# ==========================
-# get_continuous_bounds tests
-# ==========================
 def test_get_continuous_bounds_numeric():
     df = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
     min_val, max_val = get_continuous_bounds(df["a"])
@@ -33,9 +31,6 @@ def test_get_continuous_bounds_datetime():
     assert max_val == datetime_df["ts"].max().isoformat()
 
 
-# ==========================
-# identify_fixed_fields tests
-# ==========================
 @pytest.fixture
 def df_constant_per_group():
     return pd.DataFrame(
@@ -79,9 +74,6 @@ def test_fixed_fields_with_nans():
     assert "random" not in fixed
 
 
-# ==========================
-# identify_dependance tests
-# ==========================
 def test_identify_dependency_bigger():
     numeric_df = pd.DataFrame(
         {
@@ -93,16 +85,12 @@ def test_identify_dependency_bigger():
     )
     result = identify_dependency("a", numeric_df, max_mapping_size=3)
 
-    # Expected dependencies based on numeric_df
     expected = [
         {C.DEPENDS_ON: "c", C.DEPENDENCY_TYPE: C.DependencyType.SMALLER},
         {C.DEPENDS_ON: "d", C.DEPENDENCY_TYPE: C.DependencyType.BIGGER},
     ]
 
-    # Simplify result to only keys we care about
     simplified_result = [{C.DEPENDS_ON: r.depends_on, C.DEPENDENCY_TYPE: r.dependency_type} for r in result]
-
-    # Assert all expected dependencies are present
     assert simplified_result == expected
 
 

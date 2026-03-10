@@ -1,7 +1,7 @@
 """Dataclasses for csvw-safe metadata structure."""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from csvw_safe import constants as C
 
@@ -28,23 +28,60 @@ class Dependency:
 
 
 @dataclass
+class Predicate:
+    """Predicate for partition."""
+
+    partition_value: Optional[Any] = None
+    lower_bound: Optional[float] = None
+    upper_bound: Optional[float] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert dependency to JSON-serializable dictionary."""
+        if self.partition_value is not None:
+            return {C.PARTITION_VALUE: self.partition_value}
+        return {C.LOWER_BOUND: self.lower_bound, C.UPPER_BOUND: self.upper_bound}
+
+
+@dataclass
 class Partition:
     """Partition metadata entry."""
 
-    predicate: Dict[str, Any]
     max_length: int
     max_groups_per_unit: int
     max_contributions: int
 
+    def _predicate_to_dict(self) -> Dict[str, Any]:
+        raise NotImplementedError
+
     def to_dict(self) -> Dict[str, Any]:
-        """Convert dependency to JSON-serializable dictionary."""
+        """Convert partition to JSON-serializable dictionary."""
         return {
             "@type": C.PARTITION,
-            C.PREDICATE: self.predicate,
+            C.PREDICATE: self._predicate_to_dict(),
             C.MAX_LENGTH: self.max_length,
             C.MAX_GROUPS: self.max_groups_per_unit,
             C.MAX_CONTRIB: self.max_contributions,
         }
+
+
+@dataclass
+class SingleColumnPartition(Partition):
+    """Partition metadata entry for a single column."""
+
+    predicate: Predicate
+
+    def _predicate_to_dict(self) -> Dict[str, Any]:
+        return self.predicate.to_dict()
+
+
+@dataclass
+class MultiColumnPartition(Partition):
+    """Partition metadata entry for multiple columns."""
+
+    predicate: Dict[str, Predicate]
+
+    def _predicate_to_dict(self) -> Dict[str, Any]:
+        return {k: v.to_dict() for k, v in self.predicate.items()}
 
 
 @dataclass
@@ -67,7 +104,7 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
     max_groups_per_unit: Optional[int] = None
     max_contributions: Optional[int] = None
 
-    partitions: Optional[list[Dict[str, Any]]] = None  # list of values or complex partitions class
+    partitions: Optional[Union[list[SingleColumnPartition], List[str]]] = None
     max_num_partitions: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -114,7 +151,7 @@ class ColumnGroupMetadata:
     """Metadata object describing grouped columns."""
 
     columns: list[str]
-    partitions: list[Dict[str, Any]]
+    partitions: list[MultiColumnPartition]
     max_num_partitions: int
 
     def to_dict(self) -> Dict[str, Any]:

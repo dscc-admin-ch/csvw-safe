@@ -1,8 +1,10 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
-from csvw_safe.make_metadata_from_data import make_metadata_from_data
+
 import csvw_safe.constants as C
+from csvw_safe.make_metadata_from_data import make_metadata_from_data
+from csvw_safe.metadata_structure import Predicate, SingleColumnPartition
 
 
 @pytest.fixture
@@ -32,7 +34,7 @@ def big_df():
 
 def test_basic_metadata_small(small_df):
     metadata = make_metadata_from_data(small_df, privacy_unit="user_id")
-    print(metadata)
+
     assert metadata["@type"] == "csvw:Table"
     assert metadata[C.PRIVACY_UNIT] == "user_id"
     assert metadata[C.MAX_LENGTH] == len(small_df)
@@ -68,9 +70,7 @@ def test_nullable_proportion_small():
 
 
 def test_categorical_partitions_small(small_df):
-    metadata = make_metadata_from_data(
-        small_df, privacy_unit="user_id", default_contributions_level="column"
-    )
+    metadata = make_metadata_from_data(small_df, privacy_unit="user_id", default_contributions_level="column")
 
     columns = metadata["csvw:tableSchema"]["columns"]
     color_col = next(c for c in columns if c["name"] == "color")
@@ -105,8 +105,8 @@ def test_numeric_partitions_big(big_df):
         {C.LOWER_BOUND: 75.0, C.UPPER_BOUND: 100.0},
     ]
     for p, e in zip(partitions, expected):
-        assert p[C.PREDICATE][C.LOWER_BOUND] == e[C.LOWER_BOUND]
-        assert p[C.PREDICATE][C.UPPER_BOUND] == e[C.UPPER_BOUND]
+        assert p.predicate.lower_bound == e[C.LOWER_BOUND]
+        assert p.predicate.upper_bound == e[C.UPPER_BOUND]
 
 
 def test_partition_contribution_level_big(big_df):
@@ -123,8 +123,16 @@ def test_partition_contribution_level_big(big_df):
     partitions = value_col[C.PUBLIC_PARTITIONS]
 
     assert isinstance(partitions, list)
-    assert "@type" in partitions[0]  # now each partition has "@type"
-    assert C.MAX_LENGTH in partitions[0]
+    assert len(partitions) > 0
+
+    first_partition = partitions[0]
+    expected_first_partition = SingleColumnPartition(
+        predicate=Predicate(lower_bound=0.0, upper_bound=25.0),
+        max_length=15,
+        max_groups_per_unit=3,
+        max_contributions=1,
+    )
+    assert first_partition == expected_first_partition
 
 
 def test_column_groups_big(big_df):
