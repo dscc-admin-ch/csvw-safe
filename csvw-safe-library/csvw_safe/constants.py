@@ -3,7 +3,19 @@
 from enum import Enum
 
 # ============================================================
-# Namespaces
+# CSVW
+# ============================================================
+CSVW = "csvw"
+COL_NAME = f"{CSVW}:name"
+DATATYPE = f"{CSVW}:datatype"
+REQUIRED = f"{CSVW}:required"
+MINIMUM = f"{CSVW}:minimum"
+MAXIMUM = f"{CSVW}:maximum"
+TABLE_SCHEMA = f"{CSVW}:tableSchema"
+COL_LIST = f"{CSVW}:columns"
+
+# ============================================================
+# CSVW_SAFE Namespaces
 # ============================================================
 CSVW_SAFE = "csvw-safe"
 
@@ -15,6 +27,7 @@ PARTITION = f"{CSVW_SAFE}:Partition"
 
 COLUMNS = f"{CSVW_SAFE}:columns"
 PUBLIC_PARTITIONS = f"{CSVW_SAFE}:partitions"
+EXHAUSTIVE_PARTITIONS = f"{CSVW_SAFE}:exhaustivePartitions"
 MAX_NUM_PARTITIONS = f"{CSVW_SAFE}:maxNumPartitions"
 
 PUBLIC_LENGTH = f"{CSVW_SAFE}:length"
@@ -66,7 +79,9 @@ class DependencyType(str, Enum):
 
 
 # ============================================================
-# Default bounds
+# Default Values
 # ============================================================
 DEFAULT_LOWER_INCLUSIVE = True
 DEFAULT_UPPER_INCLUSIVE = True
+
+DEFAULT_NUMBER_PARTITIONS = 10

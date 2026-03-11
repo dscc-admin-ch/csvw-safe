@@ -17,71 +17,27 @@ CSVW-SAFE metadata but does not guarantee semantic correctness.
 
 import argparse
 import json
+import string
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
 
-from csvw_safe.constants import (
-    ADD_INFO,
-    COLUMN_GROUP,
-    COLUMNS,
-    LOWER_BOUND,
+from csvw_safe.constants import (  # LOWER_BOUND,; UPPER_BOUND,
+    DEFAULT_NUMBER_PARTITIONS,
+    EXHAUSTIVE_PARTITIONS,
+    MAX_NUM_PARTITIONS,
+    MAXIMUM,
+    MINIMUM,
     NULL_PROP,
     PARTITION_VALUE,
     PREDICATE,
     PUBLIC_PARTITIONS,
-    UPPER_BOUND,
 )
+from csvw_safe.datatypes import DataTypes, T
 
-
-def sample_from_partitions(
-    partitions: List[Dict[str, Any]],
-    nb_rows: int,
-    rng: np.random.Generator,
-) -> pd.Series:
-    """
-    Sample values from CSVW-SAFE partitions.
-
-    Supports both categorical and continuous partitions.
-
-    Parameters
-    ----------
-    partitions : list of dict
-        Partition metadata objects.
-    nb_rows : int
-        Number of samples to generate.
-    rng : numpy.random.Generator
-        Random number generator.
-
-    Returns
-    -------
-    pandas.Series
-        Sampled values.
-    """
-    if not partitions:
-        return pd.Series([pd.NA] * nb_rows)
-
-    predicate = partitions[0].get(PREDICATE, {})
-
-    # Categorical partitions
-    if PARTITION_VALUE in predicate:
-        values = [p[PREDICATE][PARTITION_VALUE] for p in partitions]
-        return pd.Series(rng.choice(values, size=nb_rows))
-
-    # Continuous partitions
-    if LOWER_BOUND in predicate:
-        samples = []
-
-        for _ in range(nb_rows):
-            p = partitions[rng.integers(len(partitions))]
-            pred = p[PREDICATE]
-            samples.append(rng.uniform(pred[LOWER_BOUND], pred[UPPER_BOUND]))
-
-        return pd.Series(samples)
-
-    return pd.Series([pd.NA] * nb_rows)
+RANDOM_STRINGS = list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
 
 
 def apply_nulls(
@@ -118,7 +74,7 @@ def apply_nulls(
 
     idx = rng.choice(series.index, size=n_null, replace=False)
 
-    if datatype == "dateTime":
+    if datatype == DataTypes.DATETIME:
         series.loc[idx] = pd.NaT
     else:
         series.loc[idx] = pd.NA
@@ -126,26 +82,66 @@ def apply_nulls(
     return series
 
 
+def get_bounds(col_meta: Dict[str, Any]) -> tuple[T, T]:
+    """Get min and max."""
+    assert MINIMUM in col_meta, "error"
+    assert MAXIMUM in col_meta, "error"
+    return col_meta[MINIMUM], col_meta[MAXIMUM]
+
+
 def generate_datetime_column(
     col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
 ) -> pd.Series:
     """Generate datetime column between min and max values."""
-    if "minimum" in col_meta and "maximum" in col_meta:
-        dates = pd.date_range(start=col_meta["minimum"], end=col_meta["maximum"])
-        return pd.Series(rng.choice(dates, size=nb_rows))
-    return pd.Series([pd.NaT] * nb_rows)
+    lower, upper = get_bounds(col_meta)
+    dates = pd.date_range(start=lower, end=upper)
+    return pd.Series(rng.choice(dates, size=nb_rows))
 
 
-def generate_numeric_column(
-    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator, datatype: str
+def generate_integer_column(
+    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
 ) -> pd.Series:
-    """Generate numeric column (integer or float) between min and max values."""
-    if "minimum" in col_meta and "maximum" in col_meta:
-        low, high = col_meta["minimum"], col_meta["maximum"]
-        if datatype == "integer":
-            return pd.Series(rng.integers(int(low), int(high) + 1, size=nb_rows))
-        return pd.Series(rng.uniform(float(low), float(high), size=nb_rows))
-    return pd.Series([pd.NA] * nb_rows)
+    """Generate numeric column integer between min and max values."""
+    lower, upper = get_bounds(col_meta)
+    return pd.Series(rng.integers(int(lower), int(upper) + 1, size=nb_rows))
+
+
+def generate_double_column(
+    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+) -> pd.Series:
+    """Generate numeric column double between min and max values."""
+    lower, upper = get_bounds(col_meta)
+    return pd.Series(rng.uniform(float(lower), float(upper), size=nb_rows))
+
+
+def generate_boolean_column(
+    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+) -> pd.Series:
+    """Generate boolean column."""
+    return pd.Series(rng.choice([True, False], size=nb_rows), dtype="boolean")
+
+
+def generate_string_column(
+    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+) -> pd.Series:
+    """Generate string column depending on available information."""
+    public_keys = []
+    if PUBLIC_PARTITIONS in col_meta:
+        for partition in col_meta[PUBLIC_PARTITIONS]:
+            if isinstance(partition, str):
+                public_keys.append(partition)
+            else:
+                public_keys.append(partition[PREDICATE][PARTITION_VALUE])
+        if EXHAUSTIVE_PARTITIONS in col_meta and not col_meta[EXHAUSTIVE_PARTITIONS]:
+            diff = col_meta[MAX_NUM_PARTITIONS] - len(col_meta[PUBLIC_PARTITIONS])
+            public_keys.extend(RANDOM_STRINGS[0:diff])
+    else:
+        if MAX_NUM_PARTITIONS in col_meta and col_meta[MAX_NUM_PARTITIONS]:
+            public_keys = RANDOM_STRINGS[0 : col_meta[MAX_NUM_PARTITIONS]]
+        else:
+            public_keys = RANDOM_STRINGS[0:DEFAULT_NUMBER_PARTITIONS]
+
+    return pd.Series(rng.choice(public_keys, size=nb_rows))
 
 
 def generate_column_series(
@@ -160,53 +156,22 @@ def generate_column_series(
     """
     datatype = col_meta["datatype"]
     nullable_prop = col_meta.get(NULL_PROP, 0)
-    partitions = col_meta.get(PUBLIC_PARTITIONS, [])
 
-    if datatype == "dateTime":
+    if datatype == DataTypes.DATETIME:
         series = generate_datetime_column(col_meta, nb_rows, rng)
-    elif datatype in ("double", "integer") and not partitions:
-        series = generate_numeric_column(col_meta, nb_rows, rng, datatype)
+    elif datatype in DataTypes.INTEGER:
+        series = generate_integer_column(col_meta, nb_rows, rng)
+    elif datatype in DataTypes.DOUBLE:
+        series = generate_double_column(col_meta, nb_rows, rng)
+    elif datatype == DataTypes.BOOLEAN:
+        series = generate_boolean_column(col_meta, nb_rows, rng)
+    elif datatype == DataTypes.STRING:
+        series = generate_string_column(col_meta, nb_rows, rng)
     else:
-        series = sample_from_partitions(partitions, nb_rows, rng)
-        if datatype == "integer":
-            series = series.astype("Int64")
+        raise ValueError(f"Unknow datatype {datatype}")
 
     series = apply_nulls(series, nullable_prop, datatype, rng)
     return series
-
-
-def process_column_group(
-    group: Dict[str, Any],
-    data_dict: Dict[str, pd.Series],
-    used_columns: set[str],
-    nb_rows: int,
-    rng: np.random.Generator,
-) -> None:
-    """Generate data for a column group with joint partitions."""
-    cols = group.get(COLUMNS, [])
-    partitions = group.get(PUBLIC_PARTITIONS, [])
-    if not partitions:
-        return
-
-    idx = rng.integers(0, len(partitions), size=nb_rows)
-    sampled_partitions = [partitions[i] for i in idx]
-
-    group_data: Dict[str, List[Any]] = {col: [] for col in cols}
-
-    for p in sampled_partitions:
-        predicate = p.get(PREDICATE, {})
-        for col in cols:
-            col_pred = predicate.get(col, {})
-            if PARTITION_VALUE in col_pred:
-                group_data[col].append(col_pred[PARTITION_VALUE])
-            elif LOWER_BOUND in col_pred:
-                group_data[col].append(rng.uniform(col_pred[LOWER_BOUND], col_pred[UPPER_BOUND]))
-            else:
-                group_data[col].append(pd.NA)
-
-    for col in cols:
-        data_dict[col] = pd.Series(group_data[col])
-        used_columns.add(col)
 
 
 def make_dummy_from_metadata(
@@ -236,21 +201,16 @@ def make_dummy_from_metadata(
     columns_meta = table_schema.get("columns", [])
 
     data_dict: Dict[str, pd.Series] = {}
-    used_columns: set[str] = set()
 
-    # Column groups (joint partitions)
-    for group in metadata.get(ADD_INFO, []):
-        if group.get("@type") != COLUMN_GROUP:
-            continue
-        process_column_group(group, data_dict, used_columns, nb_rows, rng)
-
-    # Remaining columns
+    # Single columns
     for col_meta in columns_meta:
-        name = col_meta["name"]
-        if name in used_columns:
+        if col_meta.get("@type") != "csvw:Column":
             continue
+        name = col_meta["name"]
+        print(name)
         data_dict[name] = generate_column_series(col_meta, nb_rows, rng)
-        used_columns.add(name)
+
+    # Column groups (joint partitions): TODO
 
     return pd.DataFrame(data_dict)
 

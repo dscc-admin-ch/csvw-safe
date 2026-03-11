@@ -1,13 +1,30 @@
 """CSVW-SAFE Datatypes Utilities."""
 
-from typing import Any, Dict, Union
+from datetime import datetime
+from enum import StrEnum
+from typing import TypeVar
 
 import pandas as pd
 
-# Allowed datatypes
-VALID_TYPES = {"string", "boolean", "decimal", "double", "dateTime"}
 
-NumericType = Union[int, float]
+class DataTypes(StrEnum):
+    """Column types for metadata."""
+
+    STRING = "string"  # categorical
+    BOOLEAN = "boolean"  # categorical
+    INTEGER = "integer"  # categorical or continuous
+    DOUBLE = "double"  # categorical or continuous
+    DATETIME = "dateTime"  # categorical or continuous
+
+
+class ColumnKind(StrEnum):
+    """Partition Kind."""
+
+    CATEGORICAL = "categorical"
+    CONTINUOUS = "continuous"
+
+
+T = TypeVar("T", int, float, datetime)
 
 
 def is_small_categorical_integer(series: pd.Series, max_unique: int = 20) -> bool:
@@ -59,9 +76,11 @@ def is_small_datetime(series: pd.Series, max_unique: int = 20) -> bool:
     return bool(series.dropna().nunique() <= max_unique)
 
 
-def infer_xmlschema_datatype(series: pd.Series) -> str:
+def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements
+    series: pd.Series,
+) -> DataTypes:
     """
-    Infer an XML Schema (XSD 1.1) datatype for a pandas column.
+    Infer an XML Schema (XSD 1.1) datatype for a pandas series.
 
     Parameters
     ----------
@@ -70,28 +89,33 @@ def infer_xmlschema_datatype(series: pd.Series) -> str:
 
     Returns
     -------
-    str
-        Inferred XML Schema datatype ('string', 'boolean', 'integer', 'double', or 'dateTime').
+    DataTypes
+        Inferred XML Schema datatype.
     """
     s = series.dropna()
+
     if s.empty:
-        return "string"
+        return DataTypes.STRING
 
-    dtype_checks = [
-        (pd.api.types.is_bool_dtype, "boolean"),
-        (pd.api.types.is_datetime64_any_dtype, "dateTime"),
-        (pd.api.types.is_integer_dtype, "integer"),
-        (pd.api.types.is_float_dtype, "double"),  # special handling below
-        (pd.api.types.is_numeric_dtype, "integer"),
-    ]
+    if pd.api.types.is_bool_dtype(s):
+        return DataTypes.BOOLEAN
 
-    for check, dtype in dtype_checks:
-        if check(s):
-            if dtype == "double" and (s % 1 == 0).all():
-                return "integer"
-            return dtype
+    if pd.api.types.is_datetime64_any_dtype(s):
+        return DataTypes.DATETIME
 
-    return "string"
+    if pd.api.types.is_integer_dtype(s):
+        return DataTypes.INTEGER
+
+    if pd.api.types.is_float_dtype(s):
+        # pandas floats may contain integers due to NaN
+        if (s % 1 == 0).all():
+            return DataTypes.INTEGER
+        return DataTypes.DOUBLE
+
+    if pd.api.types.is_numeric_dtype(s):
+        return DataTypes.INTEGER
+
+    return DataTypes.STRING
 
 
 def is_categorical(series: pd.Series) -> bool:
@@ -124,18 +148,3 @@ def is_categorical(series: pd.Series) -> bool:
     return not (
         pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series)
     )
-
-
-def map_validator_type(datatype: Any, col_meta: Dict[str, Any]) -> str:
-    """Map generator datatypes to validator-compatible types."""
-    dtype_str = str(datatype) if datatype is not None else "string"
-    if dtype_str == "decimal":
-        minimum = col_meta.get("minimum")
-        maximum = col_meta.get("maximum")
-        if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
-            if float(minimum).is_integer() and float(maximum).is_integer():
-                return "decimal"
-        return "double"
-    if dtype_str in VALID_TYPES:
-        return dtype_str
-    return "string"

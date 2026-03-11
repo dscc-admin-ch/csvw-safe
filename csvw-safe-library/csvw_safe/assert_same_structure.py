@@ -22,9 +22,6 @@ import pandas as pd
 from csvw_safe.datatypes import infer_xmlschema_datatype
 
 
-# ----------------------------
-# Structural comparison
-# ----------------------------
 def assert_same_structure(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
@@ -51,18 +48,14 @@ def assert_same_structure(
     AssertionError
         If any structural mismatch is detected.
     """
-    # ----------------------------
     # Columns: order and names
-    # ----------------------------
     if list(df1.columns) != list(df2.columns):
         raise AssertionError(
             f"Column names/order differ:"
             f"\nOriginal: {list(df1.columns)}\nDummy:{list(df2.columns)}"
         )
 
-    # ----------------------------
     # Data types
-    # ----------------------------
     for col in df1.columns:
         dtype1: str = infer_xmlschema_datatype(df1[col])
         dtype2: str = infer_xmlschema_datatype(df2[col])
@@ -72,9 +65,7 @@ def assert_same_structure(
                 f"Column '{col}' dtype mismatch: original={dtype1}, dummy={dtype2}"
             )
 
-    # ----------------------------
     # Nullability
-    # ----------------------------
     for col in df1.columns:
         required1: bool = df1[col].notna().all()
         required2: bool = df2[col].notna().all()
@@ -85,9 +76,7 @@ def assert_same_structure(
                 f"original required={required1}, dummy required={required2}"
             )
 
-    # ----------------------------
     # Categorical subset check
-    # ----------------------------
     if check_categories:
         for col in df1.columns:
             dtype = infer_xmlschema_datatype(df1[col])

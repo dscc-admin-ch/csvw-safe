@@ -39,10 +39,10 @@ def test_basic_metadata_small(small_df):
     assert metadata[C.MAX_LENGTH] == len(small_df)
     assert metadata[C.PUBLIC_LENGTH] == len(small_df)
 
-    columns = metadata["csvw:tableSchema"]["columns"]
+    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
     assert len(columns) == len(small_df.columns)
 
-    privacy_col = next(c for c in columns if c["name"] == "user_id")
+    privacy_col = next(c for c in columns if c[C.COL_NAME] == "user_id")
     assert privacy_col[C.PRIVACY_ID] is True
 
 
@@ -61,11 +61,11 @@ def test_nullable_proportion_small():
     df = pd.DataFrame({"user_id": [1, 1, 2, 2, 3], "nullable": [1, None, None, 2, 3]})
     metadata = make_metadata_from_data(df, privacy_unit="user_id")
 
-    columns = metadata["csvw:tableSchema"]["columns"]
-    nullable_col = next(c for c in columns if c["name"] == "nullable")
+    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
+    nullable_col = next(c for c in columns if c[C.COL_NAME] == "nullable")
 
     assert nullable_col[C.NULL_PROP] == 0.4
-    assert nullable_col["required"] is False
+    assert nullable_col[C.REQUIRED] is False
 
 
 def test_categorical_partitions_small(small_df):
@@ -73,8 +73,8 @@ def test_categorical_partitions_small(small_df):
         small_df, privacy_unit="user_id", default_contributions_level="column"
     )
 
-    columns = metadata["csvw:tableSchema"]["columns"]
-    color_col = next(c for c in columns if c["name"] == "color")
+    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
+    color_col = next(c for c in columns if c[C.COL_NAME] == "color")
 
     assert C.PUBLIC_PARTITIONS in color_col
     assert color_col[C.MAX_NUM_PARTITIONS] == 2
@@ -92,8 +92,8 @@ def test_numeric_partitions_big(big_df):
         default_contributions_level="column",
     )
 
-    columns = metadata["csvw:tableSchema"]["columns"]
-    value_col = next(c for c in columns if c["name"] == "value")
+    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
+    value_col = next(c for c in columns if c[C.COL_NAME] == "value")
 
     assert C.PUBLIC_PARTITIONS in value_col
     assert value_col[C.MAX_NUM_PARTITIONS] == 4
@@ -118,8 +118,8 @@ def test_partition_contribution_level_big(big_df):
         default_contributions_level="partition",
     )
 
-    columns = metadata["csvw:tableSchema"]["columns"]
-    value_col = next(c for c in columns if c["name"] == "value")
+    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
+    value_col = next(c for c in columns if c[C.COL_NAME] == "value")
 
     partitions = value_col[C.PUBLIC_PARTITIONS]
 
@@ -149,9 +149,9 @@ def test_column_groups_big(big_df):
         default_contributions_level="partition",
     )
 
-    assert "csvw-safe:additionalInformation" in metadata
+    assert C.ADD_INFO in metadata
 
-    groups = metadata["csvw-safe:additionalInformation"]
+    groups = metadata[C.ADD_INFO]
     assert len(groups) == 1
 
     group = groups[0]
@@ -169,8 +169,8 @@ def test_fine_contribution_override_big(big_df):
         fine_contributions_level={"value": "column"},
     )
 
-    columns = metadata["csvw:tableSchema"]["columns"]
-    value_col = next(c for c in columns if c["name"] == "value")
+    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
+    value_col = next(c for c in columns if c[C.COL_NAME] == "value")
 
     assert C.PUBLIC_PARTITIONS in value_col
 
@@ -178,8 +178,8 @@ def test_fine_contribution_override_big(big_df):
 def test_numeric_bounds_small(small_df):
     metadata = make_metadata_from_data(small_df, privacy_unit="user_id")
 
-    columns = metadata["csvw:tableSchema"]["columns"]
-    value_col = next(c for c in columns if c["name"] == "value")
+    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
+    value_col = next(c for c in columns if c[C.COL_NAME] == "value")
 
-    assert value_col["minimum"] == 10
-    assert value_col["maximum"] == 50
+    assert value_col[C.MINIMUM] == 10
+    assert value_col[C.MAXIMUM] == 50

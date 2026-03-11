@@ -12,7 +12,6 @@ privacy-preserving data synthesis and differential privacy pipelines.
 
 import argparse
 import json
-from enum import IntEnum
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
@@ -20,7 +19,7 @@ import pandas as pd
 import pandas.api.types as ptypes
 
 from csvw_safe.constants import DependencyType
-from csvw_safe.datatypes import infer_xmlschema_datatype, is_categorical
+from csvw_safe.datatypes import ColumnKind, infer_xmlschema_datatype, is_categorical
 from csvw_safe.metadata_structure import (
     ColumnGroupMetadata,
     ColumnMetadata,
@@ -31,65 +30,13 @@ from csvw_safe.metadata_structure import (
     SingleColumnPartition,
     TableMetadata,
 )
-from csvw_safe.utils import sanitize
-
-
-class ContributionLevel(IntEnum):
-    """
-    Represents the level at which contribution bounds are applied in CSVW-SAFE metadata.
-
-    Levels:
-    - TABLE: global table-level contribution bounds
-    - COLUMN: per-column contribution bounds
-    - PARTITION: per-partition contribution bounds
-    """
-
-    TABLE = 0
-    COLUMN = 1
-    PARTITION = 2
-
-    @classmethod
-    def from_str(cls, value: str) -> "ContributionLevel":
-        """
-        Convert a string representation into a ContributionLevel enum.
-
-        Parameters
-        ----------
-        value : str
-            One of 'table', 'column', 'partition' (case-insensitive).
-
-        Returns
-        -------
-        ContributionLevel
-            Corresponding enum value.
-
-        Raises
-        ------
-        ValueError
-            If the input string does not match any valid level.
-        """
-        value = value.lower()
-        if value == "table":
-            return cls.TABLE
-        if value == "column":
-            return cls.COLUMN
-        if value == "partition":
-            return cls.PARTITION
-        raise ValueError(f"Invalid contribution level: {value}")
-
-    def __str__(self) -> str:
-        """
-        Return the lowercase string representation of the contribution level.
-
-        Example: ContributionLevel.PARTITION -> 'partition'
-        """
-        return self.name.lower()
+from csvw_safe.utils import ContributionLevel, sanitize
 
 
 def get_effective_contrib_level(
     column_name: str,
-    fine_contributions_level: Dict[str, str],
-    default_contributions_level: str,
+    fine_contributions_level: Dict[str, ContributionLevel],
+    default_contributions_level: ContributionLevel,
 ) -> ContributionLevel:
     """
     Determine effective contribution level for a column.
@@ -98,10 +45,8 @@ def get_effective_contrib_level(
       - Take column-specific fine level if it exists, else default.
       - Return the maximum of column and default (table < column < partition).
     """
-    fine_level = ContributionLevel.from_str(fine_contributions_level.get(column_name, "table"))
-    default_level = ContributionLevel.from_str(default_contributions_level)
-    # max ensures that 'partition' overrides 'column' or 'table'
-    return max(fine_level, default_level)
+    fine_level = fine_contributions_level.get(column_name, ContributionLevel.TABLE)
+    return max(fine_level, default_contributions_level)
 
 
 # ============================================================
@@ -278,7 +223,7 @@ def make_predicate(spec: Dict[str, Any], value: Any) -> Predicate:
     Predicate
         Dataclass representing the partition predicate.
     """
-    if spec["kind"] == "categorical":
+    if spec["kind"] == ColumnKind.CATEGORICAL:
         return Predicate(partition_value=value)
 
     # Numeric or datetime interval
@@ -303,7 +248,7 @@ def make_categorical_partitions(
     partitions_meta = build_partitions(
         df,
         privacy_unit,
-        [{"name": column_name, "kind": "categorical"}],
+        [{"name": column_name, "kind": ColumnKind.CATEGORICAL}],
     )
     return [p for p in partitions_meta if isinstance(p, SingleColumnPartition)]
 
@@ -321,7 +266,7 @@ def make_numeric_partitions(
         [
             {
                 "name": column_name,
-                "kind": "numeric",
+                "kind": ColumnKind.CONTINUOUS,
                 "bins": bounds,
                 "is_datetime": pd.api.types.is_datetime64_any_dtype(df[column_name]),
             }
@@ -343,7 +288,7 @@ def get_multi_group_partitions(
             specs.append(
                 {
                     "name": col,
-                    "kind": "numeric",
+                    "kind": ColumnKind.CONTINUOUS,
                     "bins": continuous_partitions[col],
                     "is_datetime": pd.api.types.is_datetime64_any_dtype(df[col]),
                 }
@@ -352,7 +297,7 @@ def get_multi_group_partitions(
             specs.append(
                 {
                     "name": col,
-                    "kind": "categorical",
+                    "kind": ColumnKind.CATEGORICAL,
                     "is_datetime": pd.api.types.is_datetime64_any_dtype(df[col]),
                 }
             )
@@ -409,7 +354,9 @@ def build_partitions(
         - "csvw-safe:bounds.maxGroupsPerUnit": maximum rows per privacy unit
         - "csvw-safe:bounds.maxContributions": maximum partitions per unit
     """
-    df_work = df.copy() if any(spec["kind"] == "numeric" for spec in column_specs) else df
+    df_work = (
+        df.copy() if any(spec["kind"] == ColumnKind.CONTINUOUS for spec in column_specs) else df
+    )
 
     grouping_columns = []
     influenced_counts = {}
@@ -417,11 +364,11 @@ def build_partitions(
     for spec in column_specs:
         col = spec["name"]
 
-        if spec["kind"] == "categorical":
+        if spec["kind"] == ColumnKind.CATEGORICAL:
             grouping_columns.append(col)
             influenced_counts[col] = df.groupby(privacy_unit)[col].nunique(dropna=True)
 
-        elif spec["kind"] == "numeric":
+        elif spec["kind"] == ColumnKind.CONTINUOUS:
             bins = pd.to_datetime(spec["bins"]) if spec.get("is_datetime") else sorted(spec["bins"])
             binned_col = f"{col}__bin"
             df_work[binned_col] = pd.cut(df_work[col], bins=bins, right=False)
@@ -481,8 +428,8 @@ def get_column_level_contribution(
 def make_column_groups(
     df: pd.DataFrame,
     column_groups: List[List[str]],
-    fine_contributions_level: Dict[str, str],
-    default_contributions_level: str,
+    fine_contributions_level: Dict[str, ContributionLevel],
+    default_contributions_level: ContributionLevel,
     continuous_partitions: Dict[str, List[Any]],
     privacy_unit: str,
 ) -> List[ColumnGroupMetadata]:
@@ -502,11 +449,11 @@ def make_column_groups(
         List of column groups. Each group is a list of column names that
         should be treated jointly.
 
-    fine_contributions_level : dict[str, str]
+    fine_contributions_level : dict[str, ContributionLevel]
         Mapping specifying contribution bound levels for specific columns.
         Values must be either ``"column"`` or ``"partition"``.
 
-    default_contributions_level : str
+    default_contributions_level : ContributionLevel
         Default contribution bound level used when a column is not present
         in ``fine_contributions_level``.
 
@@ -567,10 +514,11 @@ def make_column_groups(
 
 
 def prepare_metadata_inputs(
+    default_contributions_level: str,
     fine_contributions_level: Optional[Dict[str, str]],
     continuous_partitions: Optional[Dict[str, List[Any]]],
     column_groups: Optional[List[List[str]]],
-) -> Tuple[Dict[str, str], Dict[str, List[Any]], List[List[str]]]:
+) -> Tuple[ContributionLevel, Dict[str, ContributionLevel], Dict[str, List[Any]], List[List[str]]]:
     """
     Normalize optional metadata configuration inputs.
 
@@ -585,6 +533,8 @@ def prepare_metadata_inputs(
 
     Parameters
     ----------
+    default_contributions_level : str
+
     fine_contributions_level : dict[str, str] or None
         Optional mapping specifying per-column contribution levels.
         Values must be one of {"table", "column", "partition"}.
@@ -601,24 +551,28 @@ def prepare_metadata_inputs(
     tuple
         A tuple containing normalized versions of:
 
-        - fine_contributions_level : dict[str, str]
+        - default_level : ContributionLevel
+        - fine_level : dict[str, ContributionLevel]
         - continuous_partitions : dict[str, list[Any]]
         - column_groups : list[list[str]]
     """
-
-    if fine_contributions_level is None:
-        fine_contributions_level = {}
+    default_level = ContributionLevel.from_str(default_contributions_level)
 
     if continuous_partitions is None:
         continuous_partitions = {}
 
-    for col in continuous_partitions:
-        fine_contributions_level[col] = "partition"
-
     if column_groups is None:
         column_groups = []
 
-    return fine_contributions_level, continuous_partitions, column_groups
+    if fine_contributions_level is None:
+        fine_level = {}
+    else:
+        fine_level = {k: ContributionLevel.from_str(v) for k, v in fine_contributions_level.items()}
+
+    for col in continuous_partitions:
+        fine_level[col] = ContributionLevel.PARTITION
+
+    return default_level, fine_level, continuous_partitions, column_groups
 
 
 def attach_partitions_to_column(
@@ -703,8 +657,8 @@ def build_column_metadata(
     column_name: str,
     privacy_unit: str,
     continuous_partitions: Dict[str, List[Any]],
-    fine_contributions_level: Dict[str, str],
-    default_contributions_level: str,
+    fine_contributions_level: Dict[str, ContributionLevel],
+    default_contributions_level: ContributionLevel,
 ) -> ColumnMetadata:
     """
     Construct metadata for a single column.
@@ -818,23 +772,23 @@ def make_metadata_from_data(
     TableMetadata
         CSVW-SAFE metadata structure as a dataclass.
     """
-    if privacy_unit not in df.columns:
-        raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
-
-    fine_contributions_level, continuous_partitions, column_groups = prepare_metadata_inputs(
+    default_level, fine_level, continuous_partitions, column_groups = prepare_metadata_inputs(
+        default_contributions_level,
         fine_contributions_level,
         continuous_partitions,
         column_groups,
     )
+    if privacy_unit is None and (
+        default_level != ContributionLevel.TABLE
+        or any(level != ContributionLevel.TABLE for level in fine_level.values())
+    ):
+        raise ValueError(f"Privacy unit is None, only '{ContributionLevel.TABLE}' possible.")
+    if privacy_unit not in df.columns:
+        raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
 
     columns_meta = [
         build_column_metadata(
-            df,
-            column_name,
-            privacy_unit,
-            continuous_partitions,
-            fine_contributions_level,
-            default_contributions_level,
+            df, column_name, privacy_unit, continuous_partitions, fine_level, default_level
         )
         for column_name in df.columns
     ]
@@ -842,12 +796,7 @@ def make_metadata_from_data(
     groups_meta = None
     if column_groups:
         groups_meta = make_column_groups(
-            df,
-            column_groups,
-            fine_contributions_level,
-            default_contributions_level,
-            continuous_partitions,
-            privacy_unit,
+            df, column_groups, fine_level, default_level, continuous_partitions, privacy_unit
         )
 
     table_metadata = TableMetadata(

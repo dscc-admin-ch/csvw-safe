@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
 from csvw_safe import constants as C
+from csvw_safe.datatypes import DataTypes
 
 
 @dataclass
@@ -89,7 +90,7 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
     """Column metadata object."""
 
     name: str
-    datatype: str
+    datatype: DataTypes
     required: bool
     privacy_id: bool
     nullable_proportion: float
@@ -116,9 +117,9 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
         """Convert dependency to JSON-serializable dictionary."""
         d = {
             "@type": "csvw:Column",
-            "name": self.name,
-            "datatype": self.datatype,
-            "required": self.required,
+            C.COL_NAME: self.name,
+            C.DATATYPE: self.datatype,
+            C.REQUIRED: self.required,
             C.PRIVACY_ID: self.privacy_id,
             C.NULL_PROP: self.nullable_proportion,
         }
@@ -130,16 +131,17 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
             d[C.FIXED_PER_ENTITY] = self.fixed_per_entity
 
         if self.minimum is not None:
-            d["minimum"] = self.minimum
+            d[C.MINIMUM] = self.minimum
 
         if self.maximum is not None:
-            d["maximum"] = self.maximum
+            d[C.MAXIMUM] = self.maximum
 
         if self.partitions is not None:
             d[C.PUBLIC_PARTITIONS] = [
                 p.to_dict() if hasattr(p, "to_dict") else p for p in self.partitions
             ]
             d[C.MAX_NUM_PARTITIONS] = self.max_num_partitions
+            d[C.EXHAUSTIVE_PARTITIONS] = True
 
         if self.max_length is not None:
             d[C.MAX_LENGTH] = self.max_length
@@ -185,6 +187,8 @@ class ColumnGroupMetadata:
             C.PUBLIC_PARTITIONS: serialized_partitions,
             C.MAX_NUM_PARTITIONS: self.max_num_partitions,
         }
+        if serialized_partitions:
+            result[C.EXHAUSTIVE_PARTITIONS] = True
 
         if self.max_length is not None:
             result[C.MAX_LENGTH] = self.max_length
@@ -225,7 +229,7 @@ class TableMetadata:  # pylint: disable=too-many-instance-attributes
             C.MAX_CONTRIB: self.max_contributions,
             C.MAX_LENGTH: self.max_length,
             C.PUBLIC_LENGTH: self.public_length,
-            "csvw:tableSchema": {"columns": [col.to_dict() for col in self.columns]},
+            C.TABLE_SCHEMA: {C.COL_LIST: [col.to_dict() for col in self.columns]},
         }
 
         if self.column_groups:

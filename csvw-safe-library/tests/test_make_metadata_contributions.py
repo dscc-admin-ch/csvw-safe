@@ -46,7 +46,7 @@ def test_categorical_partition(simple_df):
 
 def test_numeric_partition(simple_df):
     column_specs = [
-        {"name": "value", "kind": "numeric", "bins": [0, 25, 50, 60], "is_datetime": False}
+        {"name": "value", "kind": "continuous", "bins": [0, 25, 50, 60], "is_datetime": False}
     ]
     partitions = build_partitions(simple_df, "user_id", column_specs)
 
@@ -77,7 +77,7 @@ def test_numeric_partition(simple_df):
 def test_mixed_partitions(simple_df):
     column_specs = [
         {"name": "color", "kind": "categorical", "is_datetime": False},
-        {"name": "value", "kind": "numeric", "bins": [0, 25, 50, 60], "is_datetime": False},
+        {"name": "value", "kind": "continuous", "bins": [0, 25, 50, 60], "is_datetime": False},
     ]
 
     partitions = build_partitions(simple_df, "user_id", column_specs)
@@ -140,7 +140,7 @@ def test_column_level_partitions(simple_df):
         privacy_unit="user_id",
         fine_contributions_level={"color": "column"},
     )
-    color_column = next(c for c in metadata["csvw:tableSchema"]["columns"] if c["name"] == "color")
+    color_column = next(c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color")
 
     assert color_column[C.PUBLIC_PARTITIONS] == ["blue", "red"]
     assert color_column[C.MAX_NUM_PARTITIONS] == 2
@@ -157,7 +157,7 @@ def test_partition_level_partitions(simple_df):
         fine_contributions_level={"color": "partition"},
     )
 
-    color_column = next(c for c in metadata["csvw:tableSchema"]["columns"] if c["name"] == "color")
+    color_column = next(c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color")
     print(color_column)
 
     assert isinstance(color_column[C.PUBLIC_PARTITIONS], list)

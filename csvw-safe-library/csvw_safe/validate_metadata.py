@@ -8,17 +8,18 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from csvw_safe.constants import (
     ADD_INFO,
+    COLUMN_GROUP,
     COLUMNS,
-    CSVW_SAFE,
     LOWER_BOUND,
     MAX_CONTRIB,
     MAX_LENGTH,
     MAX_NUM_PARTITIONS,
     NULL_PROP,
+    PARTITION,
     PARTITION_VALUE,
     PREDICATE,
     PRIVACY_ID,
@@ -27,16 +28,7 @@ from csvw_safe.constants import (
     PUBLIC_PARTITIONS,
     UPPER_BOUND,
 )
-from csvw_safe.datatypes import (
-    VALID_TYPES,
-    NumericType,
-    map_validator_type,
-)
-
-
-def intervals_overlap(a1: NumericType, a2: NumericType, b1: NumericType, b2: NumericType) -> bool:
-    """Check if two numeric intervals overlap."""
-    return max(a1, b1) < min(a2, b2)
+from csvw_safe.datatypes import DataTypes
 
 
 def validate_table(metadata: Dict[str, Any]) -> None:
@@ -61,12 +53,11 @@ def validate_table(metadata: Dict[str, Any]) -> None:
 def validate_column(col: Dict[str, Any]) -> None:
     """Validate a single column."""
     name = col.get("name")
-    dtype = map_validator_type(col.get("datatype"), col)
-
     if not name:
         raise ValueError("Column missing 'name'")
 
-    if dtype not in VALID_TYPES:
+    dtype = col.get("datatype")
+    if dtype not in {t.value for t in DataTypes}:
         raise ValueError(f"Column '{name}' invalid datatype '{dtype}'")
 
     privacy_id = col.get(PRIVACY_ID)
@@ -98,9 +89,7 @@ def validate_column(col: Dict[str, Any]) -> None:
             raise ValueError(f"Column '{name}' exceeds declared {MAX_NUM_PARTITIONS}")
 
 
-def validate_partition_predicate(
-    predicate: dict[str, Any], col_name: Optional[str] = None
-) -> Optional[Tuple[NumericType, NumericType]]:
+def validate_partition_predicate(predicate: dict[str, Any], col_name: Optional[str] = None) -> None:
     """Validate a single predicate object and return numeric bounds if present."""
     has_value = PARTITION_VALUE in predicate
     has_bounds = LOWER_BOUND in predicate or UPPER_BOUND in predicate
@@ -121,16 +110,10 @@ def validate_partition_predicate(
             raise ValueError(
                 f"Partition lowerBound > upperBound{f' for {col_name}' if col_name else ''}"
             )
-        return lb, ub
-
-    return None
 
 
-def validate_single_partition(
-    p: Dict[str, Any], is_column_group: bool
-) -> List[Tuple[NumericType, NumericType]]:
+def validate_single_partition(p: Dict[str, Any], is_column_group: bool) -> None:
     """Validate a single partition and return a list of numeric intervals for overlap checking."""
-    numeric_intervals: List[Tuple[NumericType, NumericType]] = []
     predicate: Any = p.get(PREDICATE)
     if predicate is None:
         raise ValueError("Partition missing predicate object")
@@ -141,38 +124,21 @@ def validate_single_partition(
         for col_name, value_raw in predicate.items():
             if not isinstance(value_raw, dict):
                 raise ValueError(f"ColumnGroup partition predicate for '{col_name}' must be object")
-            result = validate_partition_predicate(value_raw, col_name)
-            if result:
-                numeric_intervals.append(result)
+            validate_partition_predicate(value_raw, col_name)
     else:
         if isinstance(predicate, dict):
-            result = validate_partition_predicate(predicate)
-            if result:
-                numeric_intervals.append(result)
-
-    return numeric_intervals
+            validate_partition_predicate(predicate)
 
 
 def validate_partitions(parent: Dict[str, Any], partitions: List[Dict[str, Any]]) -> None:
     """Validate partitions for columns or column groups in CSVW-SAFE metadata."""
-    is_column_group = parent.get("@type") == f"{CSVW_SAFE}:ColumnGroup"
-
-    all_numeric_intervals: List[Tuple[NumericType, NumericType]] = []
-
+    is_column_group = parent.get("@type") == COLUMN_GROUP
     for p in partitions:
         # validate @type for single-column partitions
-        if not is_column_group and "@type" in p and p.get("@type") != f"{CSVW_SAFE}:Partition":
-            raise ValueError("Partition must declare @type csvw-safe:Partition")
+        if not is_column_group and "@type" in p and p.get("@type") != PARTITION:
+            raise ValueError(f"Partition must declare @type {PARTITION}")
 
-        numeric_intervals = validate_single_partition(p, is_column_group)
-        all_numeric_intervals.extend(numeric_intervals)
-
-    # Check overlap only for numeric intervals of single-column partitions
-    if not is_column_group:
-        for i, (lb1, ub1) in enumerate(all_numeric_intervals):
-            for lb2, ub2 in all_numeric_intervals[i + 1 :]:
-                if intervals_overlap(lb1, ub1, lb2, ub2):
-                    raise ValueError("Overlapping numeric partitions detected")
+        validate_single_partition(p, is_column_group)
 
 
 def validate_column_groups(metadata: Dict[str, Any], columns_by_name: Dict[str, Any]) -> None:
@@ -182,7 +148,7 @@ def validate_column_groups(metadata: Dict[str, Any], columns_by_name: Dict[str, 
         return
 
     for g in groups:
-        if g.get("@type") != "csvw-safe:ColumnGroup":
+        if g.get("@type") != COLUMN_GROUP:
             continue
         cols = g.get(COLUMNS, [])
         if not isinstance(cols, list):
