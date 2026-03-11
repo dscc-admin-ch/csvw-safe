@@ -116,7 +116,7 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
     def to_dict(self) -> Dict[str, Any]:
         """Convert dependency to JSON-serializable dictionary."""
         d = {
-            "@type": "csvw:Column",
+            "@type": C.COL_TYPE,
             C.COL_NAME: self.name,
             C.DATATYPE: self.datatype,
             C.REQUIRED: self.required,
@@ -212,13 +212,8 @@ class TableMetadata:  # pylint: disable=too-many-instance-attributes
     public_length: int
     columns: List[ColumnMetadata] = field(default_factory=list)
     column_groups: Optional[List[ColumnGroupMetadata]] = None
-    context: List[str] = field(
-        default_factory=lambda: [
-            "http://www.w3.org/ns/csvw",
-            "../../../csvw-safe-context.jsonld",
-        ]
-    )
-    table_type: str = "csvw:Table"
+    context: List[str] = field(default_factory=lambda: [C.CSVW_CONTEXT, C.CSVW_SAFE_CONTEXT])
+    table_type: str = C.TABLE_TYPE
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the table metadata to a JSON-serializable dictionary."""

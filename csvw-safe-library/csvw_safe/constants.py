@@ -13,11 +13,16 @@ MINIMUM = f"{CSVW}:minimum"
 MAXIMUM = f"{CSVW}:maximum"
 TABLE_SCHEMA = f"{CSVW}:tableSchema"
 COL_LIST = f"{CSVW}:columns"
+COL_TYPE = f"{CSVW}:Column"
+TABLE_TYPE = f"{CSVW}:Table"
+
+CSVW_CONTEXT = "http://www.w3.org/ns/csvw"
 
 # ============================================================
 # CSVW_SAFE Namespaces
 # ============================================================
 CSVW_SAFE = "csvw-safe"
+CSVW_SAFE_CONTEXT = "../../../csvw-safe-context.jsonld"
 
 # ============================================================
 # Column groups / partitions

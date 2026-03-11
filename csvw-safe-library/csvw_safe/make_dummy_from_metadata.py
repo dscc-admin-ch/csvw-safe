@@ -25,6 +25,9 @@ import numpy as np
 import pandas as pd
 
 from csvw_safe.constants import (  # LOWER_BOUND,; UPPER_BOUND,
+    COL_LIST,
+    COL_NAME,
+    COL_TYPE,
     DEFAULT_NUMBER_PARTITIONS,
     EXHAUSTIVE_PARTITIONS,
     MAX_NUM_PARTITIONS,
@@ -34,6 +37,7 @@ from csvw_safe.constants import (  # LOWER_BOUND,; UPPER_BOUND,
     PARTITION_VALUE,
     PREDICATE,
     PUBLIC_PARTITIONS,
+    TABLE_SCHEMA,
 )
 from csvw_safe.datatypes import DataTypes, T
 
@@ -197,16 +201,16 @@ def make_dummy_from_metadata(
         Generated dataset.
     """
     rng = np.random.default_rng(seed)
-    table_schema = metadata.get("csvw:tableSchema", {})
-    columns_meta = table_schema.get("columns", [])
+    table_schema = metadata.get(TABLE_SCHEMA, {})
+    columns_meta = table_schema.get(COL_LIST, [])
 
     data_dict: Dict[str, pd.Series] = {}
 
     # Single columns
     for col_meta in columns_meta:
-        if col_meta.get("@type") != "csvw:Column":
+        if col_meta.get("@type") != COL_TYPE:
             continue
-        name = col_meta["name"]
+        name = col_meta[COL_NAME]
         print(name)
         data_dict[name] = generate_column_series(col_meta, nb_rows, rng)
 
