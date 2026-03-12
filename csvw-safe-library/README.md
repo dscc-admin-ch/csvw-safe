@@ -212,6 +212,12 @@ Automatically generated metadata may contain sensitive information — manual re
 
 The dummy dataset is intended for development, testing, and pipeline verification, not analysis of real individuals.
 
+# Tests
+
+```
+pytest --cov=csvw_safe --cov-report=term-missing tests/
+```
+
 # Directory Structure
 
 - Library functions in `csvw_safe_library/` for Python usage  

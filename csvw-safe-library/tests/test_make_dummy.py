@@ -87,6 +87,24 @@ def test_generate_column_series_string(rng):
     assert len(s) == 10
 
 
+def test_generate_column_series_datetime(rng):
+    """Test generating a datetime column using generate_column_series."""
+    col_meta = {
+        DATATYPE: DataTypes.DATETIME,
+        MINIMUM: "2026-01-01",
+        MAXIMUM: "2026-01-31",
+        NULL_PROP: 0,
+    }
+    s = generate_column_series(col_meta, 10, rng)
+    assert len(s) == 10
+    # Check type
+    assert pd.api.types.is_datetime64_any_dtype(s)
+    # Check all values within bounds
+    lower = pd.to_datetime(col_meta[MINIMUM])
+    upper = pd.to_datetime(col_meta[MAXIMUM])
+    assert (s >= lower).all() and (s <= upper).all()
+
+
 def test_bigger_series_numeric(rng):
     base = pd.Series(np.arange(10))
     col_meta = {DATATYPE: DataTypes.DOUBLE, MINIMUM: 0, MAXIMUM: 20}
@@ -181,8 +199,57 @@ def test_make_dummy_from_metadata_basic(rng):
         }
     }
     df = make_dummy_from_metadata(metadata, nb_rows=5, seed=42)
-    print("+++++++++++")
-    print(df)
     assert isinstance(df, pd.DataFrame)
     assert list(df.columns) == ["col1", "col2"]
     assert len(df) == 5
+
+
+def test_generate_column_circular_dependency(rng):
+    nb_rows = 5
+
+    # Columns with circular dependency
+    columns_meta = [
+        {
+            COL_NAME: "col1",
+            DATATYPE: DataTypes.INTEGER,
+            MINIMUM: 0,
+            MAXIMUM: 10,
+            NULL_PROP: 0,
+            DEPENDENCY_TYPE: DependencyType.BIGGER,
+        },
+        {
+            COL_NAME: "col2",
+            DATATYPE: DataTypes.INTEGER,
+            MINIMUM: 5,
+            MAXIMUM: 15,
+            NULL_PROP: 0,
+            DEPENDENCY_TYPE: DependencyType.BIGGER,
+        },
+    ]
+
+    depends_map = {
+        "col1": "col2",
+        "col2": "col1",
+    }
+
+    data_dict = {}
+
+    # Force col1 to see col2 as visited → triggers circular dependency branch
+    visited = {"col2"}
+
+    data_dict = generate_column(
+        "col1",
+        columns_meta,
+        depends_map,
+        data_dict,
+        nb_rows,
+        rng,
+        visited=visited,
+        max_recursion=10,
+        depth=0,
+    )
+
+    # The circular branch should generate col1 using generate_column_series
+    assert "col1" in data_dict
+    assert isinstance(data_dict["col1"], pd.Series)
+    assert len(data_dict["col1"]) == nb_rows

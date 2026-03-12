@@ -38,3 +38,19 @@ write = true
 [tool.pylint."messages control"]
 disable = []
 ignore = ".ipynb_checkpoints"
+
+[tool.coverage.run]
+branch = true
+source = ["csvw_safe"]        # only track your package
+omit = [
+    "*/tests/*",              # ignore test files
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "if __name__ == .__main__.:",   # ignore main guard
+    "def main\\(\\).*:",            # ignore the main() functions
+    "raise .*Error",                # ignore lines raising ValueError
+]

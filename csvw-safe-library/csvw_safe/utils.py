@@ -24,7 +24,7 @@ def sanitize(obj: Any) -> Any:
 
     if isinstance(obj, float):
         if math.isnan(obj) or math.isinf(obj):
-            return None
+            raise ValueError("Value in Nan or infinite")
         return obj  # keep as float
 
     return obj  # leave everything else unchanged
@@ -72,11 +72,3 @@ class ContributionLevel(IntEnum):
         if value == "partition":
             return cls.PARTITION
         raise ValueError(f"Invalid contribution level: {value}")
-
-    def __str__(self) -> str:
-        """
-        Return the lowercase string representation of the contribution level.
-
-        Example: ContributionLevel.PARTITION -> 'partition'
-        """
-        return self.name.lower()

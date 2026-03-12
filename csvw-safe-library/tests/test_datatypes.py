@@ -55,6 +55,7 @@ def test_is_small_datetime(series, expected):
         (pd.Series([1.5, 2, 3]), "double"),
         (pd.Series([1, 2, np.nan, 3]), "integer"),  # despite pandas
         (pd.Series(pd.date_range("2025-01-01", periods=3)), "dateTime"),
+        (pd.Series([pd.NA, pd.NA]), "string"),
     ],
 )
 def test_infer_xmlschema_datatype(series, expected):

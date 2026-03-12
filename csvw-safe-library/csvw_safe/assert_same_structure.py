@@ -19,7 +19,7 @@ from typing import Set
 
 import pandas as pd
 
-from csvw_safe.datatypes import infer_xmlschema_datatype
+from csvw_safe.datatypes import infer_xmlschema_datatype, is_categorical
 
 
 def assert_same_structure(
@@ -79,9 +79,7 @@ def assert_same_structure(
     # Categorical subset check
     if check_categories:
         for col in df1.columns:
-            dtype = infer_xmlschema_datatype(df1[col])
-
-            if dtype in ("string", "integer", "boolean"):
+            if is_categorical(df1[col]):
                 vals1: Set[object] = set(df1[col].dropna().unique())
                 vals2: Set[object] = set(df2[col].dropna().unique())
 

@@ -115,9 +115,6 @@ def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements
             return DataTypes.INTEGER
         return DataTypes.DOUBLE
 
-    if pd.api.types.is_numeric_dtype(s):
-        return DataTypes.INTEGER
-
     return DataTypes.STRING
 
 
