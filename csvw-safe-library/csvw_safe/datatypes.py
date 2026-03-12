@@ -87,6 +87,9 @@ def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements
     series : pd.Series
         Input column.
 
+    max_unique : int, default=20
+        Maximum number of unique values to treat as categorical-like.
+
     Returns
     -------
     DataTypes
@@ -118,7 +121,7 @@ def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements
     return DataTypes.STRING
 
 
-def is_categorical(series: pd.Series) -> bool:
+def is_categorical(series: pd.Series, max_unique: int = 20) -> bool:
     """
     Determine whether a column should be modeled as categorical.
 
@@ -126,6 +129,9 @@ def is_categorical(series: pd.Series) -> bool:
     ----------
     series : pd.Series
         Input column.
+
+    max_unique : int, default=20
+        Maximum number of unique values to treat as categorical-like.
 
     Returns
     -------
@@ -139,12 +145,32 @@ def is_categorical(series: pd.Series) -> bool:
     if pd.api.types.is_bool_dtype(series):
         return True
 
-    if is_small_categorical_integer(series):
+    if is_small_categorical_integer(series, max_unique):
         return True
 
-    if is_small_datetime(series):
+    if is_small_datetime(series, max_unique):
         return True
 
     return not (
         pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series)
     )
+
+
+def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
+    """
+    Determine whether a column should be modeled as continuous.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Input column.
+
+    max_unique : int, default=20
+        Maximum number of unique values to treat as categorical-like.
+
+    Returns
+    -------
+    bool
+        True if the column should be treated as continuous.
+    """
+    return not is_categorical(series, max_unique)

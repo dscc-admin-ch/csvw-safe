@@ -12,14 +12,21 @@ privacy-preserving data synthesis and differential privacy pipelines.
 
 import argparse
 import json
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import pandas.api.types as ptypes
+from pandas.api.types import is_datetime64_any_dtype
 
 from csvw_safe.constants import DependencyType
-from csvw_safe.datatypes import ColumnKind, infer_xmlschema_datatype, is_categorical
+from csvw_safe.datatypes import (
+    ColumnKind,
+    DataTypes,
+    T,
+    infer_xmlschema_datatype,
+    is_categorical,
+    is_continuous,
+)
 from csvw_safe.metadata_structure import (
     ColumnGroupMetadata,
     ColumnMetadata,
@@ -49,10 +56,7 @@ def get_effective_contrib_level(
     return max(fine_level, default_contributions_level)
 
 
-# ============================================================
-# Column level
-# ============================================================
-def get_continuous_bounds(series: pd.Series) -> Tuple[Optional[Any], Optional[Any]]:
+def get_continuous_bounds(series: pd.Series) -> tuple[T, T]:
     """
     Compute minimum and maximum values for continuous columns.
 
@@ -65,55 +69,19 @@ def get_continuous_bounds(series: pd.Series) -> Tuple[Optional[Any], Optional[An
     tuple
         (min_value, max_value)
     """
-    non_null = series.dropna()
-    if non_null.empty:
-        return None, None
-
-    value_min = non_null.min()
-    value_max = non_null.max()
+    value_min = series.min()
+    value_max = series.max()
 
     if pd.api.types.is_datetime64_any_dtype(series):
         return value_min.isoformat(), value_max.isoformat()
     return value_min, value_max
 
 
-def identify_fixed_fields(df: pd.DataFrame, column_name: str, threshold: int = 1) -> List[str]:
-    """
-    Identify columns that are constant within each value of a target column.
-
-    These columns can be treated as deterministic attributes.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-    column_name : str
-        Column used as grouping reference.
-    threshold : int
-        Maximum allowed unique values to consider fixed.
-
-    Returns
-    -------
-    list
-        Names of fixed columns.
-    """
-    grouped = df.groupby(column_name, dropna=False)
-
-    nunique = grouped.nunique(dropna=False)
-    fixed_columns = cast(
-        List[str],  # for the linter
-        nunique.columns[(nunique <= threshold).all()].tolist(),
-    )
-    if len(fixed_columns) == len(df.columns) - 1:
-        return []
-    return fixed_columns
-
-
-def identify_dependency(
-    column_name: str,
+def identify_dependency(  # pylint: disable=too-many-locals
     df: pd.DataFrame,
-    mapping_threshold: float = 0.95,
-    coverage_threshold: float = 0.8,
-    max_mapping_size: int = 25,
+    column_name: str,
+    max_mapping_keys: int = 25,
+    max_mapping_values: int = 10,
 ) -> List[Dependency]:
     """
     Detect dependencies between columns.
@@ -124,15 +92,13 @@ def identify_dependency(
 
     Parameters
     ----------
+    df : pd.DataFrame
     column_name : str
         Target column.
-    df : pd.DataFrame
-    mapping_threshold : float
-        Minimum deterministic ratio required.
-    coverage_threshold : float
-        Minimum dataset coverage required.
-    max_mapping_size : int
-        Maximum allowed mapping size.
+    max_mapping_keys : int
+        Maximum allowed keys in mapping.
+    max_mapping_values : int
+        Maximum allowed values in a key in a mapping.
 
     Returns
     -------
@@ -140,73 +106,54 @@ def identify_dependency(
         Dependency descriptions.
     """
     results: List[Dependency] = []
-
     for col in df.columns:
         if col == column_name:
             continue
 
         valid = df[[column_name, col]].dropna()
-
-        if valid.empty:
-            continue
-
         s_valid = valid[column_name]
         o_valid = valid[col]
 
         # Numeric dependency
-        if ptypes.is_numeric_dtype(s_valid) and ptypes.is_numeric_dtype(o_valid):
+        if is_continuous(s_valid) and is_continuous(o_valid):
+            if is_datetime64_any_dtype(s_valid) != is_datetime64_any_dtype(o_valid):
+                continue
+            s_min, s_max = get_continuous_bounds(s_valid)
+            o_min, o_max = get_continuous_bounds(o_valid)
 
-            if (s_valid >= o_valid).all():
+            # if bounds overlap only
+            if max(s_min, o_min) < min(s_max, o_max):
+                if (s_valid >= o_valid).all():
+                    results.append(
+                        Dependency(depends_on=col, dependency_type=DependencyType.BIGGER)
+                    )
+                    continue
+        else:
+            grouped = valid.groupby(col)[column_name].apply(lambda x: list(pd.unique(x)))
+            lengths = grouped.str.len()
+
+            # Only if private id (?)
+            if (lengths == 1).all():
+                results.append(Dependency(depends_on=col, dependency_type=DependencyType.FIXED))
+                continue
+
+            # Categorical dependency: finite key and values cardinality
+            if valid[col].nunique() > max_mapping_keys:
+                continue
+
+            mapping = grouped[lengths <= max_mapping_values].to_dict()
+            if mapping:
                 results.append(
                     Dependency(
                         depends_on=col,
-                        dependency_type=DependencyType.BIGGER,
+                        dependency_type=DependencyType.MAPPING,
+                        value_map=mapping,
                     )
                 )
-                continue
-
-            if (s_valid <= o_valid).all():
-                results.append(
-                    Dependency(
-                        depends_on=col,
-                        dependency_type=DependencyType.SMALLER,
-                    )
-                )
-                continue
-
-        if valid[col].nunique() > max_mapping_size:
-            continue
-
-        grouped = valid.groupby(col)[column_name].agg(lambda x: list(pd.unique(x)))
-        mapping = grouped.to_dict()
-
-        if not mapping:
-            continue
-
-        deterministic_ratio = sum(len(v) == 1 for v in mapping.values()) / len(mapping)
-        if deterministic_ratio < mapping_threshold:
-            continue
-
-        coverage = valid[col].isin(mapping.keys()).sum() / len(valid)
-        if coverage < coverage_threshold:
-            continue
-
-        clean_mapping = {k: v[0] if len(v) == 1 else v for k, v in mapping.items()}
-
-        results.append(
-            Dependency(
-                depends_on=col,
-                dependency_type=DependencyType.MAPPING,
-                value_map=clean_mapping,
-            )
-        )
 
     return results
 
 
-# ============================================================
-# Make Partitions
-# ============================================================
 def make_predicate(spec: Dict[str, Any], value: Any) -> Predicate:
     """
     Build a Predicate object from a column specification and a partition value.
@@ -659,6 +606,7 @@ def build_column_metadata(
     continuous_partitions: Dict[str, List[Any]],
     fine_contributions_level: Dict[str, ContributionLevel],
     default_contributions_level: ContributionLevel,
+    with_dependencies: bool,
 ) -> ColumnMetadata:
     """
     Construct metadata for a single column.
@@ -689,21 +637,17 @@ def build_column_metadata(
         Default contribution level applied when a column is not explicitly
         listed in ``fine_contributions_level``.
 
+    with_dependencies: bool
+
     Returns
     -------
     ColumnMetadata
         Metadata object describing the column according to the CSVW-SAFE
         specification.
     """
-
+    # Column by itself (mainly CSVW)
     series = df[column_name]
-
-    col_contrib_level = get_effective_contrib_level(
-        column_name, fine_contributions_level, default_contributions_level
-    )
-
     datatype = infer_xmlschema_datatype(series)
-
     column_meta = ColumnMetadata(
         name=column_name,
         datatype=datatype,
@@ -712,19 +656,15 @@ def build_column_metadata(
         nullable_proportion=np.ceil(series.isna().mean() * 1000) / 1000,
     )
 
-    deps = identify_dependency(column_name, df)
-    if deps:
-        column_meta.dependencies = deps
-
-    fixed_fields = identify_fixed_fields(df, column_name)
-    if fixed_fields:
-        column_meta.fixed_per_entity = fixed_fields
-
-    if datatype != "string":
+    if datatype != DataTypes.STRING:
         minimum, maximum = get_continuous_bounds(series)
         column_meta.minimum = minimum
         column_meta.maximum = maximum
 
+    # Privacy unit contributions (DP)
+    col_contrib_level = get_effective_contrib_level(
+        column_name, fine_contributions_level, default_contributions_level
+    )
     if col_contrib_level != ContributionLevel.TABLE:
         attach_partitions_to_column(
             df,
@@ -735,13 +675,19 @@ def build_column_metadata(
             col_contrib_level,
         )
 
+    # Dependencies between columns
+    if with_dependencies:
+        deps = identify_dependency(df, column_name)
+        if deps:
+            column_meta.dependencies = deps
     return column_meta
 
 
 def make_metadata_from_data(
     df: pd.DataFrame,
-    privacy_unit: str,
-    max_contributions: int = 2,
+    with_dependencies: bool = True,
+    privacy_unit: str = "",
+    max_contributions: int = 0,  # TODO: compute
     continuous_partitions: Optional[Dict[str, List[Any]]] = None,
     column_groups: Optional[List[List[str]]] = None,
     default_contributions_level: str = "table",
@@ -754,6 +700,8 @@ def make_metadata_from_data(
     ----------
     df : pd.DataFrame
         Input dataset.
+    with_dependencies: bool
+        Boolean if add dependencies between columns
     privacy_unit : str
         Column identifying the privacy unit.
     max_contributions : int
@@ -786,9 +734,16 @@ def make_metadata_from_data(
     if privacy_unit not in df.columns:
         raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
 
+    # Column
     columns_meta = [
         build_column_metadata(
-            df, column_name, privacy_unit, continuous_partitions, fine_level, default_level
+            df,
+            column_name,
+            privacy_unit,
+            continuous_partitions,
+            fine_level,
+            default_level,
+            with_dependencies,
         )
         for column_name in df.columns
     ]
@@ -830,12 +785,14 @@ def main() -> None:
     csv_file : str
         Path to the input CSV dataset.
 
-    --privacy-unit : str
-        Name of the column representing the privacy unit (e.g., patient_id).
-
     --output : str, optional
         Output JSON file where the generated metadata will be written.
         Default is "metadata.json".
+
+    --privacy-unit : str
+        Name of the column representing the privacy unit (e.g., patient_id).
+
+    --with_dependencies: bool. Default is True.
 
     --max-contributions : int, optional
         Declared global maximum number of contributions per privacy unit
@@ -865,18 +822,21 @@ def main() -> None:
 
     parser.add_argument("csv_file", help="Path to input CSV file")
 
-    parser.add_argument(
-        "--privacy-unit",
-        required=True,
-        help="Column defining the privacy unit (e.g., patient_id)",
-    )
-
     parser.add_argument("--output", default="metadata.json", help="Output metadata JSON file")
 
     parser.add_argument(
-        "--max-contributions",
-        type=int,
-        default=2,
+        "--with_dependencies",
+        default=True,
+        help="Add dependencies between columns",
+    )
+
+    parser.add_argument(
+        "--privacy_unit",
+        help="Column defining the privacy unit (e.g., patient_id)",
+    )
+
+    parser.add_argument(
+        "--max_contributions",
         help="Declared bounds.maxContributions (l_infinity)",
     )
 
@@ -920,6 +880,7 @@ def main() -> None:
 
     metadata = make_metadata_from_data(
         df=df,
+        with_dependencies=args.with_dependencies,
         privacy_unit=args.privacy_unit,
         max_contributions=args.max_contributions,
         continuous_partitions=continuous_partitions,

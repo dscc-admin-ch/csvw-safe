@@ -28,6 +28,7 @@ from csvw_safe.constants import (  # LOWER_BOUND,; UPPER_BOUND,
     COL_LIST,
     COL_NAME,
     COL_TYPE,
+    DATATYPE,
     DEFAULT_NUMBER_PARTITIONS,
     EXHAUSTIVE_PARTITIONS,
     MAX_NUM_PARTITIONS,
@@ -45,10 +46,7 @@ RANDOM_STRINGS = list(string.ascii_lowercase + string.ascii_uppercase + string.d
 
 
 def apply_nulls(
-    series: pd.Series,
-    nullable_prop: float,
-    datatype: str,
-    rng: np.random.Generator,
+    series: pd.Series, nullable_prop: float, datatype: str, rng: np.random.Generator
 ) -> pd.Series:
     """
     Inject null values into a column according to metadata.
@@ -72,10 +70,7 @@ def apply_nulls(
     if nullable_prop <= 0:
         return series
 
-    n_null = int(len(series) * nullable_prop)
-    if n_null == 0:
-        return series
-
+    n_null = max(1, int(len(series) * nullable_prop))  # at least one
     idx = rng.choice(series.index, size=n_null, replace=False)
 
     if datatype == DataTypes.DATETIME:
@@ -88,8 +83,8 @@ def apply_nulls(
 
 def get_bounds(col_meta: Dict[str, Any]) -> tuple[T, T]:
     """Get min and max."""
-    assert MINIMUM in col_meta, "error"
-    assert MAXIMUM in col_meta, "error"
+    assert MINIMUM in col_meta, f"Missing {MINIMUM} in column {col_meta[COL_NAME]}"
+    assert MAXIMUM in col_meta, f"Missing {MAXIMUM} in column {col_meta[COL_NAME]}"
     return col_meta[MINIMUM], col_meta[MAXIMUM]
 
 
@@ -158,7 +153,7 @@ def generate_column_series(
 
     Handles datetime, numeric, and partitioned columns, applying nulls.
     """
-    datatype = col_meta["datatype"]
+    datatype = col_meta[DATATYPE]
     nullable_prop = col_meta.get(NULL_PROP, 0)
 
     if datatype == DataTypes.DATETIME:

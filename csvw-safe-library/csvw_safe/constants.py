@@ -1,6 +1,6 @@
 """Defaults, constants and metadata objects for csvw-safe."""
 
-from enum import Enum
+from enum import StrEnum
 
 # ============================================================
 # CSVW
@@ -69,18 +69,17 @@ NULL_PROP = f"{SYNTH}.nullableProportion"
 ROW_DEP = f"{SYNTH}.rowDependencies"
 
 DEPENDS_ON = f"{SYNTH}.dependsOn"
-DEPENDENCY_TYPE = f"{SYNTH}.dependency_type"
-VALUE_MAP = f"{SYNTH}.value_map"
-
-FIXED_PER_ENTITY = f"{SYNTH}.fixed_per_entity"
+DEPENDENCY_TYPE = f"{SYNTH}.dependencyType"
+VALUE_MAP = f"{SYNTH}.valueMap"
 
 
-class DependencyType(str, Enum):
+class DependencyType(StrEnum):
     """Types of column dependency relationships."""
 
     MAPPING = "mapping"
     BIGGER = "bigger"
-    SMALLER = "smaller"
+    # SMALLER = "smaller" # redundant with bigger
+    FIXED = "fixedPerEntity"
 
 
 # ============================================================

@@ -96,7 +96,6 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
     nullable_proportion: float
 
     dependencies: list[Dependency] = field(default_factory=list)
-    fixed_per_entity: list[str] = field(default_factory=list)
 
     minimum: Optional[Any] = None
     maximum: Optional[Any] = None
@@ -126,9 +125,6 @@ class ColumnMetadata:  # pylint: disable=too-many-instance-attributes
 
         if self.dependencies:
             d[C.ROW_DEP] = [dep.to_dict() for dep in self.dependencies]
-
-        if self.fixed_per_entity:
-            d[C.FIXED_PER_ENTITY] = self.fixed_per_entity
 
         if self.minimum is not None:
             d[C.MINIMUM] = self.minimum

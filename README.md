@@ -416,7 +416,7 @@ is similar to
     "csvw-safe:bounds.maxGroupsPerUnit": 2,
     "csvw-safe:public.maxNumPartitions": 3,
     "csvw-safe:public.exhaustivePartitions": true,
-     "csvw-safe:bounds.maxContributions": 2,
+    "csvw-safe:bounds.maxContributions": 2,
     "csvw-safe:bounds.maxLength": 200
     
     "csvw-safe:public.partitions": [
@@ -805,29 +805,29 @@ Columns may have row-level or multi-row dependencies that describe relationships
 | Term                                  | Type                                  | Meaning                                             |
 | ------------------------------------- | ------------------------------------- | --------------------------------------------------- |
 | `csvw-safe:synth.dependsOn`           | column reference                      | Declares dependency on another column               |
-| `csvw-safe:synth.dependency_type`     | enum (`bigger`, `smaller`, `mapping`) | Type of dependency                                  |
-| `csvw-safe:synth.value_map`           | object                                | Required if `how = mapping`, defines a mapping from the dependent column to the source column. |
+| `csvw-safe:synth.dependencyType`     | enum (`bigger`, `smaller`, `mapping`)  | Type of dependency on single rows                   |
+| `csvw-safe:synth.valueMap`           | object                                 | Required if `dependencyType = mapping`, defines a mapping from the dependent column to the source column. |
 
 Rules:
-- `dependsOn` and `how` MUST be provided together.
-- If `how = mapping`, then `value_map` MUST be provided.
+- `dependsOn` and `dependencyType` MUST be provided together.
+- If `dependencyType = mapping`, then `valueMap` MUST be provided.
 
 Examples:
 1. Age -> Adult
   - Column `age`.
-  - Column `is_adult` depends on `age`, `how = mapping`. 
-  - Mapping: `value_map = {..., 6: False, 7: False, ..., 18: True, 19: True, ...}`.
+  - Column `is_adult` depends on `age`, `dependencyType = mapping`. 
+  - Mapping: `valueMap = {..., 6: False, 7: False, ..., 18: True, 19: True, ...}`.
 
 2. Occupation → Specialization:
   - Column `occupation` values: `medical`, `engineer`.
   - Column `specialization` depends on `occupation`:
     - `medical` → `nurse` or `doctor`
     - `engineer` → `Mechanical Engineering`, `Microengineering`, or `Civil Engineering`
-  - Mapping: `value_map = {'medical': ['nurse', 'doctor'], 'engineer': ['Mechanical Engineering', 'Microengineering', 'Civil Engineering']}`.
+  - Mapping: `valueMap = {'medical': ['nurse', 'doctor'], 'engineer': ['Mechanical Engineering', 'Microengineering', 'Civil Engineering']}`.
 
 3. Treatment dates:
   - Column `first_treatment_date` exists.
-  - Column `second_treatment_date` depends on `first_treatment_date`, `how = bigger`.
+  - Column `second_treatment_date` depends on `first_treatment_date`, `dependencyType = bigger`.
 
 4. Supplementary information
   - If there are many `diagnostic_{i}` column with `i`, the number of the diagnostic and there are filled in increasing order, then if `diagnostic_{i}` is Null then `diagnostic_{i+1}` is also Null. So it depends, `how = mapping`. Mapping: `{None: None}`.
@@ -836,7 +836,7 @@ Examples:
 #### 3.2.2 Column-Level Multi-Rows Level Structural Properties
 | Term                                  | Type             | Meaning                                             |
 | ------------------------------------- | ---------------- | --------------------------------------------------- |
-| `csvw-safe:synth.fixed_per_entity`    | list             | Columns whose values are constant across multiple rows for the same entity. |
+| `csvw-safe:synth.dependencyType`      | `fixedPerEntity` | Type of dependency on multiple on multiple rows     |
 
 Examples:
 1. Person-level data:
@@ -847,6 +847,7 @@ Examples:
   - Column `student_id` repeats for multiple semesters.
   - Column `birth_date` is fixed for that student.
 
+A bit like a mapping but where the keys are private (because they might belong to a privacy unit).
 
 ### 3.3 ColumnGroup-Level Structural Properties
 `csvw-safe:ColumnGroup` represents a grouping key composed of multiple columns

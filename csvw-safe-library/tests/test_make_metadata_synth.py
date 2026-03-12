@@ -1,12 +1,9 @@
-import numpy as np
 import pandas as pd
-import pytest
 
-from csvw_safe import constants as C
+from csvw_safe.constants import DependencyType
 from csvw_safe.make_metadata_from_data import (
     get_continuous_bounds,
     identify_dependency,
-    identify_fixed_fields,
 )
 
 
@@ -17,13 +14,6 @@ def test_get_continuous_bounds_numeric():
     assert max_val == 5
 
 
-def test_get_continuous_bounds_empty():
-    s = pd.Series([], dtype=float)
-    min_val, max_val = get_continuous_bounds(s)
-    assert min_val is None
-    assert max_val is None
-
-
 def test_get_continuous_bounds_datetime():
     datetime_df = pd.DataFrame({"ts": pd.date_range("2025-01-01", periods=5)})
     min_val, max_val = get_continuous_bounds(datetime_df["ts"])
@@ -31,82 +21,98 @@ def test_get_continuous_bounds_datetime():
     assert max_val == datetime_df["ts"].max().isoformat()
 
 
-@pytest.fixture
-def df_constant_per_group():
-    return pd.DataFrame(
+def test_identify_dependency_bigger_overlap():
+    # bounds overlap
+    df = pd.DataFrame(
         {
-            "group": ["A", "A", "B", "B"],
-            "fixed1": [10, 10, 20, 20],
-            "fixed2": ["X", "X", "Y", "Y"],
-            "random": [1, 2, 3, 4],
+            "a": list(range(30, 60)),  # target column
+            "b": list(range(25, 55)),  # depends_on column, overlaps bounds
+        }
+    )
+    result = identify_dependency(df, "a")
+    assert any(d.depends_on == "b" and d.dependency_type == DependencyType.BIGGER for d in result)
+
+    result = identify_dependency(df, "b")
+    assert result == []
+
+
+def test_identify_dependency_bigger_no_overlap():
+    """
+    Test numeric 'BIGGER' dependency when bounds do NOT overlap.
+    """
+    df = pd.DataFrame(
+        {
+            "a": list(range(30, 60)),  # target column
+            "b": list(range(0, 30)),  # depends_on column, no overlap
         }
     )
 
+    result = identify_dependency(df, "a")
 
-def test_fixed_fields_detected(df_constant_per_group):
-    # fixed1 and fixed2 have <=1 unique value per group -> should be detected
-    fixed = identify_fixed_fields(df_constant_per_group, "group", threshold=1)
-    assert "fixed1" in fixed
-    assert "fixed2" in fixed
-    assert "random" not in fixed
+    # No dependency should be detected
+    assert all(d.depends_on != "b" for d in result)
 
 
-def test_no_fixed_fields_for_random(df_constant_per_group):
-    # group by random column -> no other column should be fixed
-    fixed = identify_fixed_fields(df_constant_per_group, "random", threshold=1)
-    assert fixed == []
-
-
-def test_fixed_fields_with_nans():
-    df_with_nan = pd.DataFrame(
+def test_identify_dependency_bigger_equal_bounds():
+    """
+    Test numeric 'BIGGER' when some values are equal.
+    """
+    df = pd.DataFrame(
         {
-            "group": ["A", "A", "B", "B"],
-            "fixed": [1, 1, 2, 2],
-            "maybe": [np.nan, np.nan, np.nan, np.nan],
-            "random": [5, 6, 7, 8],
+            "a": list(range(30, 60)),
+            "b": list(range(30, 60)),  # identical values → a >= b
         }
     )
-    # 'fixed' has <=1 unique per group -> detected
-    # 'maybe' has only NaN -> still treated as <= threshold per group
-    fixed = identify_fixed_fields(df_with_nan, "group", threshold=1)
-    assert "fixed" in fixed
-    assert "maybe" in fixed
-    assert "random" not in fixed
+
+    result = identify_dependency(df, "a")
+
+    assert any(d.depends_on == "b" and d.dependency_type == DependencyType.BIGGER for d in result)
 
 
-def test_identify_dependency_bigger():
-    numeric_df = pd.DataFrame(
+def test_identify_dependency_fixed():
+    df = pd.DataFrame(
         {
-            "a": [1, 2, 3, 4, 5],
-            "b": [5, 4, 3, 2, 1],
-            "c": [10, 10, 10, 10, 10],
-            "d": [1, 2, 2, np.nan, 1],
+            "target": [100, 200, 300, 400],
+            "id": ["A", "B", "C", "D"],  # Each key has exactly one target value
         }
     )
-    result = identify_dependency("a", numeric_df, max_mapping_size=3)
 
-    expected = [
-        {C.DEPENDS_ON: "c", C.DEPENDENCY_TYPE: C.DependencyType.SMALLER},
-        {C.DEPENDS_ON: "d", C.DEPENDENCY_TYPE: C.DependencyType.BIGGER},
+    result = identify_dependency(df, "target")
+
+    # There should be one dependency: id -> target, type FIXED
+    fixed_deps = [
+        d for d in result if d.depends_on == "id" and d.dependency_type == DependencyType.FIXED
     ]
 
-    simplified_result = [
-        {C.DEPENDS_ON: r.depends_on, C.DEPENDENCY_TYPE: r.dependency_type} for r in result
-    ]
-    assert simplified_result == expected
+    assert len(fixed_deps) == 1
+    dep = fixed_deps[0]
+    assert dep.depends_on == "id"
+    assert dep.dependency_type == DependencyType.FIXED
 
 
 def test_identify_dependency_mapping():
-    mapping_df = pd.DataFrame(
+    df = pd.DataFrame(
         {
-            "key": ["A", "B", "B", "C", "C"],
-            "value": [1, 2, 2, 3, 3],
-            "other": ["X", "Y", "Y", "Z", "Z"],
+            "target": [1, 2, 2, 3, 3, 4, 4],
+            "key": ["A", "A", "B", "B", "C", "C", "C"],  # multiple target values per key
         }
     )
 
-    result = identify_dependency("value", mapping_df, mapping_threshold=0.9, coverage_threshold=0.8)
-    expected_mapping = {"A": 1, "B": 2, "C": 3}
-    mapping_dep = next((r for r in result if r.dependency_type == C.DependencyType.MAPPING), None)
-    assert mapping_dep is not None
-    assert mapping_dep.value_map == expected_mapping
+    # max_mapping_values = 2 → any key mapping >2 values will be dropped
+    result = identify_dependency(df, "target", max_mapping_keys=5, max_mapping_values=2)
+
+    # Find MAPPING dependency
+    mapping_deps = [
+        d for d in result if d.depends_on == "key" and d.dependency_type == DependencyType.MAPPING
+    ]
+
+    assert len(mapping_deps) == 1
+    dep = mapping_deps[0]
+
+    # The value_map should include only keys where #values <= max_mapping_values
+    expected_mapping = {
+        "A": [1, 2],
+        "B": [2, 3],
+        "C": [3, 4],  # truncated to max_mapping_values=2
+    }
+    assert dep.value_map == expected_mapping
