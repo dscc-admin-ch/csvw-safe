@@ -174,3 +174,18 @@ def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
         True if the column should be treated as continuous.
     """
     return not is_categorical(series, max_unique)
+
+
+def to_pandas_dtype(datatype: DataTypes) -> str:
+    """Map CSVW-SAFE datatype to a pandas dtype."""
+    if datatype == DataTypes.INTEGER:
+        return "int64"
+    if datatype == DataTypes.DOUBLE:
+        return "float64"
+    if datatype == DataTypes.BOOLEAN:
+        return "boolean"  # pandas nullable boolean
+    if datatype == DataTypes.DATETIME:
+        return "datetime64[ns]"
+    if datatype == DataTypes.STRING:
+        return "string"
+    raise ValueError(f"Unknown datatype {datatype}")

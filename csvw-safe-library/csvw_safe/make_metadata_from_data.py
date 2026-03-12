@@ -138,18 +138,22 @@ def identify_dependency(  # pylint: disable=too-many-locals
                 continue
 
             # Categorical dependency: finite key and values cardinality
-            if valid[col].nunique() > max_mapping_keys:
+            n_keys = valid[col].nunique()
+            if n_keys > max_mapping_keys:
                 continue
 
             mapping = grouped[lengths <= max_mapping_values].to_dict()
             if mapping:
-                results.append(
-                    Dependency(
-                        depends_on=col,
-                        dependency_type=DependencyType.MAPPING,
-                        value_map=mapping,
+                # Prevent redundant reverse mapping:
+                n_values = valid[column_name].nunique()
+                if n_keys <= n_values:
+                    results.append(
+                        Dependency(
+                            depends_on=col,
+                            dependency_type=DependencyType.MAPPING,
+                            value_map=mapping,
+                        )
                     )
-                )
 
     return results
 

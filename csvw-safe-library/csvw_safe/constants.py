@@ -78,7 +78,7 @@ class DependencyType(StrEnum):
 
     MAPPING = "mapping"
     BIGGER = "bigger"
-    # SMALLER = "smaller" # redundant with bigger
+    # SMALLER = "smaller"  # redundant with bigger
     FIXED = "fixedPerEntity"
 
 
