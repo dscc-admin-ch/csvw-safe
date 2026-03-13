@@ -28,7 +28,7 @@ disable_error_code = []
 [tool.pylint.'MASTER']
 ignore = ["venv", "__pycache__"]
 jobs = 1
-disable = ["too-many-arguments", "too-many-positional-arguments"]
+disable = ["too-many-arguments", "too-many-positional-arguments", "R0801", "fixme"]
 max-line-length = 100
 
 [tool.pydocstringformatter]

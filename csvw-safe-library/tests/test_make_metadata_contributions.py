@@ -2,10 +2,15 @@ import pandas as pd
 import pytest
 
 from csvw_safe import constants as C
-from csvw_safe.make_metadata_from_data import build_partitions, make_metadata_from_data
+from csvw_safe.make_metadata_from_data import (
+    build_partitions,
+    make_metadata_from_data,
+    make_numeric_partitions,
+)
 from csvw_safe.metadata_structure import (
+    CategoricalPredicate,
+    ContinuousPredicate,
     MultiColumnPartition,
-    Predicate,
     SingleColumnPartition,
 )
 
@@ -28,13 +33,13 @@ def test_categorical_partition(simple_df):
 
     expected_partitions = [
         SingleColumnPartition(
-            predicate=Predicate(partition_value="blue"),
+            predicate=CategoricalPredicate(partition_value="blue"),
             max_length=2,
             max_groups_per_unit=1,
             max_contributions=2,
         ),
         SingleColumnPartition(
-            predicate=Predicate(partition_value="red"),
+            predicate=CategoricalPredicate(partition_value="red"),
             max_length=3,
             max_groups_per_unit=1,
             max_contributions=2,
@@ -52,19 +57,19 @@ def test_numeric_partition(simple_df):
 
     expected_partitions = [
         SingleColumnPartition(
-            predicate=Predicate(lower_bound=0.0, upper_bound=25.0),
+            predicate=ContinuousPredicate(lower_bound=0.0, upper_bound=25.0),
             max_length=2,
             max_groups_per_unit=2,
             max_contributions=1,
         ),
         SingleColumnPartition(
-            predicate=Predicate(lower_bound=25.0, upper_bound=50.0),
+            predicate=ContinuousPredicate(lower_bound=25.0, upper_bound=50.0),
             max_length=2,
             max_groups_per_unit=2,
             max_contributions=1,
         ),
         SingleColumnPartition(
-            predicate=Predicate(lower_bound=50.0, upper_bound=60.0),
+            predicate=ContinuousPredicate(lower_bound=50.0, upper_bound=60.0),
             max_length=1,
             max_groups_per_unit=1,
             max_contributions=1,
@@ -85,8 +90,8 @@ def test_mixed_partitions(simple_df):
     expected_partitions = [
         MultiColumnPartition(
             predicate={
-                "color": Predicate(partition_value="blue"),
-                "value": Predicate(lower_bound=0.0, upper_bound=25.0),
+                "color": CategoricalPredicate(partition_value="blue"),
+                "value": ContinuousPredicate(lower_bound=0.0, upper_bound=25.0),
             },
             max_length=1,
             max_groups_per_unit=1,
@@ -94,8 +99,8 @@ def test_mixed_partitions(simple_df):
         ),
         MultiColumnPartition(
             predicate={
-                "color": Predicate(partition_value="blue"),
-                "value": Predicate(lower_bound=25.0, upper_bound=50.0),
+                "color": CategoricalPredicate(partition_value="blue"),
+                "value": ContinuousPredicate(lower_bound=25.0, upper_bound=50.0),
             },
             max_length=1,
             max_groups_per_unit=1,
@@ -103,8 +108,8 @@ def test_mixed_partitions(simple_df):
         ),
         MultiColumnPartition(
             predicate={
-                "color": Predicate(partition_value="red"),
-                "value": Predicate(lower_bound=0.0, upper_bound=25.0),
+                "color": CategoricalPredicate(partition_value="red"),
+                "value": ContinuousPredicate(lower_bound=0.0, upper_bound=25.0),
             },
             max_length=1,
             max_groups_per_unit=1,
@@ -112,8 +117,8 @@ def test_mixed_partitions(simple_df):
         ),
         MultiColumnPartition(
             predicate={
-                "color": Predicate(partition_value="red"),
-                "value": Predicate(lower_bound=25.0, upper_bound=50.0),
+                "color": CategoricalPredicate(partition_value="red"),
+                "value": ContinuousPredicate(lower_bound=25.0, upper_bound=50.0),
             },
             max_length=1,
             max_groups_per_unit=1,
@@ -121,8 +126,8 @@ def test_mixed_partitions(simple_df):
         ),
         MultiColumnPartition(
             predicate={
-                "color": Predicate(partition_value="red"),
-                "value": Predicate(lower_bound=50.0, upper_bound=60.0),
+                "color": CategoricalPredicate(partition_value="red"),
+                "value": ContinuousPredicate(lower_bound=50.0, upper_bound=60.0),
             },
             max_length=1,
             max_groups_per_unit=1,
@@ -142,7 +147,7 @@ def test_column_level_partitions(simple_df):
     )
     color_column = next(c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color")
 
-    assert color_column[C.PUBLIC_PARTITIONS] == ["blue", "red"]
+    assert color_column[C.PUBLIC_KEYS] == ["blue", "red"]
     assert color_column[C.MAX_NUM_PARTITIONS] == 2
     assert color_column[C.MAX_LENGTH] == 3
     assert color_column[C.MAX_GROUPS] == 1
@@ -158,9 +163,39 @@ def test_partition_level_partitions(simple_df):
     )
 
     color_column = next(c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color")
-    print(color_column)
 
     assert isinstance(color_column[C.PUBLIC_PARTITIONS], list)
     assert isinstance(color_column[C.PUBLIC_PARTITIONS][0], dict)
 
     assert color_column[C.MAX_NUM_PARTITIONS] == 2
+
+
+def test_datetime_partition(simple_df):
+    # Create partitions for the datetime column
+    bounds = ["2025-01-01", "2025-01-03", "2025-01-05"]
+    partitions = make_numeric_partitions(simple_df, "user_id", "timestamp", bounds=bounds)
+
+    # Expected predicates use ISO strings
+    expected_partitions = [
+        SingleColumnPartition(
+            predicate=ContinuousPredicate(
+                lower_bound=pd.Timestamp("2025-01-01T00:00:00").isoformat(),
+                upper_bound=pd.Timestamp("2025-01-03T00:00:00").isoformat(),
+            ),
+            max_length=2,
+            max_groups_per_unit=2,
+            max_contributions=1,
+        ),
+        SingleColumnPartition(
+            predicate=ContinuousPredicate(
+                lower_bound=pd.Timestamp("2025-01-03T00:00:00").isoformat(),
+                upper_bound=pd.Timestamp("2025-01-05T00:00:00").isoformat(),
+            ),
+            max_length=2,
+            max_groups_per_unit=2,
+            max_contributions=1,
+        ),
+    ]
+
+    # Compare the generated partitions to the expected partitions
+    assert [p.to_dict() for p in partitions] == [p.to_dict() for p in expected_partitions]

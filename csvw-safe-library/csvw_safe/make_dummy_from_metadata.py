@@ -24,7 +24,8 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 
-from csvw_safe.constants import (  # LOWER_BOUND,; UPPER_BOUND,
+from csvw_safe.constants import (
+    ADD_INFO,
     COL_LIST,
     COL_NAME,
     DATATYPE,
@@ -32,14 +33,17 @@ from csvw_safe.constants import (  # LOWER_BOUND,; UPPER_BOUND,
     DEPENDENCY_TYPE,
     DEPENDS_ON,
     EXHAUSTIVE_PARTITIONS,
+    LOWER_BOUND,
     MAX_NUM_PARTITIONS,
     MAXIMUM,
     MINIMUM,
     NULL_PROP,
+    OVERSAMPLING_FACTOR,
     PARTITION_VALUE,
     PREDICATE,
     PUBLIC_PARTITIONS,
     TABLE_SCHEMA,
+    UPPER_BOUND,
     VALUE_MAP,
     DependencyType,
 )
@@ -116,9 +120,7 @@ def generate_double_column(
     return pd.Series(rng.uniform(float(lower), float(upper), size=nb_rows))
 
 
-def generate_boolean_column(
-    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
-) -> pd.Series:
+def generate_boolean_column(nb_rows: int, rng: np.random.Generator) -> pd.Series:
     """Generate boolean column."""
     return pd.Series(rng.choice([True, False], size=nb_rows), dtype="boolean")
 
@@ -166,7 +168,7 @@ def generate_column_series(
     elif datatype in DataTypes.DOUBLE:
         series = generate_double_column(col_meta, nb_rows, rng)
     elif datatype == DataTypes.BOOLEAN:
-        series = generate_boolean_column(col_meta, nb_rows, rng)
+        series = generate_boolean_column(nb_rows, rng)
     elif datatype == DataTypes.STRING:
         series = generate_string_column(col_meta, nb_rows, rng)
     else:
@@ -401,13 +403,50 @@ def generate_column(
     return data_dict
 
 
+def column_group_partitions(
+    df: pd.DataFrame,
+    columns_group_meta: List[Dict[str, Any]],
+) -> pd.DataFrame:
+    """Filter a DataFrame so that only rows matching exhaustive column group partitions remain."""
+    keep_mask = pd.Series(False, index=df.index)
+
+    for col_group in columns_group_meta:
+        if not col_group.get(EXHAUSTIVE_PARTITIONS, False):
+            continue
+        print("new col group")
+        print(col_group)
+
+        partitions = col_group.get(PUBLIC_PARTITIONS, [])
+        print("partitions")
+        print(partitions)
+        for p in partitions:
+            print("ppppppppppppp")
+            print(p)
+            predicate = p[PREDICATE]
+            print("predicate")
+            print(predicate)
+            mask = pd.Series(True, index=df.index)
+            for col, v in predicate.items():
+                if isinstance(v, dict):
+                    if PARTITION_VALUE in v:
+                        mask &= df[col] == v[PARTITION_VALUE]
+                    else:
+                        mask &= (df[col] >= v[LOWER_BOUND]) & (df[col] <= v[UPPER_BOUND])
+                else:
+                    mask &= df[col] == v
+
+            keep_mask |= mask  # union of all allowed partitions
+
+    return df[keep_mask].reset_index(drop=True)
+
+
 def make_dummy_from_metadata(
     metadata: Dict[str, Any],
     nb_rows: int = 100,
     seed: int = 0,
 ) -> pd.DataFrame:
     """
-    Generate a dummy dataset from CSVW-SAFE metadata.
+    Generate a dummy dataset from CSVW-SAFE metadata, respecting exhaustive column group partitions.
 
     Parameters
     ----------
@@ -421,25 +460,45 @@ def make_dummy_from_metadata(
     Returns
     -------
     pandas.DataFrame
-        Generated dataset.
+        Generated dataset
     """
     rng = np.random.default_rng(seed)
     table_schema = metadata.get(TABLE_SCHEMA, {})
+
     columns_meta = table_schema.get(COL_LIST, [])
 
-    data_dict: Dict[str, pd.Series] = {}
-
-    # Column name → dependency column (if any)
     depends_map = {col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta}
+    columns_group_meta = metadata.get(ADD_INFO, [])
+    print(len(columns_group_meta))
+    print(columns_group_meta)
 
-    # Generate all columns respecting dependencies
-    for col_meta in columns_meta:
-        data_dict = generate_column(
-            col_meta[COL_NAME], columns_meta, depends_map, data_dict, nb_rows, rng
-        )
+    generated: List[pd.DataFrame] = []
+    # Oversample to increase chance of covering all partitions
+    oversample_rows = int(nb_rows * OVERSAMPLING_FACTOR)
 
-    # Column groups (joint partitions): TODO
-    return pd.DataFrame(data_dict)
+    while sum(len(df) for df in generated) < nb_rows:
+        data_dict: Dict[str, pd.Series] = {}
+        for col_meta in columns_meta:
+            data_dict = generate_column(
+                col_meta[COL_NAME],
+                columns_meta,
+                depends_map,
+                data_dict,
+                oversample_rows,
+                rng,
+            )
+
+        df = pd.DataFrame(data_dict)
+
+        if columns_group_meta:
+            df = column_group_partitions(df, columns_group_meta)
+
+        generated.append(df)
+
+    output_df = pd.concat(generated, ignore_index=True)
+    output_df = output_df.sample(n=nb_rows, random_state=seed)  # final row selection
+
+    return output_df.reset_index(drop=True)
 
 
 def main() -> None:

@@ -28,14 +28,18 @@ from csvw_safe.datatypes import (
     is_continuous,
 )
 from csvw_safe.metadata_structure import (
+    CategoricalPredicate,
     ColumnGroupMetadata,
     ColumnMetadata,
+    ContinuousPredicate,
     Dependency,
     MultiColumnPartition,
     Partition,
     Predicate,
     SingleColumnPartition,
     TableMetadata,
+    full_partition_to_key_multi,
+    full_partition_to_key_single,
 )
 from csvw_safe.utils import ContributionLevel, sanitize
 
@@ -175,7 +179,7 @@ def make_predicate(spec: Dict[str, Any], value: Any) -> Predicate:
         Dataclass representing the partition predicate.
     """
     if spec["kind"] == ColumnKind.CATEGORICAL:
-        return Predicate(partition_value=value)
+        return CategoricalPredicate(partition_value=value)
 
     # Numeric or datetime interval
     interval = value
@@ -189,7 +193,7 @@ def make_predicate(spec: Dict[str, Any], value: Any) -> Predicate:
         if spec.get("is_datetime")
         else float(interval.right)
     )
-    return Predicate(lower_bound=lower, upper_bound=upper)
+    return ContinuousPredicate(lower_bound=lower, upper_bound=upper)
 
 
 def make_categorical_partitions(
@@ -446,7 +450,7 @@ def make_column_groups(
             )
             group_meta = ColumnGroupMetadata(
                 columns=col_group,
-                partitions=[p.predicate for p in partitions_meta],
+                public_keys=full_partition_to_key_multi(partitions_meta),
                 max_num_partitions=len(partitions_meta),
                 max_length=max_length,
                 max_groups_per_unit=max_groups_per_unit,
@@ -577,20 +581,13 @@ def attach_partitions_to_column(
         column_meta.max_num_partitions = len(partitions_meta)
 
         if col_contrib_level == ContributionLevel.COLUMN:
-
             max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
                 partitions_meta
             )
-
             column_meta.max_length = max_length
             column_meta.max_groups_per_unit = max_groups_per_unit
             column_meta.max_contributions = max_contributions
-
-            column_meta.partitions = [
-                p.predicate.partition_value
-                for p in partitions_meta
-                if p.predicate.partition_value is not None
-            ]
+            column_meta.public_keys = full_partition_to_key_single(partitions_meta)
         else:
             column_meta.partitions = partitions_meta
 
