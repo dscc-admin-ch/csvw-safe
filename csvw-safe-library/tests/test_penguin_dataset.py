@@ -8,8 +8,7 @@ import pytest
 # from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
 from csvw_safe.make_metadata_from_data import make_metadata_from_data
 from csvw_safe.validate_metadata import validate_metadata
-
-# from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
+from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
 
 
 def make_random_unique_id(
@@ -121,7 +120,8 @@ column_groups_continuous = [
 
 
 TEST_CASES = [
-    dict(name="basic"),
+    dict(name="table_minimal", with_dependencies=False),
+    dict(name="table_with_dependencies", with_dependencies=True),
     dict(
         name="continuous_partitions_table_level",
         continuous_partitions=continuous_partitions,
@@ -178,7 +178,7 @@ def test_metadata_generation(df, shacl_path, metadata_dir, config):
 
     print(metadata)
     validate_metadata(metadata)
-    # validate_metadata_shacl(path, shacl_path)
+    validate_metadata_shacl(path, shacl_path)
     # dummy_df = make_dummy_from_metadata(metadata, nb_rows=100, seed=0)
     # assert_same_structure(df, dummy_df, check_categories=False)
 

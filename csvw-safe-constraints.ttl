@@ -1,178 +1,145 @@
-@prefix sh:        <http://www.w3.org/ns/shacl#> .
-@prefix rdf:       <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
-@prefix csvw:      <http://www.w3.org/ns/csvw#> .
-@prefix csvw-safe: <https://w3id.org/csvw-safe#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix csvw: <http://www.w3.org/ns/csvw#> .
+@prefix cs: <http://example.org/csvw-safe#> .
 
-#################################################################
-# TABLE LEVEL
-#################################################################
-csvw-safe:TableShape
+############################################
+# Table
+############################################
+
+cs:TableShape
     a sh:NodeShape ;
     sh:targetClass csvw:Table ;
 
-    # public.length ≤ bounds.maxLength
-    sh:sparql [
-        sh:message "public.length must be ≤ bounds.maxLength." ;
-        sh:select """
-            SELECT $this WHERE {
-                $this csvw-safe:length ?pl ;
-                      csvw-safe:dp.maxLength ?ml .
-                FILTER (?pl > ?ml)
-            }
-        """ ;
-    ] ;
-
-    # bounds.maxContributions ≤ bounds.maxLength
-    sh:sparql [
-        sh:message "bounds.maxContributions must be ≤ bounds.maxLength." ;
-        sh:select """
-            SELECT $this WHERE {
-                $this csvw-safe:dp.maxContributions ?mc ;
-                      csvw-safe:dp.maxLength ?ml .
-                FILTER (?mc > ?ml)
-            }
-        """ ;
-    ] .
-
-#################################################################
-# COLUMN LEVEL
-#################################################################
-csvw-safe:ColumnShape
-    a sh:NodeShape ;
-    sh:targetClass csvw:Column ;
-
-    # synth.nullableProportion between 0 and 1
     sh:property [
-        sh:path csvw-safe:synth.nullableProportion ;
-        sh:datatype xsd:double ;
-        sh:minInclusive 0 ;
-        sh:maxInclusive 1 ;
-    ] ;
-
-    # maxGroupsPerUnit must be non-negative
-    sh:property [
-        sh:path csvw-safe:dp.maxGroupsPerUnit ;
-        sh:datatype xsd:integer ;
-        sh:minInclusive 0 ;
-    ] ;
-
-    # public.maxNumPartitions must be non-negative
-    sh:property [
-        sh:path csvw-safe:partitions ;
-        sh:datatype xsd:integer ;
-        sh:minInclusive 0 ;
-    ] ;
-
-    # contributionLevel must be valid string
-    sh:property [
-        sh:path csvw-safe:public.contributionLevel ;
+        sh:path cs:privacyUnit ;
         sh:datatype xsd:string ;
-        sh:in ("table" "column" "partition") ;
-    ] .
-
-#################################################################
-# COLUMN GROUP / GROUPING KEY LEVEL
-#################################################################
-csvw-safe:GroupingKeyShape
-    a sh:NodeShape ;
-    sh:targetClass csvw-safe:ColumnGroup ;
-
-    # must reference at least 2 columns
-    sh:property [
-        sh:path csvw-safe:columns ;
-        sh:minCount 2 ;
-    ] ;
-
-    # bounds.maxGroupsPerUnit must be non-negative
-    sh:property [
-        sh:path csvw-safe:dp.maxGroupsPerUnit ;
-        sh:datatype xsd:integer ;
-        sh:minInclusive 0 ;
-    ] ;
-
-    # public.maxNumPartitions must be non-negative
-    sh:property [
-        sh:path csvw-safe:partitions ;
-        sh:datatype xsd:integer ;
-        sh:minInclusive 0 ;
-    ] .
-
-#################################################################
-# PARTITION LEVEL
-#################################################################
-csvw-safe:PartitionShape
-    a sh:NodeShape ;
-    sh:targetClass csvw-safe:Partition ;
-
-    # must have predicate
-    sh:property [
-        sh:path csvw-safe:part.predicate ;
         sh:minCount 1 ;
     ] ;
 
-    # bounds.maxContributions must be non-negative
     sh:property [
-        sh:path csvw-safe:dp.maxContributions ;
+        sh:path cs:maxContributions ;
         sh:datatype xsd:integer ;
-        sh:minInclusive 0 ;
+        sh:minCount 1 ;
     ] ;
 
-    # bounds.maxLength must be non-negative
     sh:property [
-        sh:path csvw-safe:dp.maxLength ;
+        sh:path cs:maxLength ;
         sh:datatype xsd:integer ;
-        sh:minInclusive 0 ;
+        sh:minCount 1 ;
     ] ;
 
-    # public.length ≤ bounds.maxLength
-    sh:sparql [
-        sh:message "Partition public.length must be ≤ bounds.maxLength." ;
-        sh:select """
-            SELECT $this WHERE {
-                $this csvw-safe:length ?pl ;
-                      csvw-safe:dp.maxLength ?ml .
-                FILTER (?pl > ?ml)
-            }
-        """ ;
+    sh:property [
+        sh:path cs:length ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
     ] .
 
-#################################################################
-# PREDICATE / INTERVAL LEVEL
-#################################################################
-csvw-safe:PredicateShape
+############################################
+# Column
+############################################
+
+cs:ColumnShape
     a sh:NodeShape ;
-    sh:targetClass csvw-safe:Predicate ;
+    sh:targetClass csvw:Column ;
 
-    # lowerBound ≤ upperBound (for numeric partitions)
-    sh:sparql [
-        sh:message "lowerBound must be ≤ upperBound." ;
-        sh:select """
-            SELECT $this WHERE {
-                $this csvw-safe:part.lowerBound ?l ;
-                      csvw-safe:part.upperBound ?u .
-                FILTER (?l > ?u)
-            }
-        """ ;
-    ] .
-
-#################################################################
-# CONTRIBUTION LEVEL
-#################################################################
-csvw-safe:ContributionShape
-    a sh:NodeShape ;
-    sh:targetClass csvw-safe:Contribution ;
-
-    # maxContributions must be non-negative
     sh:property [
-        sh:path csvw-safe:dp.maxContributions ;
-        sh:datatype xsd:integer ;
-        sh:minInclusive 0 ;
+        sh:path csvw:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
     ] ;
 
-    # maxGroupsPerUnit must be non-negative
     sh:property [
-        sh:path csvw-safe:dp.maxGroupsPerUnit ;
+        sh:path csvw:datatype ;
+        sh:minCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path csvw:required ;
+        sh:datatype xsd:boolean ;
+        sh:minCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path cs:privacyId ;
+        sh:datatype xsd:boolean ;
+        sh:minCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path cs:nullableProportion ;
+        sh:datatype xsd:decimal ;
+        sh:minCount 1 ;
+    ] .
+
+############################################
+# Dependency
+############################################
+
+cs:DependencyShape
+    a sh:NodeShape ;
+
+    sh:property [
+        sh:path cs:dependsOn ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path cs:dependencyType ;
+        sh:datatype xsd:string ;
+        sh:in ("mapping" "bigger" "fixedPerEntity") ;
+        sh:minCount 1 ;
+    ] .
+
+############################################
+# Partition
+############################################
+
+cs:PartitionShape
+    a sh:NodeShape ;
+
+    sh:property [
+        sh:path cs:maxLength ;
         sh:datatype xsd:integer ;
-        sh:minInclusive 0 ;
+        sh:minCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path cs:maxGroupsPerUnit ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path cs:maxContributions ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+    ] .
+
+############################################
+# Predicate (categorical)
+############################################
+
+cs:CategoricalPredicateShape
+    a sh:NodeShape ;
+
+    sh:property [
+        sh:path cs:partitionValue ;
+        sh:minCount 1 ;
+    ] .
+
+############################################
+# Predicate (continuous)
+############################################
+
+cs:ContinuousPredicateShape
+    a sh:NodeShape ;
+
+    sh:property [
+        sh:path cs:lowerBound ;
+    ] ;
+
+    sh:property [
+        sh:path cs:upperBound ;
     ] .

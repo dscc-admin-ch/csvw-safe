@@ -1,6 +1,7 @@
 """Defaults, constants and metadata objects for csvw-safe."""
 
 from enum import StrEnum
+from pathlib import Path
 
 # ============================================================
 # CSVW
@@ -22,7 +23,9 @@ CSVW_CONTEXT = "http://www.w3.org/ns/csvw"
 # CSVW_SAFE Namespaces
 # ============================================================
 CSVW_SAFE = "csvw-safe"
-CSVW_SAFE_CONTEXT = "../../../csvw-safe-context.jsonld"
+CSVW_SAFE_CONTEXT = str(
+    Path("/home/onyxia/work/csvw-safe/csvw-safe-context.jsonld").resolve()
+)  # tmp
 
 # ============================================================
 # Column groups / partitions

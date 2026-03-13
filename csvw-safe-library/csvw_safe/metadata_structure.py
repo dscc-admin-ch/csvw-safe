@@ -179,7 +179,7 @@ class SingleColumnKey(BaseModel):
         """
         if isinstance(self.predicate, CategoricalPredicate):
             return self.predicate.partition_value  # just the value
-        return self.predicate.to_dict()  # full dict for continuous
+        return self.predicate.to_dict()  # should not happen: col level is continuous
 
     @classmethod
     def from_dict(cls, data: Any) -> "SingleColumnKey":

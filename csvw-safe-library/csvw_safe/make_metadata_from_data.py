@@ -335,9 +335,6 @@ def build_partitions(
 
     partitions_meta: List[Partition] = []
     for group_key, group_df in df_work.groupby(grouping_columns, dropna=True, observed=True):
-        if not isinstance(group_key, tuple):
-            group_key = (group_key,)
-
         per_privacy_unit_contrib = group_df.groupby(privacy_unit).size()
         max_contrib = max(
             int(influenced_counts[spec["name"]].loc[per_privacy_unit_contrib.index].max())
