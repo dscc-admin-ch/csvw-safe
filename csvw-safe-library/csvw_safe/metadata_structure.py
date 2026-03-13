@@ -211,7 +211,7 @@ class MultiColumnKeys(BaseModel):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MultiColumnKeys":
         """Create a MultiColumnKeys from CSVW-SAFE metadata."""
-        predicates = {k: parse_predicate(v) for k, v in data[C.PREDICATE].items()}
+        predicates = {k: parse_predicate(v) for k, v in data.items()}
         return cls(predicate=predicates)
 
 
