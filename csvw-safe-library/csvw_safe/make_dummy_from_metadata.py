@@ -38,9 +38,9 @@ from csvw_safe.constants import (
     MAXIMUM,
     MINIMUM,
     NULL_PROP,
-    OVERSAMPLING_FACTOR,
     PARTITION_VALUE,
     PREDICATE,
+    PUBLIC_KEYS,
     PUBLIC_PARTITIONS,
     TABLE_SCHEMA,
     UPPER_BOUND,
@@ -52,7 +52,7 @@ from csvw_safe.datatypes import DataTypes, T, to_pandas_dtype
 RANDOM_STRINGS = list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
 
 
-def apply_nulls(
+def apply_nulls_serie(
     series: pd.Series, nullable_prop: float, datatype: str, rng: np.random.Generator
 ) -> pd.Series:
     """
@@ -130,15 +130,25 @@ def generate_string_column(
 ) -> pd.Series:
     """Generate string column depending on available information."""
     public_keys = []
-    if PUBLIC_PARTITIONS in col_meta:
+    if PUBLIC_KEYS in col_meta:
+        # new key-only format
+        for key in col_meta[PUBLIC_KEYS]:
+            if isinstance(key, str):
+                public_keys.append(key)
+            elif isinstance(key, dict) and PARTITION_VALUE in key:
+                public_keys.append(key[PARTITION_VALUE])
+
+    elif PUBLIC_PARTITIONS in col_meta:
         for partition in col_meta[PUBLIC_PARTITIONS]:
             if isinstance(partition, str):
                 public_keys.append(partition)
             else:
                 public_keys.append(partition[PREDICATE][PARTITION_VALUE])
+
         if EXHAUSTIVE_PARTITIONS in col_meta and not col_meta[EXHAUSTIVE_PARTITIONS]:
             diff = col_meta[MAX_NUM_PARTITIONS] - len(col_meta[PUBLIC_PARTITIONS])
             public_keys.extend(RANDOM_STRINGS[0:diff])
+
     else:
         if MAX_NUM_PARTITIONS in col_meta and col_meta[MAX_NUM_PARTITIONS]:
             public_keys = RANDOM_STRINGS[0 : col_meta[MAX_NUM_PARTITIONS]]
@@ -159,7 +169,6 @@ def generate_column_series(
     Handles datetime, numeric, and partitioned columns, applying nulls.
     """
     datatype = col_meta[DATATYPE]
-    nullable_prop = col_meta.get(NULL_PROP, 0)
 
     if datatype == DataTypes.DATETIME:
         series = generate_datetime_column(col_meta, nb_rows, rng)
@@ -174,7 +183,6 @@ def generate_column_series(
     else:
         raise ValueError(f"Unknow datatype {datatype}")
 
-    series = apply_nulls(series, nullable_prop, datatype, rng)
     return series
 
 
@@ -328,8 +336,6 @@ def generate_dependant_column_series(
     pd.Series
         Generated dependent column series.
     """
-    datatype = col_meta[DATATYPE]
-    nullable_prop = col_meta.get(NULL_PROP, 0)
     depend_type = col_meta[DEPENDENCY_TYPE]
 
     if depend_type == DependencyType.BIGGER:
@@ -341,8 +347,7 @@ def generate_dependant_column_series(
     else:
         raise ValueError(f"Unknown dependency type {depend_type} in {col_meta[COL_NAME]}")
 
-    # apply nulls if needed
-    return apply_nulls(series, nullable_prop, datatype, rng)
+    return series
 
 
 def generate_column(
@@ -403,41 +408,66 @@ def generate_column(
     return data_dict
 
 
+def _apply_value_mask(series: pd.Series, value: Any) -> pd.Series:
+    """Return mask for a categorical or continuous predicate."""
+    if isinstance(value, dict):
+        if PARTITION_VALUE in value:
+            return series == value[PARTITION_VALUE]
+
+        lower = value.get(LOWER_BOUND)
+        upper = value.get(UPPER_BOUND)
+
+        mask = pd.Series(True, index=series.index)
+        if lower is not None:
+            mask &= series > lower
+        if upper is not None:
+            mask &= series <= upper
+        return mask
+
+    return series == value
+
+
+def _predicate_mask(df: pd.DataFrame, predicate: Dict[str, Any]) -> pd.Series:
+    """Return mask for a full predicate."""
+    mask = pd.Series(True, index=df.index)
+    for col, value in predicate.items():
+        mask &= _apply_value_mask(df[col], value)
+    return mask
+
+
 def column_group_partitions(
     df: pd.DataFrame,
     columns_group_meta: List[Dict[str, Any]],
 ) -> pd.DataFrame:
-    """Filter a DataFrame so that only rows matching exhaustive column group partitions remain."""
-    keep_mask = pd.Series(False, index=df.index)
-
+    """Keep only rows belonging to allowed column-group partitions."""
+    global_mask = pd.Series(True, index=df.index)
     for col_group in columns_group_meta:
         if not col_group.get(EXHAUSTIVE_PARTITIONS, False):
             continue
-        print("new col group")
-        print(col_group)
 
-        partitions = col_group.get(PUBLIC_PARTITIONS, [])
-        print("partitions")
-        print(partitions)
+        partitions = col_group.get(PUBLIC_PARTITIONS) or col_group.get(PUBLIC_KEYS, [])
+        group_mask = pd.Series(False, index=df.index)
         for p in partitions:
-            print("ppppppppppppp")
-            print(p)
-            predicate = p[PREDICATE]
-            print("predicate")
-            print(predicate)
-            mask = pd.Series(True, index=df.index)
-            for col, v in predicate.items():
-                if isinstance(v, dict):
-                    if PARTITION_VALUE in v:
-                        mask &= df[col] == v[PARTITION_VALUE]
-                    else:
-                        mask &= (df[col] >= v[LOWER_BOUND]) & (df[col] <= v[UPPER_BOUND])
-                else:
-                    mask &= df[col] == v
+            predicate = p.get(PREDICATE, p)
+            group_mask |= _predicate_mask(df, predicate)
 
-            keep_mask |= mask  # union of all allowed partitions
+        global_mask &= group_mask
 
-    return df[keep_mask].reset_index(drop=True)
+    return df[global_mask].reset_index(drop=True)
+
+
+def apply_nulls_dataframe(
+    df: pd.DataFrame, columns_meta: List[dict[str, Any]], rng: np.random.Generator
+) -> pd.DataFrame:
+    """Apply null proportion on dataframe."""
+    columns_meta_map = {c[COL_NAME]: c for c in columns_meta}
+    for col in df.columns:
+        series = df[col]
+        col_meta = columns_meta_map[col]
+        nullable_prop = col_meta.get(NULL_PROP, 0)
+        datatype = col_meta[DATATYPE]
+        df[col] = apply_nulls_serie(series, nullable_prop, datatype, rng)
+    return df
 
 
 def make_dummy_from_metadata(
@@ -469,13 +499,8 @@ def make_dummy_from_metadata(
 
     depends_map = {col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta}
     columns_group_meta = metadata.get(ADD_INFO, [])
-    print(len(columns_group_meta))
-    print(columns_group_meta)
 
     generated: List[pd.DataFrame] = []
-    # Oversample to increase chance of covering all partitions
-    oversample_rows = int(nb_rows * OVERSAMPLING_FACTOR)
-
     while sum(len(df) for df in generated) < nb_rows:
         data_dict: Dict[str, pd.Series] = {}
         for col_meta in columns_meta:
@@ -484,7 +509,7 @@ def make_dummy_from_metadata(
                 columns_meta,
                 depends_map,
                 data_dict,
-                oversample_rows,
+                nb_rows,
                 rng,
             )
 
@@ -497,6 +522,8 @@ def make_dummy_from_metadata(
 
     output_df = pd.concat(generated, ignore_index=True)
     output_df = output_df.sample(n=nb_rows, random_state=seed)  # final row selection
+
+    output_df = apply_nulls_dataframe(output_df, columns_meta, rng)
 
     return output_df.reset_index(drop=True)
 

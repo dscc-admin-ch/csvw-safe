@@ -192,7 +192,7 @@ class SingleColumnKey(BaseModel):
         - A continuous dict → ContinuousPredicate
         """
         if isinstance(data, dict):
-            pred = parse_predicate(data)
+            pred = parse_predicate(data)  # should not happen: col level is continuous
         else:
             # assume raw categorical value
             pred = CategoricalPredicate(partition_value=data)

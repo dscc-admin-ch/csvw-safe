@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-# from csvw_safe.assert_same_structure import assert_same_structure
-# from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
+from csvw_safe.assert_same_structure import assert_same_structure
+from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
 from csvw_safe.make_metadata_from_data import make_metadata_from_data
 from csvw_safe.validate_metadata import validate_metadata
 from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
@@ -34,6 +34,30 @@ def make_random_unique_id(
 
     assert df.groupby(id_column).size().max() == max_contributions
     return df
+
+
+def get_island_bill_partitions(df: pd.DataFrame, bins: list[float]):
+    """
+    Compute real (species, island, bill_length_bin) partitions from dataframe.
+    """
+    df = df.copy()
+
+    # Create bins
+    bin_edges = [-np.inf] + bins + [np.inf]
+
+    df["bill_bin"] = pd.cut(
+        df["bill_length_mm"],
+        bins=bin_edges,
+        right=True,
+        include_lowest=True,
+    )
+
+    # Drop rows where bill length is missing
+    df = df.dropna(subset=["bill_length_mm"])
+
+    partitions = set(df.groupby(["species", "island", "bill_bin"]).groups.keys())
+
+    return partitions
 
 
 def build_dataset():
@@ -85,6 +109,21 @@ def build_dataset():
         ('Chinstrap', 'Dream'),
         ('Gentoo', 'Biscoe'),
     ]
+
+    partitions = get_island_bill_partitions(df, [30.0, 40.0, 50.0, 60.0])
+    assert partitions == {
+        ('Adelie', 'Biscoe', pd.Interval(30.0, 40.0, closed='right')),
+        ('Adelie', 'Biscoe', pd.Interval(40.0, 50.0, closed='right')),
+        ('Adelie', 'Dream', pd.Interval(30.0, 40.0, closed='right')),
+        ('Adelie', 'Dream', pd.Interval(40.0, 50.0, closed='right')),
+        ('Adelie', 'Torgersen', pd.Interval(30.0, 40.0, closed='right')),
+        ('Adelie', 'Torgersen', pd.Interval(40.0, 50.0, closed='right')),
+        ('Chinstrap', 'Dream', pd.Interval(40.0, 50.0, closed='right')),
+        ('Chinstrap', 'Dream', pd.Interval(50.0, 60.0, closed='right')),
+        ('Gentoo', 'Biscoe', pd.Interval(40.0, 50.0, closed='right')),
+        ('Gentoo', 'Biscoe', pd.Interval(50.0, 60.0, closed='right')),
+    }
+
     return df
 
 
@@ -112,7 +151,7 @@ continuous_partitions = {
     ],
 }
 
-column_groups_categorie = [["species", "island"]]
+column_groups_categories = [["species", "island"]]
 column_groups_continuous = [
     ["species", "island"],
     ["species", "island", "bill_length_mm"],
@@ -139,12 +178,12 @@ TEST_CASES = [
     ),
     dict(
         name="column_groups_partition_level",
-        column_groups=column_groups_categorie,
+        column_groups=column_groups_categories,
         default_contributions_level="partition",
     ),
     dict(
         name="column_groups_column_level",
-        column_groups=column_groups_categorie,
+        column_groups=column_groups_categories,
         default_contributions_level="column",
     ),
     dict(
@@ -176,22 +215,61 @@ def test_metadata_generation(df, shacl_path, metadata_dir, config):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(metadata, f)
 
-    print(metadata)
     validate_metadata(metadata)
     validate_metadata_shacl(path, shacl_path)
-    # dummy_df = make_dummy_from_metadata(metadata, nb_rows=100, seed=0)
-    # assert_same_structure(df, dummy_df, check_categories=False)
+    dummy_df = make_dummy_from_metadata(metadata, nb_rows=100, seed=0)
+    assert_same_structure(df, dummy_df, check_categories=False)
 
 
-# def test_species_island_partitions(df):
-#     metadata = make_metadata_from_data(
-#         df,
-#         privacy_unit="penguin_id",
-#         column_groups=column_groups,
-#         default_contributions_level="column",
-#     )
-#     dummy_df = make_dummy_from_metadata(metadata, nb_rows=100, seed=0)
+GROUP_CAT_TEST_CASES = [
+    dict(
+        column_groups=column_groups_categories,
+        default_contributions_level="partition",
+    ),
+    dict(
+        column_groups=column_groups_categories,
+        default_contributions_level="column",
+    ),
+]
 
-#     expected = set(df.groupby(["species", "island"]).groups)
-#     observed = set(dummy_df.groupby(["species", "island"]).groups)
-#     assert observed == expected
+
+@pytest.mark.parametrize("config", GROUP_CAT_TEST_CASES)
+def test_species_island_partitions(df, config):
+    metadata = make_metadata_from_data(
+        df,
+        privacy_unit="penguin_id",
+        **config,
+    )
+    dummy_df = make_dummy_from_metadata(metadata, nb_rows=100, seed=0)
+
+    expected = set(df.groupby(["species", "island"]).groups)
+    observed = set(dummy_df.groupby(["species", "island"]).groups)
+    assert observed == expected
+
+
+GROUP_CONT_TEST_CASES = [
+    dict(
+        continuous_partitions=continuous_partitions,
+        column_groups=column_groups_continuous,
+        default_contributions_level="partition",
+    ),
+    dict(
+        continuous_partitions=continuous_partitions,
+        column_groups=column_groups_continuous,
+        default_contributions_level="column",
+    ),
+]
+
+
+@pytest.mark.parametrize("config", GROUP_CONT_TEST_CASES)
+def test_species_island_bill_length_mm_partitions(df, config):
+    metadata = make_metadata_from_data(
+        df,
+        privacy_unit="penguin_id",
+        **config,
+    )
+    dummy_df = make_dummy_from_metadata(metadata, nb_rows=100, seed=0)
+
+    expected = get_island_bill_partitions(df, continuous_partitions["bill_length_mm"])
+    observed = get_island_bill_partitions(dummy_df, continuous_partitions["bill_length_mm"])
+    assert observed == expected

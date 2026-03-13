@@ -21,7 +21,7 @@ from csvw_safe.make_dummy_from_metadata import (
     _bigger_series,
     _fixed_series,
     _mapping_series,
-    apply_nulls,
+    apply_nulls_serie,
     generate_column,
     generate_column_series,
     generate_dependant_column_series,
@@ -46,14 +46,14 @@ def sample_metadata():
 
 def test_apply_nulls_numeric(rng):
     s = pd.Series(np.arange(10))
-    out = apply_nulls(s.copy(), 0.5, DataTypes.INTEGER, rng)
+    out = apply_nulls_serie(s.copy(), 0.5, DataTypes.INTEGER, rng)
     assert out.isna().sum() >= 1
     assert len(out) == 10
 
 
 def test_apply_nulls_datetime(rng):
     s = pd.Series(pd.date_range("2023-01-01", periods=5))
-    out = apply_nulls(s.copy(), 0.4, DataTypes.DATETIME, rng)
+    out = apply_nulls_serie(s.copy(), 0.4, DataTypes.DATETIME, rng)
     assert out.isna().sum() >= 1
     assert len(out) == 5
 
