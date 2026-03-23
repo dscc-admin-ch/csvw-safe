@@ -23,9 +23,15 @@ jobs:
           cd csvw-safe-library
           pip install -r requirements.txt
           pip install -e .
-          pip install pytest
+          pip install pytest pytest-cov
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
           cd csvw-safe-library
-          pytest . -vv
+          pytest . -vv --cov=csvw_safe --cov-report=term-missing --cov-report=xml
+      
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: csvw-safe-library/coverage.xml

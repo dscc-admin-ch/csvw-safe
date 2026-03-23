@@ -1,6 +1,8 @@
 name: Lint & Format Checks
 
 on:
+  push:
+    branches: ["**"]
   pull_request:
     branches: ["**"]
 
