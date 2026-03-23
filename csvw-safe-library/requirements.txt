@@ -1,4 +1,5 @@
 numpy>=1.21
+opendp>=0.14
 pandas>=1.3
 pydantic>=2.12.5
 pyshacl>=0.17.2
