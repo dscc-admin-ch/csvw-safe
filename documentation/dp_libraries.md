@@ -32,12 +32,13 @@
 
 
 
-| Term                      | OpenDP                                                                 | 
-| ------------------------- | ---------------------------------------------------------------------- | 
-| `bounds.maxContributions` | `privacy_unit=dp.unit_of(contributions=36)`                            |
-| `bounds.maxGroupsPerUnit` | `margins=[dp.polars.Margin(max_groups=3)]`                             | 
-| `bounds.maxLength`        | `margins=[dp.polars.Margin(max_length=150_000)]`                       | 
-| `bounds.maxNumPartitions` | upper bound of `bounds.maxGroupsPerUnit` if unknown                    |
-| `public.length`           | `margins=[dp.polars.Margin(invariant="length")]`                       |
-| `public.partitions`       | `margins=[dp.polars.Margin(invariant="keys")]` if exhaustivePartitions or `.with_keys()` or `join()` in query |
+| Term                            | OpenDP                                                           | 
+| ------------------------------- | ---------------------------------------------------------------- | 
+| `csvw-safe.dp.maxContributions` | `privacy_unit=dp.unit_of(contributions=36)`                      |
+| `csvw-safe.dp.maxGroupsPerUnit` | `margins=[dp.polars.Margin(max_groups=3)]`                       | 
+| `csvw-safe.dp.maxLength`        | `margins=[dp.polars.Margin(max_length=150_000)]`                 | 
+| `csvw-safe.maxNumPartitions`    | upper bound of `bounds.maxGroupsPerUnit` if unknown              |
+| `csvw-safe.length`              | `margins=[dp.polars.Margin(invariant="length")]`                 |
+| `csvw-safe.PUBLIC_PARTITIONS`   | `margins=[dp.polars.Margin(invariant="keys")]` if csvw-safe.exhaustivePartitions True |
+| `csvw-safe.PUBLIC_KEYS`         | `margins=[dp.polars.Margin(invariant="keys")]` if csvw-safe.exhaustivePartitions True |
 
