@@ -11,6 +11,18 @@ from typing import Any, Dict
 
 import yaml
 
+from csvw_safe.constants import (
+    COL_LIST,
+    COL_NAME,
+    DATATYPE,
+    MAX_CONTRIB,
+    MAXIMUM,
+    MINIMUM,
+    NULL_PROP,
+    PRIVACY_ID,
+    REQUIRED,
+)
+
 
 def map_datatype(csvw_type: str) -> str:
     """
@@ -38,7 +50,7 @@ def map_datatype(csvw_type: str) -> str:
     return type_map[key]
 
 
-def csvw_to_snsql_column(col_meta: Dict[str, Any], privacy_unit: str) -> Dict[str, Any]:
+def csvw_to_snsql_column(col_meta: Dict[str, Any]) -> Dict[str, Any]:
     """
     Convert a single CSVW column metadata to SmartNoise SQL column metadata.
 
@@ -46,42 +58,39 @@ def csvw_to_snsql_column(col_meta: Dict[str, Any], privacy_unit: str) -> Dict[st
     ----------
     col_meta : dict
         Dictionary representing CSVW column metadata.
-        Expected keys: "name", "datatype", optionally "required" or "nullable_proportion",
-        optionally "privacy_id", "minimum", "maximum".
-    privacy_unit : str
-        Name of the column representing the privacy unit. This column will be marked as private_id.
+        Expected keys: "name", "datatype".
 
     Returns
     -------
     dict
         Dictionary representing the column metadata in SmartNoise SQL format.
     """
-    if "datatype" not in col_meta:
+    if DATATYPE not in col_meta:
         raise ValueError(f"Column '{col_meta.get('name', '<unknown>')}' is missing 'datatype'")
 
     # Determine nullable
-    if "required" in col_meta:
-        nullable = not col_meta["required"]
+    if REQUIRED in col_meta:
+        nullable = not col_meta[REQUIRED]
     else:
         # Default fallback to nullable_proportion
-        nullable_prop = col_meta.get("nullable_proportion", 1.0)
+        nullable_prop = col_meta.get(NULL_PROP, 1.0)
         nullable = nullable_prop > 0.0
 
     col_dict: Dict[str, Any] = {
-        "name": col_meta["name"],
-        "type": map_datatype(col_meta["datatype"]),
+        "name": col_meta[COL_NAME],
+        "type": map_datatype(col_meta[DATATYPE]),
         "nullable": nullable,
     }
 
     # Mark privacy unit
-    if col_meta.get("privacy_id", False) or col_meta["name"] == privacy_unit:
+    if col_meta.get(PRIVACY_ID, False):
         col_dict["private_id"] = True
 
     # Add numeric bounds if present
-    if "minimum" in col_meta:
-        col_dict["lower"] = col_meta["minimum"]
-    if "maximum" in col_meta:
-        col_dict["upper"] = col_meta["maximum"]
+    if MINIMUM in col_meta:
+        col_dict["lower"] = col_meta[MINIMUM]
+    if MAXIMUM in col_meta:
+        col_dict["upper"] = col_meta[MAXIMUM]
 
     return col_dict
 
@@ -90,97 +99,176 @@ def csvw_to_smartnoise_sql(
     csvw_meta: Dict[str, Any],
     schema_name: str,
     table_name: str,
-    privacy_unit: str,
-    max_ids: int,
-    row_privacy: bool,
+    row_privacy: bool = False,
+    sample_max_ids: bool = True,
+    censor_dims: bool = True,
+    clamp_counts: bool = False,
+    clamp_columns: bool = True,
+    use_dpsu: bool = False,
 ) -> Dict[str, Any]:
-    """Convert CSVW-SAFE table metadata to SmartNoise SQL table metadata."""
-    table_meta: Dict[str, Any] = {"max_ids": max_ids, "row_privacy": row_privacy}
+    """
+    Convert a CSVW-SAFE table metadata dictionary to SmartNoise SQL metadata.
+
+    Parameters
+    ----------
+    csvw_meta : Dict[str, Any]
+        The CSVW-SAFE metadata dictionary for a single table.
+        Must include "columns" list and "max_contributions" (used as max_ids).
+    schema_name : str
+        Name of the SmartNoise schema (top-level namespace) for the table.
+    table_name : str
+        Name of the table in SmartNoise metadata.
+    row_privacy : bool, default=False
+        Whether to enable row-level privacy for the table.
+    sample_max_ids : bool, default=True
+        If True, skips reservoir sampling when users appear at most max_ids times.
+    censor_dims : bool, default=True
+        If True, drops GROUP BY rows that might reveal rare individuals.
+    clamp_counts : bool, default=False
+        If True, clamps negative differentially private counts to zero.
+    clamp_columns : bool, default=True
+        If True, clamps input data to column lower/upper bounds.
+    use_dpsu : bool, default=False
+        If True, enables Differential Private Set Union for censoring rare dimensions.
+
+    Returns
+    -------
+    Dict[str, Any]
+        SmartNoise SQL metadata as a nested dictionary suitable for YAML serialization.
+        Structure:
+        {
+            "": {
+                schema_name: {
+                    table_name: {
+                        "max_ids": ...,
+                        "row_privacy": ...,
+                        "sample_max_ids": ...,
+                        "censor_dims": ...,
+                        "clamp_counts": ...,
+                        "clamp_columns": ...,
+                        "use_dpsu": ...,
+                        "<column_name>": {
+                            "name": ...,
+                            "type": ...,
+                            "nullable": ...,
+                            "lower": ...,
+                            "upper": ...,
+                            "private_id": ...
+                        },
+                        ...
+                    }
+                }
+            }
+        }
+
+    Raises
+    ------
+    ValueError
+        If "max_contributions" is missing from the CSVW metadata, since it is required
+        as `max_ids`.
+    """
+    # Validate max_ids
+    if MAX_CONTRIB not in csvw_meta:
+        raise ValueError(f"CSVW metadata must include '{MAX_CONTRIB}' (max_ids for SNSQL)")
+    max_ids = csvw_meta[MAX_CONTRIB]
+
+    # Initialize table metadata
+    table_meta: Dict[str, Any] = {
+        "max_ids": max_ids,
+        "row_privacy": row_privacy,
+        "sample_max_ids": sample_max_ids,
+        "censor_dims": censor_dims,
+        "clamp_counts": clamp_counts,
+        "clamp_columns": clamp_columns,
+        "use_dpsu": use_dpsu,
+    }
 
     # Convert columns
-    for col_meta in csvw_meta.get("columns", []):
-        col_dict = csvw_to_snsql_column(col_meta, privacy_unit)
+    for col_meta in csvw_meta.get(COL_LIST, []):
+        col_dict = csvw_to_snsql_column(col_meta)
         table_meta[col_dict["name"]] = col_dict
 
+    # Wrap into schema/table hierarchy
     return {"": {schema_name: {table_name: table_meta}}}
 
 
 def main() -> None:
     """
-    Command-line interface for converting CSVW-SAFE JSON metadata to SmartNoise metadata.
+    CLI for converting CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata.
 
-    This function reads a JSON file containing CSVW-SAFE metadata and translates it into the
-    dictionary/YAML format required by SmartNoise SQL. It maps column datatypes, numeric bounds,
-    and privacy identifiers. Any fields that cannot be inferred from the CSVW metadata (e.g.,
-    `max_ids` or `row_privacy`) can be provided via CLI arguments.
+    This function reads a CSVW-SAFE JSON metadata file and converts it into SmartNoise SQL
+    YAML metadata.
+    All table-level options are configurable via CLI arguments, except `max_ids`, which must
+    be present in the CSVW metadata (as 'max_contributions').
+    Defaults and meaning are taken directly from https://docs.smartnoise.org/sql/metadata.html.
 
     Command-line arguments
     ----------------------
     --input : str (required)
-        Path to the input CSVW-SAFE JSON metadata file.
-        This file is expected to contain a dictionary with the structure produced by
-        your CSVW-SAFE metadata generator, including the "columns" list.
-
+        Path to input CSVW-SAFE JSON metadata file.
     --output : str (required)
-        Path to the output SmartNoise SQL YAML metadata file.
-        The YAML file will contain a nested dictionary suitable for SNSQL ingestion.
-
+        Path to output SmartNoise YAML metadata file.
     --schema : str (default="MySchema")
-        Name of the schema to use in the SmartNoise SQL metadata.
-        This acts as the top-level namespace for the table.
-
+        SmartNoise schema name.
     --table : str (default="MyTable")
-        Name of the table to use in the SmartNoise SQL metadata.
-
-    --privacy_unit : str (default="")
-        Name of the column in the CSVW-SAFE metadata that identifies the privacy unit.
-        This column will be marked as `private_id: True` in the SNSQL metadata.
-        If left empty, no column will be marked as the private identifier.
-
-    --max_ids : int (default=1)
-        Maximum number of rows a unique user can contribute in the table.
-        This sets the `max_ids` field in the SNSQL metadata.
-
+        SmartNoise table name.
     --row_privacy : bool (default=False)
-        Indicates whether row-level privacy is enabled for the table.
-        Sets the `row_privacy` field in the SNSQL metadata.
-        If True, SmartNoise treats each row as a single individual.
-
-    Behavior
-    --------
-    1. Loads CSVW-SAFE JSON metadata from the provided input file.
-    2. Converts each column to the SNSQL format:
-       - Maps CSVW types to SNSQL types ("integer" -> "int", "float" -> "float", etc.)
-       - Adds numeric bounds (`minimum` and `maximum`) as `lower` and `upper`
-       - Marks the privacy unit column with `private_id: True`
-    3. Writes the resulting SmartNoise SQL metadata as a YAML file to the specified output path.
-    4. Prints a confirmation message with the output file path.
+        Treat each row as a single individual.
+    --sample_max_ids : bool (default=True)
+        Skip reservoir sampling if users appear at most max_ids times.
+    --censor_dims : bool (default=True)
+        Drop GROUP BY output rows that might reveal rare individuals.
+    --clamp_counts : bool (default=False)
+        Clamp negative DP counts to zero.
+    --clamp_columns : bool (default=True)
+        Clamp all input data to the column lower/upper bounds.
+    --use_dpsu : bool (default=False)
+        Use Differential Private Set Union for rare dimensions.
     """
     parser = argparse.ArgumentParser(
         description="Convert CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata."
     )
     parser.add_argument("--input", required=True, help="Input CSVW-SAFE JSON metadata file")
     parser.add_argument("--output", required=True, help="Output SmartNoise YAML metadata file")
-    parser.add_argument("--schema", default="schema", help="SmartNoise SQL schema name")
-    parser.add_argument("--table", default="table", help="SmartNoise SQL table name")
+    parser.add_argument("--schema", default="MySchema", help="SmartNoise SQL schema name")
+    parser.add_argument("--table", default="MyTable", help="SmartNoise SQL table name")
+    parser.add_argument("--row_privacy", type=bool, default=False, help="Enable row privacy")
     parser.add_argument(
-        "--privacy_unit", default="", help="Column representing privacy unit (private_id)"
+        "--sample_max_ids", type=bool, default=True, help="Skip sampling if max_ids enforced"
     )
-    parser.add_argument("--max_ids", type=int, default=1, help="Maximum rows per unique user")
     parser.add_argument(
-        "--row_privacy", type=bool, default=False, help="Whether to enable row privacy"
+        "--censor_dims", type=bool, default=True, help="Drop GROUP BY rows revealing individuals"
     )
+    parser.add_argument(
+        "--clamp_counts", type=bool, default=False, help="Clamp negative counts to zero"
+    )
+    parser.add_argument("--clamp_columns", type=bool, default=True, help="Clamp columns to bounds")
+    parser.add_argument(
+        "--use_dpsu", type=bool, default=False, help="Use Differential Private Set Union"
+    )
+
     args = parser.parse_args()
 
+    # Load CSVW metadata
     with open(args.input, "r", encoding="utf-8") as f:
         csvw_meta = json.load(f)
 
+    # Call conversion function
     snsql_meta = csvw_to_smartnoise_sql(
-        csvw_meta, args.schema, args.table, args.privacy_unit, args.max_ids, args.row_privacy
+        csvw_meta=csvw_meta,
+        schema_name=args.schema,
+        table_name=args.table,
+        row_privacy=args.row_privacy,
+        sample_max_ids=args.sample_max_ids,
+        censor_dims=args.censor_dims,
+        clamp_counts=args.clamp_counts,
+        clamp_columns=args.clamp_columns,
+        use_dpsu=args.use_dpsu,
     )
 
+    # Write YAML
     with open(args.output, "w", encoding="utf-8") as f:
-        yaml.safe_dump(snsql_meta, f, sort_keys=False)
+        yaml.safe_dump(snsql_meta, f)
 
     print(f"SmartNoise SQL metadata written to {args.output}")
 
