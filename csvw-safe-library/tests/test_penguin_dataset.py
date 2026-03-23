@@ -20,7 +20,7 @@ def make_random_unique_id(
     df[id_column] = np.arange(len(df))
 
     def random_merge(group):
-        idx = group.index.to_numpy()
+        idx = group.index.to_numpy().copy()
         np.random.shuffle(idx)
 
         chunks = np.array_split(idx, np.ceil(len(idx) / max_contributions))

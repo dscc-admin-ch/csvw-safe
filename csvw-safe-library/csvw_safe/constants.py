@@ -24,7 +24,7 @@ CSVW_CONTEXT = "http://www.w3.org/ns/csvw"
 # ============================================================
 CSVW_SAFE = "csvw-safe"
 CSVW_SAFE_CONTEXT = str(
-    Path("/home/onyxia/work/csvw-safe/csvw-safe-context.jsonld").resolve()
+    (Path(__file__).resolve().parents[2] / "csvw-safe-context.jsonld").resolve()
 )  # tmp
 
 # ============================================================
