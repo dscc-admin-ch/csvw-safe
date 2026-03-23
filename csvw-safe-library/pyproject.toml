@@ -51,6 +51,7 @@ show_missing = true
 skip_covered = false
 exclude_lines = [
     "if __name__ == .__main__.:",   # ignore main guard
+    "if TYPE_CHECKING:",            # ignore main guard
     "def main\\(\\).*:",            # ignore the main() functions
     "raise .*Error",                # ignore lines raising ValueError
 ]
