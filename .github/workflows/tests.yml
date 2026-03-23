@@ -35,21 +35,3 @@ jobs:
         with:
           name: coverage-report
           path: csvw-safe-library/coverage.xml
-
-  coverage-comment:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Download coverage artifacts
-        uses: actions/download-artifact@v6
-        with:
-          pattern: coverage-*
-          merge-multiple: true
-
-      - name: Show coverage summary
-        run: |
-          pip install coverage
-          coverage combine
-          coverage report -m
