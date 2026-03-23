@@ -1,0 +1,45 @@
+name: Lint & Format Checks
+
+on:
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: csvw-safe-library
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_dev.txt
+
+      - name: Run isort
+        run: python -m isort csvw_safe/ tests/ --check-only
+
+      - name: Run black
+        run: python -m black csvw_safe/ tests/ --check
+
+      - name: Run flake8
+        run: python -m flake8 --toml-config=./pyproject.toml csvw_safe/ tests/
+
+      - name: Run mypy
+        run: python -m mypy csvw_safe/
+
+      - name: Run pylint
+        run: python -m pylint csvw_safe/
+
+      - name: Check docstring formatting
+        run: python -m pydocstringformatter --check csvw_safe/
