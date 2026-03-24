@@ -32,12 +32,13 @@ jobs:
       - name: Run tests with coverage
         run: |
           cd csvw-safe-library
-          pytest . -vv --cov=csvw_safe --cov-report=xml
+          coverage run -m pytest . -vv
+          coverage xml
 
       - name: Coverage comment
         uses: py-cov-action/python-coverage-comment-action@v3
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERAGE_PATH: csvw-safe-library/csvw_safe/
+          COVERAGE_PATH: csvw-safe-library/
           MINIMUM_GREEN: 90
           MINIMUM_ORANGE: 80
