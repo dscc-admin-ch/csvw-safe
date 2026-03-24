@@ -1,36 +1,30 @@
-import pytest
-
 from csvw_safe.constants import (
+    ADD_INFO,
     COL_LIST,
     COL_NAME,
+    COLUMNS,
+    EXHAUSTIVE_PARTITIONS,
     MAX_CONTRIB,
     MAX_GROUPS,
     MAX_LENGTH,
-    PUBLIC_KEYS,
+    MAX_NUM_PARTITIONS,
     PUBLIC_LENGTH,
 )
 from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
 
 
 def mock_csvw_metadata():
-    """Minimal valid CSVW-SAFE metadata for margins."""
+    """CSVW-SAFE metadata for margins testing."""
     return {
-        MAX_CONTRIB: 36,
         MAX_LENGTH: 1000,
-        PUBLIC_LENGTH: True,
+        PUBLIC_LENGTH: 1000,
         COL_LIST: [
-            {
-                COL_NAME: "age",
-                MAX_GROUPS: 120,
-            },
-            {
-                COL_NAME: "income",
-                MAX_LENGTH: 10,
-            },
+            {COL_NAME: "age", MAX_GROUPS: 120, PUBLIC_LENGTH: 500},
+            {COL_NAME: "income", MAX_LENGTH: 10, MAX_NUM_PARTITIONS: 40},
             {
                 COL_NAME: "city",
                 MAX_GROUPS: 50,
-                PUBLIC_KEYS: True,
+                EXHAUSTIVE_PARTITIONS: True,
             },
         ],
     }
@@ -66,6 +60,11 @@ def test_column_max_groups():
     assert age_margin is not None
     assert getattr(age_margin, "max_groups", None) == 120
 
+    income_margin = find_margin(margins, ["income"])
+
+    assert income_margin is not None
+    assert getattr(income_margin, "max_groups", None) == 40
+
 
 def test_column_max_length():
     """Test column-level max_length mapping."""
@@ -78,23 +77,20 @@ def test_column_max_length():
     assert getattr(income_margin, "max_length", None) == 10
 
 
-# def test_invariant_keys():
-#     """Test PUBLIC_KEYS → invariant='keys'."""
-#     csvw_meta = mock_csvw_metadata()
-#     margins = csvw_to_opendp_margins(csvw_meta)
+def test_invariant_keys():
+    """Test PUBLIC_KEYS → invariant='keys'."""
+    csvw_meta = mock_csvw_metadata()
+    margins = csvw_to_opendp_margins(csvw_meta)
 
-#     city_margin = find_margin(margins, ["city"])
+    city_margin = find_margin(margins, ["city"])
 
-#     assert city_margin is not None
-#     assert getattr(city_margin, "invariant", None) == "keys"
+    assert city_margin is not None
+    assert getattr(city_margin, "invariant", None) == "keys"
 
+    age_margin = find_margin(margins, ["age"])
 
-def test_missing_max_contrib_raises():
-    """Test missing MAX_CONTRIB raises ValueError."""
-    csvw_meta = {COL_LIST: [{COL_NAME: "age"}]}
-
-    with pytest.raises(ValueError):
-        csvw_to_opendp_margins(csvw_meta)
+    assert age_margin is not None
+    assert getattr(age_margin, "invariant", None) == "lengths"
 
 
 def test_no_optional_fields():
@@ -113,3 +109,25 @@ def test_no_optional_fields():
     # No max_length or max_groups
     assert getattr(col_margin, "max_length", None) is None
     assert getattr(col_margin, "max_groups", None) is None
+
+
+def test_column_group():
+    """CSVW-SAFE metadata for margins testing."""
+    csvw_meta = {
+        MAX_CONTRIB: 10,
+        COL_LIST: [{COL_NAME: "col1"}],
+        ADD_INFO: [
+            {
+                COLUMNS: ["species", "island"],
+                EXHAUSTIVE_PARTITIONS: True,
+            },
+        ],
+    }
+    margins = csvw_to_opendp_margins(csvw_meta)
+
+    # Should have a margin on both columns
+    cols_margin = find_margin(margins, ["species", "island"])
+    assert cols_margin is not None
+
+    # No max_length or max_groups
+    assert getattr(cols_margin, "invariant", None) == "keys"
