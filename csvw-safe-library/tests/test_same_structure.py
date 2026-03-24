@@ -25,6 +25,7 @@ def test_assert_same_structure_only():
 
     # Should not raise if not checking categories
     assert_same_structure(df1, df2, check_categories=False)
+
     with pytest.raises(
         AssertionError, match=r"Column 'name' dummy values .* are not subset of original .*"
     ):

@@ -15,7 +15,6 @@ It does NOT check statistical similarity, only structural compatibility.
 import argparse
 import sys
 from pathlib import Path
-from typing import Set
 
 import pandas as pd
 
@@ -78,15 +77,15 @@ def assert_same_structure(
 
     # Categorical subset check
     if check_categories:
-        for col in df1.columns:
-            if is_categorical(df1[col]):
-                vals1: Set[object] = set(df1[col].dropna().unique())
-                vals2: Set[object] = set(df2[col].dropna().unique())
+        cat_cols = [col for col in df1.columns if is_categorical(df1[col])]
+        for col in cat_cols:
+            vals1 = set(df1[col].dropna().unique())
+            vals2 = set(df2[col].dropna().unique())
 
-                if not vals2.issubset(vals1):
-                    raise AssertionError(
-                        f"Column '{col}' dummy values {vals2} are not subset of original {vals1}"
-                    )
+            if not vals2.issubset(vals1):
+                raise AssertionError(
+                    f"Column '{col}' dummy values {vals2} are not subset of original {vals1}"
+                )
 
     print(
         f"Structure check passed: {len(df1.columns)} columns match, "
@@ -94,9 +93,6 @@ def assert_same_structure(
     )
 
 
-# ----------------------------
-# CLI
-# ----------------------------
 def main() -> None:
     """Command-line entry point for the CSV structure validator."""
     parser = argparse.ArgumentParser(
