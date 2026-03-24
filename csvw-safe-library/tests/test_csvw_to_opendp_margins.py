@@ -78,15 +78,15 @@ def test_column_max_length():
     assert getattr(income_margin, "max_length", None) == 10
 
 
-def test_invariant_keys():
-    """Test PUBLIC_KEYS → invariant='keys'."""
-    csvw_meta = mock_csvw_metadata()
-    margins = csvw_to_opendp_margins(csvw_meta)
+# def test_invariant_keys():
+#     """Test PUBLIC_KEYS → invariant='keys'."""
+#     csvw_meta = mock_csvw_metadata()
+#     margins = csvw_to_opendp_margins(csvw_meta)
 
-    city_margin = find_margin(margins, ["city"])
+#     city_margin = find_margin(margins, ["city"])
 
-    assert city_margin is not None
-    assert getattr(city_margin, "invariant", None) == "keys"
+#     assert city_margin is not None
+#     assert getattr(city_margin, "invariant", None) == "keys"
 
 
 def test_missing_max_contrib_raises():

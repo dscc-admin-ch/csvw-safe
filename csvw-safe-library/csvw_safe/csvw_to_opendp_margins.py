@@ -95,10 +95,10 @@ def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
         # Public keys / partitions → invariant keys
         if col_meta.get(EXHAUSTIVE_PARTITIONS):
             margin_kwargs["invariant"] = "keys"
-        print(col_name)
-        print(margin_kwargs)
+        # print(col_name)
+        # print(margin_kwargs)
         margins.append(dp.polars.Margin(**margin_kwargs))  # type: ignore[attr-defined]
-    print(margins)
+    # print(margins)
     return margins
 
 
