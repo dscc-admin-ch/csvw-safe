@@ -41,6 +41,7 @@ ignore = ".ipynb_checkpoints"
 
 [tool.coverage.run]
 branch = true
+relative_files = true
 source = ["csvw_safe"]        # only track your package
 omit = [
     "*/tests/*",              # ignore test files
