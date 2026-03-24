@@ -2,7 +2,15 @@ import opendp.prelude as dp
 import polars as pl
 import pytest
 
-from csvw_safe.constants import COL_LIST, COL_NAME, DATATYPE, MAX_CONTRIB, PRIVACY_ID
+from csvw_safe.constants import (
+    COL_LIST,
+    COL_NAME,
+    DATATYPE,
+    EXHAUSTIVE_PARTITIONS,
+    MAX_CONTRIB,
+    MAX_LENGTH,
+    PRIVACY_ID,
+)
 from csvw_safe.csvw_to_opendp_context import csvw_to_opendp_context
 
 dp.enable_features("contrib")
@@ -34,19 +42,18 @@ def mock_data():
     return df.lazy()
 
 
-# --------------------------------------------------
-# Tests
-# --------------------------------------------------
 def test_epsilon_context(mock_csvw_meta, mock_data):
     """Test OpenDP context creation with epsilon (Laplace DP)."""
-    epsilon = 1.0
+    epsilon = 10.0
     context = csvw_to_opendp_context(
         csvw_meta=mock_csvw_meta,
         data=mock_data,
         epsilon=epsilon,
         delta=1e-6,
     )
-    assert context is not None
+    query = context.query().select(dp.len())
+    res = query.release().collect()
+    assert res.select("len").item() > 0
 
 
 def test_rho_context(mock_csvw_meta, mock_data):
@@ -57,7 +64,9 @@ def test_rho_context(mock_csvw_meta, mock_data):
         data=mock_data,
         rho=rho,
     )
-    assert context is not None
+    query = context.query().select(dp.len())
+    res = query.release().collect()
+    assert res.select("len").item() > -1000
 
 
 def test_either_required(mock_csvw_meta, mock_data):
@@ -82,9 +91,36 @@ def test_missing_max_contrib(mock_data):
 
 def test_split_evenly_over(mock_csvw_meta, mock_data):
     """Test split_evenly_over parameter."""
+    mock_csvw_meta[MAX_LENGTH] = 10  # second query
+    mock_csvw_meta[COL_LIST][2][EXHAUSTIVE_PARTITIONS] = True  # third query
     context = csvw_to_opendp_context(
         csvw_meta=mock_csvw_meta,
         data=mock_data,
-        epsilon=0.5,
-        split_evenly_over=5,
+        epsilon=5,
+        split_evenly_over=4,
     )
+
+    # First query (global count)
+    query = context.query().select(dp.len())
+    res = query.release().collect()
+    assert res is not None
+
+    # Second query (global sum)
+    query = context.query().select(pl.col("age").dp.sum(bounds=(0, 100)))
+    res = query.release().collect()
+    assert res is not None
+
+    # Third query (grouped count)
+    query = context.query().group_by("signup_date").agg(dp.len())
+    res = query.release().collect()
+    assert res is not None
+
+    # Fourth query (grouped sum)
+    query = context.query().group_by("signup_date").agg(pl.col.age.dp.sum(bounds=(0, 100)))
+    res = query.release().collect()
+    assert res is not None
+
+    # Fifth query (should error)
+    with pytest.raises(ValueError, match="Privacy allowance has been exhausted"):
+        query = context.query().select(dp.len())
+        res = query.release().collect()
