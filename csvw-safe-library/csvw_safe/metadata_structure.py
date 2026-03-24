@@ -172,30 +172,36 @@ class SingleColumnKey(BaseModel):
 
     def to_dict(self) -> Any:
         """
-        Convert the partition to CSVW-SAFE JSON format for key-only usage.
+        Convert a categorical partition to CSVW-SAFE JSON format.
 
-        - Categorical: return only the partition value (e.g., 'blue').
-        - Continuous: return the full dict with lower/upper bounds.
+        Returns:
+            The partition value (e.g., 'blue').
         """
-        if isinstance(self.predicate, CategoricalPredicate):
-            return self.predicate.partition_value  # just the value
-        return self.predicate.to_dict()  # should not happen: col level is continuous
+        if not isinstance(self.predicate, CategoricalPredicate):
+            raise TypeError(f"Expected CategoricalPredicate, got {type(self.predicate).__name__}")
+
+        return self.predicate.partition_value
 
     @classmethod
     def from_dict(cls, data: Any) -> "SingleColumnKey":
         """
-        Create a SingleColumnKey from JSON metadata.
+        Create a SingleColumnKey from a categorical JSON value.
 
-        Handles either:
-        - A dict like {'csvw-safe:part.partitionValue': 'blue'} → CategoricalPredicate
-        - A raw value like 'blue' → CategoricalPredicate
-        - A continuous dict → ContinuousPredicate
+        Args:
+            data: A raw categorical value (e.g., 'blue').
+
+        Returns:
+            SingleColumnKey with a CategoricalPredicate.
+
+        Raises:
+            TypeError: If input is not a categorical value.
         """
         if isinstance(data, dict):
-            pred = parse_predicate(data)  # should not happen: col level is continuous
-        else:
-            # assume raw categorical value
-            pred = CategoricalPredicate(partition_value=data)
+            raise TypeError(
+                "Expected categorical value, got dict (continuous predicates not supported)"
+            )
+
+        pred = CategoricalPredicate(partition_value=data)
         return cls(predicate=pred)
 
 
@@ -397,7 +403,6 @@ class ColumnGroupMetadata(BaseModel):
             max_groups_per_unit=data.get(C.MAX_GROUPS),
             max_contributions=data.get(C.MAX_CONTRIB),
         )
-
         raw_partitions = data.get(C.PUBLIC_PARTITIONS)
         raw_public_keys = data.get(C.PUBLIC_KEYS)
 
