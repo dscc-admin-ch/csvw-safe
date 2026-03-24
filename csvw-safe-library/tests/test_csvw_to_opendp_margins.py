@@ -6,7 +6,7 @@ from csvw_safe.constants import (
     MAX_CONTRIB,
     MAX_GROUPS,
     MAX_LENGTH,
-    PUBLIC_KEYS,
+    EXHAUSTIVE_PARTITIONS,
     PUBLIC_LENGTH,
 )
 from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
@@ -30,7 +30,7 @@ def mock_csvw_metadata():
             {
                 COL_NAME: "city",
                 MAX_GROUPS: 50,
-                PUBLIC_KEYS: True,
+                EXHAUSTIVE_PARTITIONS: True,
             },
         ],
     }
@@ -78,23 +78,15 @@ def test_column_max_length():
     assert getattr(income_margin, "max_length", None) == 10
 
 
-# def test_invariant_keys():
-#     """Test PUBLIC_KEYS → invariant='keys'."""
-#     csvw_meta = mock_csvw_metadata()
-#     margins = csvw_to_opendp_margins(csvw_meta)
+def test_invariant_keys():
+    """Test PUBLIC_KEYS → invariant='keys'."""
+    csvw_meta = mock_csvw_metadata()
+    margins = csvw_to_opendp_margins(csvw_meta)
 
-#     city_margin = find_margin(margins, ["city"])
+    city_margin = find_margin(margins, ["city"])
 
-#     assert city_margin is not None
-#     assert getattr(city_margin, "invariant", None) == "keys"
-
-
-def test_missing_max_contrib_raises():
-    """Test missing MAX_CONTRIB raises ValueError."""
-    csvw_meta = {COL_LIST: [{COL_NAME: "age"}]}
-
-    with pytest.raises(ValueError):
-        csvw_to_opendp_margins(csvw_meta)
+    assert city_margin is not None
+    assert getattr(city_margin, "invariant", None) == "keys"
 
 
 def test_no_optional_fields():
