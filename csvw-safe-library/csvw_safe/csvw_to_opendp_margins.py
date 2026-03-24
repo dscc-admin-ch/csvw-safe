@@ -18,23 +18,62 @@ The resulting margins can be used in an OpenDP context, for example:
 
 import argparse
 import json
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import Any, Dict, List
 
 import opendp.prelude as dp
+from opendp.extras.polars import Margin
 
 from csvw_safe.constants import (
+    ADD_INFO,
     COL_LIST,
     COL_NAME,
+    COLUMNS,
     EXHAUSTIVE_PARTITIONS,
-    MAX_CONTRIB,
     MAX_GROUPS,
     MAX_LENGTH,
     MAX_NUM_PARTITIONS,
     PUBLIC_LENGTH,
 )
 
-if TYPE_CHECKING:
-    from opendp.polars import Margin
+
+def get_margins(col_meta: Dict[str, Any], by: List[str]) -> Dict[str, Any]:
+    """
+    Build margin keyword arguments for a given column or column group.
+
+    Parameters
+    ----------
+    col_meta : Dict[str, Any]
+        Metadata describing a column or group of columns, including
+        differential privacy constraints (e.g., max_length, max_groups).
+    by : List[str]
+        Column name(s) to group by when defining the margin.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Dictionary of keyword arguments suitable for constructing an
+        OpenDP Margin object.
+    """
+    margin_kwargs: Dict[str, Any] = {"by": by}
+
+    # max_length per column
+    if MAX_LENGTH in col_meta:
+        margin_kwargs["max_length"] = col_meta[MAX_LENGTH]
+
+    # max_groups per column
+    if MAX_GROUPS in col_meta:
+        margin_kwargs["max_groups"] = col_meta[MAX_GROUPS]
+    elif MAX_NUM_PARTITIONS in col_meta:
+        margin_kwargs["max_groups"] = col_meta[MAX_NUM_PARTITIONS]
+
+    # Exhaustive partitions --> invariant keys
+    if col_meta.get(EXHAUSTIVE_PARTITIONS):
+        margin_kwargs["invariant"] = "keys"
+
+    if col_meta.get(PUBLIC_LENGTH):
+        margin_kwargs["invariant"] = "lengths"
+
+    return margin_kwargs
 
 
 def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
@@ -62,50 +101,26 @@ def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
     margin_kwargs: Dict[str, Any] = {}
 
     # Max length (for non count queries)
-    global_max_length = csvw_meta.get(MAX_LENGTH)
-    if global_max_length is not None:
-        margin_kwargs["max_length"] = global_max_length
+    if csvw_meta.get(MAX_LENGTH, False):
+        margin_kwargs["max_length"] = csvw_meta[MAX_LENGTH]
 
     # If length is public --> invariant lengths
     if csvw_meta.get(PUBLIC_LENGTH, False):
         margin_kwargs["invariant"] = "lengths"
 
-    print("global")
-    print(margin_kwargs)
-
     if margin_kwargs:
-        margins.append(dp.polars.Margin(**margin_kwargs))  # type: ignore[attr-defined]
+        margins.append(Margin(**margin_kwargs))
 
     # Column-level margins: groupby queries (by=['col_name'], max_length=100, ...)
     for col_meta in csvw_meta.get(COL_LIST, []):
-        col_name = col_meta[COL_NAME]
+        margin_kwargs = get_margins(col_meta, by=[col_meta[COL_NAME]])
+        margins.append(Margin(**margin_kwargs))
 
-        margin_kwargs = {"by": [col_name]}
+    # Multi-columns-level margins: groupby queries (by=['col_1', 'col_2'], max_length=100, ...)
+    for cols_meta in csvw_meta.get(ADD_INFO, []):
+        margin_kwargs = get_margins(cols_meta, by=cols_meta[COLUMNS])
+        margins.append(Margin(**margin_kwargs))
 
-        # max_length per column
-        if MAX_LENGTH in col_meta:
-            margin_kwargs["max_length"] = col_meta[MAX_LENGTH]
-
-        # max_groups per column
-        if MAX_GROUPS in col_meta:
-            margin_kwargs["max_groups"] = col_meta[MAX_GROUPS]
-        elif MAX_NUM_PARTITIONS in col_meta:
-            margin_kwargs["max_groups"] = col_meta[MAX_NUM_PARTITIONS]
-        
-        #  per column
-        if MAX_CONTRIB in col_meta:
-            margin_kwargs["max_groups"] = col_meta[MAX_CONTRIB]
-
-        # Exhaustive partitions --> invariant keys
-        if col_meta.get(EXHAUSTIVE_PARTITIONS):
-            margin_kwargs["invariant"] = "keys"
-            if col_meta.get(PUBLIC_LENGTH):
-                margin_kwargs["invariant"] = "lengths"
-
-        print(col_name)
-        print(margin_kwargs)
-        margins.append(dp.polars.Margin(**margin_kwargs))  # type: ignore[attr-defined]
-    print(margins)
     return margins
 
 
@@ -157,7 +172,7 @@ def main() -> None:
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
             json.dump(margins_dict, f, indent=2)
-        print(f"OpenDP margins written to {args.output}")
+        print(f"opendp margins written to {args.output}")
     else:
         print(json.dumps(margins_dict, indent=2))
 
