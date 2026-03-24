@@ -173,16 +173,41 @@ def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
     return not is_categorical(series, max_unique)
 
 
-def to_pandas_dtype(datatype: DataTypes) -> str:
+def to_pandas_dtype(csvw_type: DataTypes) -> str:
     """Map CSVW-SAFE datatype to a pandas dtype."""
-    if datatype == DataTypes.INTEGER:
-        return "int64"
-    if datatype == DataTypes.DOUBLE:
-        return "float64"
-    if datatype == DataTypes.BOOLEAN:
-        return "boolean"  # pandas nullable boolean
-    if datatype == DataTypes.DATETIME:
-        return "datetime64[ns]"
-    if datatype == DataTypes.STRING:
-        return "string"
-    raise ValueError(f"Unknown datatype {datatype}")
+    if not csvw_type:
+        raise ValueError("CSVW column missing 'datatype'")
+
+    type_map = {
+        DataTypes.INTEGER: "int64",
+        DataTypes.DOUBLE: "float64",
+        DataTypes.STRING: "string",
+        DataTypes.BOOLEAN: "boolean",
+        DataTypes.DATETIME: "datetime64[ns]",
+    }
+
+    if csvw_type not in type_map:
+        raise ValueError(f"Unrecognized CSVW datatype '{csvw_type}'")
+    return type_map[csvw_type]
+
+
+def to_snsql_datatype(csvw_type: DataTypes) -> str:
+    """
+    Map CSVW-SAFE datatype to SmartNoise SQL type.
+
+    Raises ValueError if csvw_type is missing or unrecognized.
+    """
+    if not csvw_type:
+        raise ValueError("CSVW column missing 'datatype'")
+
+    type_map = {
+        DataTypes.INTEGER: "int",
+        DataTypes.DOUBLE: "float",
+        DataTypes.STRING: "string",
+        DataTypes.BOOLEAN: "boolean",
+        DataTypes.DATETIME: "datetime",
+    }
+
+    if csvw_type not in type_map:
+        raise ValueError(f"Unrecognized CSVW datatype '{csvw_type}'")
+    return type_map[csvw_type]

@@ -25,12 +25,11 @@ import opendp.prelude as dp
 from csvw_safe.constants import (
     COL_LIST,
     COL_NAME,
+    EXHAUSTIVE_PARTITIONS,
     MAX_CONTRIB,
     MAX_GROUPS,
     MAX_LENGTH,
-    PUBLIC_KEYS,
     PUBLIC_LENGTH,
-    PUBLIC_PARTITIONS,
 )
 
 if TYPE_CHECKING:
@@ -58,13 +57,11 @@ def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
     """
     margins: List["Margin"] = []
 
-    # --------------------
-    # Global margin (max_length)
-    # --------------------
+    # Global max contribution (any non groupby query)
     if MAX_CONTRIB not in csvw_meta:
         raise ValueError(f"Missing required field '{MAX_CONTRIB}'")
 
-    # Optional global max_length
+    # Global max_length (for non count queries)
     global_max_length = csvw_meta.get(MAX_LENGTH)
 
     margin_kwargs: Dict[str, Any] = {}
@@ -79,9 +76,7 @@ def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
     if margin_kwargs:
         margins.append(dp.polars.Margin(**margin_kwargs))  # type: ignore[attr-defined]
 
-    # --------------------
     # Column-level margins
-    # --------------------
     for col_meta in csvw_meta.get(COL_LIST, []):
         col_name = col_meta[COL_NAME]
 
@@ -98,11 +93,12 @@ def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
             margin_kwargs["max_groups"] = col_meta[MAX_GROUPS]
 
         # Public keys / partitions → invariant keys
-        if col_meta.get(PUBLIC_KEYS) or col_meta.get(PUBLIC_PARTITIONS):
+        if col_meta.get(EXHAUSTIVE_PARTITIONS):
             margin_kwargs["invariant"] = "keys"
-
+        # print(col_name)
+        # print(margin_kwargs)
         margins.append(dp.polars.Margin(**margin_kwargs))  # type: ignore[attr-defined]
-
+    # print(margins)
     return margins
 
 

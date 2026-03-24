@@ -22,32 +22,7 @@ from csvw_safe.constants import (
     PRIVACY_ID,
     REQUIRED,
 )
-
-
-def map_datatype(csvw_type: str) -> str:
-    """
-    Map CSVW-SAFE datatype to SmartNoise SQL type.
-
-    Raises ValueError if csvw_type is missing or unrecognized.
-    """
-    if not csvw_type:
-        raise ValueError("CSVW column missing 'datatype'")
-
-    type_map = {
-        "integer": "int",
-        "float": "float",
-        "decimal": "float",
-        "double": "float",
-        "string": "string",
-        "boolean": "boolean",
-        "date": "datetime",
-        "datetime": "datetime",
-        "time": "datetime",
-    }
-    key = csvw_type.lower()
-    if key not in type_map:
-        raise ValueError(f"Unrecognized CSVW datatype '{csvw_type}'")
-    return type_map[key]
+from csvw_safe.datatypes import to_snsql_datatype
 
 
 def csvw_to_snsql_column(col_meta: Dict[str, Any]) -> Dict[str, Any]:
@@ -78,7 +53,7 @@ def csvw_to_snsql_column(col_meta: Dict[str, Any]) -> Dict[str, Any]:
 
     col_dict: Dict[str, Any] = {
         "name": col_meta[COL_NAME],
-        "type": map_datatype(col_meta[DATATYPE]),
+        "type": to_snsql_datatype(col_meta[DATATYPE]),
         "nullable": nullable,
     }
 
