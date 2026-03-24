@@ -10,6 +10,7 @@ from csvw_safe.constants import (
     MAX_CONTRIB,
     MAX_LENGTH,
     PRIVACY_ID,
+    PRIVACY_UNIT,
 )
 from csvw_safe.csvw_to_opendp_context import csvw_to_opendp_context
 
@@ -44,12 +45,8 @@ def mock_data():
 
 def test_epsilon_context(mock_csvw_meta, mock_data):
     """Test OpenDP context creation with epsilon (Laplace DP)."""
-    epsilon = 10.0
     context = csvw_to_opendp_context(
-        csvw_meta=mock_csvw_meta,
-        data=mock_data,
-        epsilon=epsilon,
-        delta=1e-6,
+        csvw_meta=mock_csvw_meta, data=mock_data, epsilon=10.0, delta=1e-6, split_evenly_over=1
     )
     query = context.query().select(dp.len())
     res = query.release().collect()
@@ -58,11 +55,8 @@ def test_epsilon_context(mock_csvw_meta, mock_data):
 
 def test_rho_context(mock_csvw_meta, mock_data):
     """Test OpenDP context creation with rho (Gaussian DP)."""
-    rho = 0.5
     context = csvw_to_opendp_context(
-        csvw_meta=mock_csvw_meta,
-        data=mock_data,
-        rho=rho,
+        csvw_meta=mock_csvw_meta, data=mock_data, rho=0.5, split_evenly_over=1
     )
     query = context.query().select(dp.len())
     res = query.release().collect()
@@ -81,7 +75,7 @@ def test_either_required(mock_csvw_meta, mock_data):
 def test_missing_max_contrib(mock_data):
     """Ensure ValueError is raised if max_contributions is missing."""
     meta_missing = {"columns": [{COL_NAME: "user_id", DATATYPE: "integer"}]}
-    with pytest.raises(ValueError, match="Missing required field"):
+    with pytest.raises(ValueError, match="Missing max_contributions in metadata"):
         csvw_to_opendp_context(
             csvw_meta=meta_missing,
             data=mock_data,
@@ -124,3 +118,36 @@ def test_split_evenly_over(mock_csvw_meta, mock_data):
     with pytest.raises(ValueError, match="Privacy allowance has been exhausted"):
         query = context.query().select(dp.len())
         res = query.release().collect()
+
+
+def test_identifier_context(mock_csvw_meta, mock_data):
+    """Test OpenDP context creation with identifier."""
+    mock_csvw_meta[PRIVACY_UNIT] = "user_id"
+    context = csvw_to_opendp_context(
+        csvw_meta=mock_csvw_meta, data=mock_data, epsilon=10.0, delta=1e-6, split_evenly_over=1
+    )
+    assert context is not None
+
+
+def test_context_init_split_by_weights(mock_csvw_meta, mock_data):
+    context = csvw_to_opendp_context(
+        csvw_meta=mock_csvw_meta, data=mock_data, epsilon=3, split_by_weights=[1, 1, 1]
+    )
+
+    assert context.remaining_privacy_loss() == [1.0, 1.0, 1.0]
+
+
+def test_changes_distance(mock_csvw_meta, mock_data):
+    """Test other distance types in get_privacy_unit."""
+    context = csvw_to_opendp_context(
+        csvw_meta=mock_csvw_meta,
+        data=mock_data,
+        epsilon=1.0,
+        split_evenly_over=1,
+        distance="changes",
+    )
+
+    query = context.query().select(dp.len())
+    res = query.release().collect()
+
+    assert res.select("len").item() is not None

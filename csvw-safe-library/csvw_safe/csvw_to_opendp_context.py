@@ -17,8 +17,90 @@ from typing import Any, Dict, Optional
 import opendp.prelude as dp
 import polars as pl
 
-from csvw_safe.constants import MAX_CONTRIB
+from csvw_safe.constants import MAX_CONTRIB, PRIVACY_UNIT
 from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
+
+
+def get_privacy_loss(
+    epsilon: Optional[float] = None,
+    rho: Optional[float] = None,
+    delta: Optional[float] = None,
+) -> Any:
+    """
+    Create an opendp privacy loss object.
+
+    Parameters
+    ----------
+    epsilon : float, optional
+        Privacy budget epsilon (for Laplace DP).
+    rho : float, optional
+        Privacy budget rho (for Gaussian / zCDP).
+    delta : float, optional
+        Privacy budget delta (if using approximate DP).
+
+    Returns
+    -------
+    privacy_loss
+        opendp privacy loss object
+
+    Raises
+    ------
+    ValueError
+        If neither epsilon nor rho is provided.
+    """
+
+    if epsilon is None and rho is None:
+        raise ValueError("Either epsilon or rho must be provided")
+
+    if epsilon is not None and rho is not None:
+        raise ValueError("Specify only one of epsilon or rho")
+
+    if epsilon is not None:
+        return dp.loss_of(epsilon=epsilon, delta=delta)
+
+    return dp.loss_of(rho=rho, delta=delta)
+
+
+def get_privacy_unit(csvw_meta: Dict[str, Any], distance: str) -> Any:
+    """
+    Construct an OpenDP privacy unit from CSVW-SAFE metadata.
+
+    Parameters
+    ----------
+    csvw_meta : Dict[str, Any]
+        CSVW-SAFE metadata dictionary.
+
+    Returns
+    -------
+    privacy_unit
+        OpenDP privacy unit descriptor.
+    """
+    if MAX_CONTRIB not in csvw_meta:
+        raise ValueError("Missing max_contributions in metadata")
+
+    max_contrib = csvw_meta[MAX_CONTRIB]
+    identifier = csvw_meta.get(PRIVACY_UNIT)
+
+    kwargs: Dict[str, Any] = {}
+
+    # Map distance type → correct argument
+    if distance == "contributions":
+        kwargs["contributions"] = max_contrib
+    elif distance == "changes":
+        kwargs["changes"] = max_contrib
+    # elif distance == "absolute":
+    # kwargs["absolute"] = max_contrib
+    # elif distance == "l1":
+    # kwargs["l1"] = float(max_contrib)
+    # elif distance == "l2":
+    # kwargs["l2"] = float(max_contrib)
+    else:
+        raise ValueError(f"Unsupported distance type: {distance}")
+
+    if identifier is not None:
+        kwargs["identifier"] = pl.col(identifier)
+
+    return dp.unit_of(**kwargs)
 
 
 def csvw_to_opendp_context(
@@ -27,7 +109,9 @@ def csvw_to_opendp_context(
     epsilon: Optional[float] = None,
     rho: Optional[float] = None,
     delta: Optional[float] = None,
-    split_evenly_over: int = 1,
+    split_evenly_over: Optional[int] = None,
+    split_by_weights: Optional[list[float]] = None,
+    distance: str = "contributions",
 ) -> dp.Context:
     """
     Create an OpenDP Context from CSVW-SAFE metadata and a dataset.
@@ -45,8 +129,12 @@ def csvw_to_opendp_context(
         Privacy budget rho (for Gaussian / zCDP).
     delta : float, optional
         Privacy budget delta (if using approximate DP).
-    split_evenly_over : int, default=1
+    split_evenly_over : int
         Number of queries to split privacy budget across.
+    split_by_weights: list[float]
+        List of privacy budget weight by query.
+    distance: str, default='contributions'
+        Distance metric for privacy unit.
 
     Returns
     -------
@@ -59,43 +147,21 @@ def csvw_to_opendp_context(
         If required metadata (max_contributions) is missing.
         If neither epsilon nor rho is provided.
     """
-    if MAX_CONTRIB not in csvw_meta:
-        raise ValueError(f"Missing required field '{MAX_CONTRIB}'")
+    if split_evenly_over is not None and split_by_weights is not None:
+        raise ValueError("Specify only one of split_evenly_over or split_by_weights")
 
-    max_contrib = csvw_meta[MAX_CONTRIB]
+    kwargs: Dict[str, Any] = {
+        "data": data,
+        "privacy_unit": get_privacy_unit(csvw_meta, distance),
+        "privacy_loss": get_privacy_loss(epsilon, rho, delta),
+        "margins": csvw_to_opendp_margins(csvw_meta),
+    }
+    if split_by_weights is not None:
+        kwargs["split_by_weights"] = split_by_weights
+    else:
+        kwargs["split_evenly_over"] = split_evenly_over
 
-    if epsilon is None and rho is None:
-        raise ValueError("Either epsilon or rho must be provided")
-
-    # Build margins
-    margins = csvw_to_opendp_margins(csvw_meta)
-
-    # Privacy unit
-    privacy_unit = dp.unit_of(contributions=max_contrib)
-
-    # Laplace / standard DP
-    if epsilon is not None:
-        privacy_loss = dp.loss_of(epsilon=epsilon, delta=delta)
-        context = dp.Context.compositor(
-            data=data,
-            privacy_unit=privacy_unit,
-            privacy_loss=privacy_loss,
-            split_evenly_over=split_evenly_over,
-            margins=margins,
-        )
-        return context
-
-    # Gaussian / zCDP
-    # If delta is not provided, it will be ignored by dp.loss_of
-    privacy_loss = dp.loss_of(rho=rho, delta=delta)
-    context = dp.Context.compositor(
-        data=data,
-        privacy_unit=privacy_unit,
-        privacy_loss=privacy_loss,
-        split_evenly_over=split_evenly_over,
-        margins=margins,
-    )
-    return context
+    return dp.Context.compositor(**kwargs)
 
 
 def main() -> None:
@@ -126,6 +192,18 @@ def main() -> None:
     parser.add_argument("--rho", type=float, default=None, help="Privacy budget rho")
     parser.add_argument("--delta", type=float, default=None, help="Privacy budget delta")
     parser.add_argument("--split_evenly_over", type=int, default=1)
+    parser.add_argument(
+        "--split_by_weights",
+        type=float,
+        nargs="+",
+        help="Split privacy budget by weights (e.g. 1 2 3)",
+    )
+    parser.add_argument(
+        "--distance",
+        choices=["contributions", "changes"],  # "absolute", "l1", "l2"
+        default="contributions",
+        help="Distance metric for privacy unit",
+    )
 
     args = parser.parse_args()
 
@@ -144,6 +222,7 @@ def main() -> None:
         rho=args.rho,
         delta=args.delta,
         split_evenly_over=args.split_evenly_over,
+        split_by_weights=args.split_by_weights,
     )
 
     print("OpenDP Context successfully created.")
