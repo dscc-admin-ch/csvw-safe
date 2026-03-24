@@ -8,6 +8,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    permissions:
+      pull-requests: write
+      contents: write
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -23,15 +27,18 @@ jobs:
           cd csvw-safe-library
           pip install -r requirements.txt
           pip install -e .
-          pip install pytest pytest-cov
+          pip install pytest pytest-cov coverage
 
       - name: Run tests with coverage
         run: |
           cd csvw-safe-library
-          pytest . -vv --cov=csvw_safe --cov-report=term-missing --cov-report=xml
-      
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+          coverage run -m pytest . -vv
+          coverage xml
+
+      - name: Coverage comment
+        uses: py-cov-action/python-coverage-comment-action@v3
         with:
-          name: coverage-report
-          path: csvw-safe-library/coverage.xml
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERAGE_PATH: csvw-safe-library/
+          MINIMUM_GREEN: 90
+          MINIMUM_ORANGE: 80
