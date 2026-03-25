@@ -1,6 +1,9 @@
 [project]
 name = "csvw-safe"
 version = "0.1.0"
+description = "Safe processing utilities for CSVW data"
+readme = "README.md"
+requires-python = ">=3.9"
 dependencies = [
     "numpy>=1.21",
     "pandas>=1.3",
