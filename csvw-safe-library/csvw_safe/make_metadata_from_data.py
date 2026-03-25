@@ -441,7 +441,7 @@ def make_column_groups(
             continuous_partitions,
             privacy_unit,
         )
-        if col_contrib_level == ContributionLevel.COLUMN:
+        if default_contributions_level == ContributionLevel.COLUMN:
             max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
                 partitions_meta
             )
@@ -453,7 +453,7 @@ def make_column_groups(
                 max_groups_per_unit=max_groups_per_unit,
                 max_contributions=max_contributions,
             )
-        else:
+        else:  # ContributionLevel.PARTITION
             group_meta = ColumnGroupMetadata(
                 columns=col_group,
                 partitions=partitions_meta,

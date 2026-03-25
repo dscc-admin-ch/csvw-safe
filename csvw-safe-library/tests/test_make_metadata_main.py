@@ -140,7 +140,7 @@ def test_partition_contribution_level_big(big_df):
     assert first_partition == expected_first_partition
 
 
-def test_column_groups_big(big_df):
+def test_column_groups_big_partition_level(big_df):
     metadata = make_metadata_from_data(
         big_df,
         privacy_unit="user_id",
@@ -158,6 +158,27 @@ def test_column_groups_big(big_df):
     assert group["@type"] == C.COLUMN_GROUP
     assert group["csvw-safe:columns"] == ["color", "value"]
     assert C.PUBLIC_PARTITIONS in group
+
+
+def test_column_groups_big_column_level(big_df):
+    metadata = make_metadata_from_data(
+        big_df,
+        privacy_unit="user_id",
+        continuous_partitions={"value": [0, 25, 50, 75, 100]},
+        column_groups=[["color", "value"]],
+        default_contributions_level="column",
+    )
+
+    assert C.ADD_INFO in metadata
+
+    groups = metadata[C.ADD_INFO]
+    assert len(groups) == 1
+
+    group = groups[0]
+    assert group["@type"] == C.COLUMN_GROUP
+    assert group["csvw-safe:columns"] == ["color", "value"]
+    assert C.PUBLIC_PARTITIONS not in group
+    assert group[C.MAX_NUM_PARTITIONS] == 12
 
 
 def test_fine_contribution_override_big(big_df):
