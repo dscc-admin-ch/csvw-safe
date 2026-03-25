@@ -22,16 +22,18 @@ pip install pandas numpy pyshacl
 ```
 Note: pyshacl only if additional validation with `validate_metadata_shacl.py`.
 
-Install the library via pip: TODO!!
+Install the library via pip:
 ```
 pip install csvw-safe-library
+pip install csvw-safe[full]
 ```
-or 
+
+or for development: 
 ```
 git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
 cd csvw-safe-library
-pip install .
-```
+pip install -e .[dev]```
+
 
 ## Scripts Overview
 
