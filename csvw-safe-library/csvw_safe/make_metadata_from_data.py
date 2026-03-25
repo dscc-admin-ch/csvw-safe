@@ -865,11 +865,6 @@ def main() -> None:
     args = parser.parse_args()
 
     df = pd.read_csv(args.csv_file)
-    for col in df.columns:
-        try:
-            df[col] = pd.to_datetime(df[col])
-        except (ValueError, TypeError):
-            pass
 
     continuous_partitions = (
         json.loads(args.continuous_partitions) if args.continuous_partitions else {}

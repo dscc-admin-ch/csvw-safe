@@ -134,6 +134,26 @@ def test_column_nullable_handling():
     assert table_meta["col2"]["nullable"] is False
 
 
+def test_float_and_boolean():
+    """Test nullable_proportion is converted correctly to nullable flag."""
+    csvw_meta = {
+        MAX_CONTRIB: 1,
+        COL_LIST: [
+            {COL_NAME: "col1", DATATYPE: "double", NULL_PROP: 0.5},
+            {COL_NAME: "col2", DATATYPE: "boolean", NULL_PROP: 0.0},
+        ],
+    }
+    snsql_meta = csvw_to_smartnoise_sql(
+        csvw_meta=csvw_meta,
+        schema_name="Schema",
+        table_name="Table",
+    )
+    table_meta = snsql_meta[""]["Schema"]["Table"]
+
+    assert table_meta["col1"]["type"] == "float"
+    assert table_meta["col2"]["type"] == "boolean"
+
+
 def test_missing_max_contributions_raises():
     """Test that missing max_contributions raises ValueError."""
     csvw_meta = {"columns": [{COL_NAME: "col1", DATATYPE: "integer"}]}

@@ -42,13 +42,11 @@ class DataTypes(StrEnum):
     LONG = "long"
     INT = "int"
     SHORT = "short"
-    NON_NEGATIVE_INTEGER = "nonNegativeInteger"
     POSITIVE_INTEGER = "positiveInteger"
     UNSIGNED_LONG = "unsignedLong"
     UNSIGNED_INT = "unsignedInt"
     UNSIGNED_SHORT = "unsignedShort"
     UNSIGNED_BYTE = "unsignedByte"
-    NON_POSITIVE_INTEGER = "nonPositiveInteger"
     NEGATIVE_INTEGER = "negativeInteger"
 
     # FLOAT (categorical or continuous)
@@ -77,13 +75,11 @@ XSD_GROUP_MAP: dict[DataTypes, DataTypesGroups] = {
     DataTypes.LONG: DataTypesGroups.INTEGER,
     DataTypes.INT: DataTypesGroups.INTEGER,
     DataTypes.SHORT: DataTypesGroups.INTEGER,
-    DataTypes.NON_NEGATIVE_INTEGER: DataTypesGroups.INTEGER,
     DataTypes.POSITIVE_INTEGER: DataTypesGroups.INTEGER,
     DataTypes.UNSIGNED_LONG: DataTypesGroups.INTEGER,
     DataTypes.UNSIGNED_INT: DataTypesGroups.INTEGER,
     DataTypes.UNSIGNED_SHORT: DataTypesGroups.INTEGER,
     DataTypes.UNSIGNED_BYTE: DataTypesGroups.INTEGER,
-    DataTypes.NON_POSITIVE_INTEGER: DataTypesGroups.INTEGER,
     DataTypes.NEGATIVE_INTEGER: DataTypesGroups.INTEGER,
     # Floats
     DataTypes.DECIMAL: DataTypesGroups.FLOAT,
@@ -126,15 +122,11 @@ def refine_integer_type(series: pd.Series) -> DataTypes:
     """Infer type of integer."""
     s = series.dropna()
 
-    if (s >= 0).all():
-        if (s > 0).all():
-            return DataTypes.POSITIVE_INTEGER
-        return DataTypes.NON_NEGATIVE_INTEGER
+    if (s > 0).all():
+        return DataTypes.POSITIVE_INTEGER
 
-    if (s <= 0).all():
-        if (s < 0).all():
-            return DataTypes.NEGATIVE_INTEGER
-        return DataTypes.NON_POSITIVE_INTEGER
+    if (s < 0).all():
+        return DataTypes.NEGATIVE_INTEGER
 
     return DataTypes.INTEGER
 
@@ -147,22 +139,14 @@ def is_categorical(series: pd.Series, max_unique: int = 20) -> bool:
 
     inferred = infer_xmlschema_datatype(series)
     group = XSD_GROUP_MAP[inferred]
-
-    # always categorical
+    print("********")
+    print(group)
+    # string and boolean: categorical
     if group in {DataTypesGroups.STRING, DataTypesGroups.BOOLEAN}:
         return True
 
-    # numeric/datetime → depends on cardinality
-    if group in {
-        DataTypesGroups.INTEGER,
-        DataTypesGroups.FLOAT,
-        DataTypesGroups.DATETIME,
-        DataTypesGroups.DURATION,
-    }:
-        non_null = series.dropna()
-        return bool(non_null.nunique() <= max_unique)
-
-    return True
+    # numeric/datetime/duration: depend on cardinality
+    return bool(non_null.nunique() <= max_unique)
 
 
 def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
@@ -185,7 +169,7 @@ def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
     return not is_categorical(series, max_unique)
 
 
-def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements
+def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements, too-many-branches
     series: pd.Series,
 ) -> DataTypes:
     """Infer xml schema datatype."""
@@ -196,6 +180,8 @@ def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements
 
     # Native pandas types
     if pd.api.types.is_bool_dtype(s):
+        return DataTypes.BOOLEAN
+    if s.dtype == object and s.map(lambda x: isinstance(x, bool)).all():
         return DataTypes.BOOLEAN
 
     if pd.api.types.is_datetime64_any_dtype(s):
@@ -211,19 +197,18 @@ def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements
 
     # String
     if pd.api.types.is_string_dtype(s) or s.dtype == object:
-        sample = s.astype(str).head(50)
 
-        if sample.map(lambda v: v.lower() in {"true", "false"}).all():
+        if s.map(lambda v: v.lower() in {"true", "false"}).all():
             return DataTypes.BOOLEAN
 
-        if sample.map(is_date).all():
+        if s.map(is_date).all():
             return DataTypes.DATE
 
-        if sample.map(is_datetime).all():
+        if s.map(is_datetime).all():
             return DataTypes.DATETIME
 
         # Numeric inside strings
-        nums = pd.to_numeric(sample, errors="coerce")
+        nums = pd.to_numeric(s, errors="coerce")
         if not nums.isna().any():
             if (nums % 1 == 0).all():
                 return refine_integer_type(nums)

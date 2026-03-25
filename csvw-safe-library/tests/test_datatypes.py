@@ -2,7 +2,47 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from csvw_safe.datatypes import infer_xmlschema_datatype, is_categorical
+from csvw_safe.datatypes import (
+    DataTypes,
+    infer_xmlschema_datatype,
+    is_categorical,
+    is_date,
+    is_datetime,
+    refine_integer_type,
+)
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("2023-03-25", True),
+        ("2023-03-25T12:34:56", False),  # datetime, not date
+        ("25-03-2023", False),  # wrong format
+        ("2023-3-5", False),  # wrong format (< 10)
+        ("not a date", False),
+        (None, False),
+        (12345, False),
+    ],
+)
+def test_is_date(value, expected):
+    assert is_date(value) == expected
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("2023-03-25T12:34:56", True),
+        ("2023-03-25", True),  # date also valid ISO format
+        ("2023-03-25 12:34:56", True),
+        ("2023-03-05T01:02:03", True),
+        ("2023-3-5T01:02:03", False),
+        ("invalid", False),
+        (None, False),
+        (123456, False),
+    ],
+)
+def test_is_datetime(value, expected):
+    assert is_datetime(value) == expected
 
 
 @pytest.mark.parametrize(
@@ -36,25 +76,6 @@ def test_is_categorical_datetime(series, expected):
 @pytest.mark.parametrize(
     "series,expected",
     [
-        (pd.Series([True, False]), "boolean"),
-        (pd.Series([1, 2, 3]), "positiveInteger"),
-        (pd.Series([1.2, 3.4]), "double"),
-        (pd.Series(["a", "b"]), "string"),
-        (pd.Series([1, 2.5, 3]), "double"),
-        (pd.Series([1.5, 2, 3]), "double"),
-        (pd.Series([-1, 2, 3]), "integer"),
-        (pd.Series([-1, 2, np.nan, 3]), "integer"),
-        (pd.Series(pd.date_range("2025-01-01", periods=3)), "dateTime"),
-        (pd.Series([pd.NA, pd.NA]), "string"),
-    ],
-)
-def test_infer_xmlschema_datatype(series, expected):
-    assert infer_xmlschema_datatype(series) == expected
-
-
-@pytest.mark.parametrize(
-    "series,expected",
-    [
         (pd.Series([True, False]), True),
         (pd.Series([True, False, np.nan]), True),
         (pd.Series([1, 2, 2, np.nan, 1]), True),
@@ -67,26 +88,54 @@ def test_infer_xmlschema_datatype(series, expected):
         (pd.Series([np.nan, np.nan]), True),
     ],
 )
-def test_is_categorical(series, expected):
+def test_is_categorical_all(series, expected):
     assert is_categorical(series) is expected
 
 
-# ============================================================
-# Cross-function consistency
-# ============================================================
-def test_is_categorical_consistency():
-    s = pd.Series(["a", "b", "a", "c"])
+def test_refine_integer_type():
+    # positive integer
+    s = pd.Series([1, 2, 3])
+    assert refine_integer_type(s) == DataTypes.POSITIVE_INTEGER
 
-    assert is_categorical(s)
+    # non-negative integer including zero
+    s = pd.Series([0, 1, 2])
+    assert refine_integer_type(s) == DataTypes.INTEGER
+
+    # negative integer
+    s = pd.Series([-5, -2, -1])
+    assert refine_integer_type(s) == DataTypes.NEGATIVE_INTEGER
+
+    # non-positive integer including zero
+    s = pd.Series([-3, 0, -1])
+    assert refine_integer_type(s) == DataTypes.INTEGER
+
+    # mixed integers
+    s = pd.Series([-1, 0, 1])
+    assert refine_integer_type(s) == DataTypes.INTEGER
 
 
-def test_small_integer_is_also_categorical():
-    s = pd.Series([1, 2, 3, 1, 2])
-
-    assert is_categorical(s)
-
-
-def test_large_integer_not_categorical():
-    s = pd.Series(range(100))
-
-    assert not is_categorical(s)
+@pytest.mark.parametrize(
+    "series,expected",
+    [
+        (pd.Series([True, False]), DataTypes.BOOLEAN),
+        (pd.Series(["True", "False"]), DataTypes.BOOLEAN),
+        (pd.Series(["true", "false"]), DataTypes.BOOLEAN),
+        (pd.Series([-1, 2, 3]), DataTypes.INTEGER),
+        (pd.Series([-1, 2, np.nan, 3]), DataTypes.INTEGER),
+        (pd.Series([0, 2, 3]), DataTypes.INTEGER),
+        (pd.Series([1, 2, 3]), DataTypes.POSITIVE_INTEGER),
+        (pd.Series(["1", "2", "3"]), DataTypes.POSITIVE_INTEGER),
+        (pd.Series([1.0, 2.0, 3.0]), DataTypes.POSITIVE_INTEGER),
+        (pd.Series([1.2, 3.4]), DataTypes.DOUBLE),
+        (pd.Series([1, 2.5, 3]), DataTypes.DOUBLE),
+        (pd.Series([1.5, 2, 3]), DataTypes.DOUBLE),
+        (pd.Series(["1.5", "2", "3"]), DataTypes.DOUBLE),
+        (pd.Series(pd.date_range("2025-01-01", periods=3)), DataTypes.DATETIME),
+        (pd.Series(["2023-03-25T12:00:00", "2023-03-26T01:23:45"]), DataTypes.DATETIME),
+        (pd.Series(["2023-03-25", "2023-01-01"]), DataTypes.DATE),
+        (pd.Series([pd.NA, pd.NA]), DataTypes.STRING),
+        (pd.Series(["a", "b"]), DataTypes.STRING),
+    ],
+)
+def test_infer_xmlschema_datatype(series, expected):
+    assert infer_xmlschema_datatype(series) == expected

@@ -84,22 +84,22 @@ def generate_integer_column(
     lower, upper = get_bounds(col_meta)
     datatype: DataTypes = col_meta[DATATYPE]
 
-    # Inclusive bounds
     low = int(lower)
     high = int(upper)
 
-    # Force inclusion of zero for nonNegativeInteger if needed
-    if datatype == DataTypes.NON_NEGATIVE_INTEGER:
+    # Force inclusion of zero for if needed
+    if datatype == DataTypes.POSITIVE_INTEGER:
         low = max(0, low)
-    elif datatype == DataTypes.POSITIVE_INTEGER:
-        low = max(1, low)
     elif datatype == DataTypes.NEGATIVE_INTEGER:
-        high = min(-1, high)
-    elif datatype == DataTypes.NON_POSITIVE_INTEGER:
         high = min(0, high)
 
-    series = pd.Series(rng.integers(low, high + 1, size=nb_rows), dtype="Int64")
-    return series
+    values = rng.integers(low, high + 1, size=nb_rows)
+
+    # Ensure at least one zero if allowed
+    if low <= 0 <= high and nb_rows > 0:
+        values[0] = 0
+
+    return pd.Series(values, dtype="Int64")
 
 
 def generate_double_column(
@@ -185,7 +185,7 @@ def generate_column_series(
     return series.astype(to_pandas_dtype(datatype))
 
 
-def _bigger_series(
+def _bigger_series(  # pylint: disable=too-many-locals
     depend_serie: pd.Series,
     col_meta: Dict[str, Any],
     nb_rows: int,
@@ -256,13 +256,9 @@ def _bigger_series(
         series = pd.Series(base + offsets, index=depend_serie.index, dtype="Int64")
 
         # Clip to original bounds, preserving XSD subtype
-        if datatype == DataTypes.NON_NEGATIVE_INTEGER:
+        if datatype == DataTypes.POSITIVE_INTEGER:
             series = series.clip(lower=0, upper=upper)
-        elif datatype == DataTypes.POSITIVE_INTEGER:
-            series = series.clip(lower=1, upper=upper)
         elif datatype == DataTypes.NEGATIVE_INTEGER:
-            series = series.clip(lower=lower, upper=-1)
-        elif datatype == DataTypes.NON_POSITIVE_INTEGER:
             series = series.clip(lower=lower, upper=0)
         else:
             series = series.clip(lower=lower, upper=upper)
