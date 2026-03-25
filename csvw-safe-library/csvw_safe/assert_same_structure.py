@@ -18,7 +18,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from csvw_safe.datatypes import infer_xmlschema_datatype, is_categorical
+from csvw_safe.datatypes import (
+    XSD_GROUP_MAP,
+    DataTypesGroups,
+    infer_xmlschema_datatype,
+    is_categorical,
+)
 
 
 def assert_same_structure(
@@ -56,8 +61,15 @@ def assert_same_structure(
 
     # Data types
     for col in df1.columns:
-        dtype1: str = infer_xmlschema_datatype(df1[col])
-        dtype2: str = infer_xmlschema_datatype(df2[col])
+        dtype1 = infer_xmlschema_datatype(df1[col])
+        dtype2 = infer_xmlschema_datatype(df2[col])
+
+        group1 = XSD_GROUP_MAP.get(dtype1)
+        group2 = XSD_GROUP_MAP.get(dtype2)
+
+        # If both are integer types, accept subtype differences
+        if group1 == DataTypesGroups.INTEGER and group2 == DataTypesGroups.INTEGER:
+            continue
 
         if dtype1 != dtype2:
             raise AssertionError(
