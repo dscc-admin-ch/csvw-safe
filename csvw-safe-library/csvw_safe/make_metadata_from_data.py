@@ -676,8 +676,7 @@ def build_column_metadata(
     # Dependencies between columns
     if with_dependencies:
         deps = identify_dependency(df, column_name)
-        if deps:
-            column_meta.dependencies = deps
+        column_meta.dependencies = deps
     return column_meta
 
 

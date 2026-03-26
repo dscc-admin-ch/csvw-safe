@@ -116,3 +116,23 @@ def test_identify_dependency_mapping():
         "C": [3, 4],  # truncated to max_mapping_values=2
     }
     assert dep.value_map == expected_mapping
+
+
+def test_identify_dependency_exceeds_max_keys_fixed():
+    # 10 rows
+    n_rows = 10
+    max_keys = 4
+
+    # 'x' is target, 'y' has repeated values to avoid fixed dependency
+    df = pd.DataFrame(
+        {
+            "x": list(range(n_rows)),
+            "y": [0, 0, 1, 1, 2, 2, 3, 3, 4, 4],  # 5 unique keys ≤ max_keys
+        }
+    )
+
+    # Set max_mapping_keys smaller to trigger the branch
+    deps = identify_dependency(df, "x", max_mapping_keys=max_keys)
+
+    # 'y' should be skipped because n_keys=5 > max_mapping_keys=4
+    assert deps == []

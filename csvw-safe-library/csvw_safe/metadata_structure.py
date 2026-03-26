@@ -196,11 +196,6 @@ class SingleColumnKey(BaseModel):
         Raises:
             TypeError: If input is not a categorical value.
         """
-        if isinstance(data, dict):
-            raise TypeError(
-                "Expected categorical value, got dict (continuous predicates not supported)"
-            )
-
         pred = CategoricalPredicate(partition_value=data)
         return cls(predicate=pred)
 
@@ -244,9 +239,10 @@ class ColumnMetadata(BaseModel):
 
     name: str
     datatype: DataTypes
-    required: bool
-    privacy_id: bool
-    nullable_proportion: float
+
+    required: Optional[bool] = None
+    privacy_id: Optional[bool] = None
+    nullable_proportion: Optional[float] = None
 
     dependencies: List[Dependency] = Field(default_factory=list)
 
@@ -271,6 +267,14 @@ class ColumnMetadata(BaseModel):
             C.PRIVACY_ID: self.privacy_id,
             C.NULL_PROP: self.nullable_proportion,
         }
+        if self.required:
+            d[C.REQUIRED] = self.required
+
+        if self.privacy_id:
+            d[C.PRIVACY_ID] = self.privacy_id
+
+        if self.nullable_proportion:
+            d[C.NULL_PROP] = self.nullable_proportion
 
         if self.dependencies:
             d[C.ROW_DEP] = [dep.to_dict() for dep in self.dependencies]
@@ -321,9 +325,9 @@ class ColumnMetadata(BaseModel):
         col_metadata = ColumnMetadata(
             name=data[C.COL_NAME],
             datatype=data[C.DATATYPE],
-            required=data[C.REQUIRED],
-            privacy_id=data[C.PRIVACY_ID],
-            nullable_proportion=data[C.NULL_PROP],
+            required=data.get(C.REQUIRED),
+            privacy_id=data.get(C.PRIVACY_ID),
+            nullable_proportion=data.get(C.NULL_PROP),
             dependencies=deps,
             minimum=data.get(C.MINIMUM),
             maximum=data.get(C.MAXIMUM),
@@ -398,7 +402,7 @@ class ColumnGroupMetadata(BaseModel):
         """Parse grouped column metadata from JSON."""
         col_group_metadata = ColumnGroupMetadata(
             columns=data[C.COLUMNS],
-            max_num_partitions=data[C.MAX_NUM_PARTITIONS],
+            max_num_partitions=data.get(C.MAX_NUM_PARTITIONS),
             max_length=data.get(C.MAX_LENGTH),
             max_groups_per_unit=data.get(C.MAX_GROUPS),
             max_contributions=data.get(C.MAX_CONTRIB),
