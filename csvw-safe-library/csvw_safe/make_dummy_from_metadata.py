@@ -93,10 +93,8 @@ def _apply_value_mask(series: pd.Series, value: Any) -> pd.Series:
         upper = value.get(UPPER_BOUND)
 
         mask = pd.Series(True, index=series.index)
-        if lower is not None:
-            mask &= series > lower
-        if upper is not None:
-            mask &= series <= upper
+        mask &= series >= lower
+        mask &= series <= upper
         return mask
 
     return series == value
