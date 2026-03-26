@@ -2,7 +2,7 @@ from csvw_safe import constants as C
 from csvw_safe.constants import DependencyType
 from csvw_safe.datatypes import DataTypes
 from csvw_safe.metadata_structure import (
-    CategoricalPredicate,
+    ColumnMetadata,
     ContinuousPredicate,
     MultiColumnPartition,
     SingleColumnKey,
@@ -132,6 +132,7 @@ def test_validate_metadata_with_single_column_partitions():
                         },
                     ],
                     C.PUBLIC_KEYS: ["a", "b"],
+                    C.EXHAUSTIVE_PARTITIONS: True,
                 }
             ]
         },
@@ -139,6 +140,9 @@ def test_validate_metadata_with_single_column_partitions():
 
     table = validate_metadata(metadata)
     col1 = table.columns[0]
+    assert isinstance(col1, ColumnMetadata)
+    _ = col1.to_dict()
+
     assert col1.partitions
     partition = col1.partitions[0]
     assert isinstance(partition, SingleColumnPartition)
@@ -172,6 +176,7 @@ def test_validate_metadata_with_multi_column_partitions():
                     C.REQUIRED: True,
                     C.PRIVACY_ID: False,
                     C.NULL_PROP: 0.0,
+                    C.EXHAUSTIVE_PARTITIONS: True,
                     C.PUBLIC_PARTITIONS: [
                         {
                             "@type": C.PARTITION,
@@ -247,36 +252,32 @@ def test_validate_metadata_column_groups():
                     }
                 ],
                 C.MAX_NUM_PARTITIONS: 2,
+                C.EXHAUSTIVE_PARTITIONS: True,
                 C.MAX_LENGTH: 100,
             },
         ],
     }
 
     table = validate_metadata(metadata)
-    assert table.column_groups
-    group = table.column_groups[0]
-    assert group.public_keys
-    group_dict = group.to_dict()
-    assert group_dict[C.COLUMNS] == ["col1", "col2"]
+    column_groups = table.column_groups
 
-    keys = group.public_keys[0]
-    assert "col1" in keys.predicate
-
-    cat_pred = keys.predicate["col1"]
-    assert isinstance(cat_pred, CategoricalPredicate)
-    assert cat_pred.partition_value == "a"
-
-    cont_pred = keys.predicate["col2"]
-    assert isinstance(cont_pred, ContinuousPredicate)
-    assert cont_pred.lower_bound == 1.0
-    assert cont_pred.upper_bound == 10.0
-
+    keys = column_groups[0]
     keys_dict = keys.to_dict()
     print(keys_dict)
-    assert keys_dict == {
+    assert keys_dict[C.COLUMNS] == ["col1", "col2"]
+    assert keys_dict[C.PUBLIC_KEYS] == [{
         'col1': {C.PARTITION_VALUE: 'a'},
         'col2': {C.LOWER_BOUND: 1.0, C.UPPER_BOUND: 10.0},
-    }
+    }]
+
+    partitions = column_groups[1]
+    partitions_dict = partitions.to_dict()
+    print(partitions_dict)
+    assert partitions_dict[C.COLUMNS] == ["col3", "col4"]
+    assert C.PUBLIC_PARTITIONS in partitions_dict
+    assert partitions_dict[C.MAX_NUM_PARTITIONS] == 2
+    assert partitions_dict[C.EXHAUSTIVE_PARTITIONS]
+    assert partitions_dict[C.MAX_LENGTH] == 100
 
 
 def test_validate_metadata_round_trip():
@@ -322,6 +323,7 @@ def test_validate_metadata_with_continuous_partition():
                     C.REQUIRED: True,
                     C.PRIVACY_ID: False,
                     C.NULL_PROP: 0.0,
+                    C.EXHAUSTIVE_PARTITIONS: True,
                     C.PUBLIC_PARTITIONS: [
                         {
                             "@type": C.PARTITION,

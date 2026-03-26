@@ -252,6 +252,7 @@ class ColumnMetadata(BaseModel):
     max_length: Optional[int] = None
     max_groups_per_unit: Optional[int] = None
     max_contributions: Optional[int] = None
+    exhaustive_partitions: Optional[bool] = None
 
     partitions: Optional[List[SingleColumnPartition]] = None
     public_keys: Optional[List[SingleColumnKey]] = None
@@ -287,11 +288,12 @@ class ColumnMetadata(BaseModel):
 
         if self.partitions is not None:
             d[C.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
-            d[C.EXHAUSTIVE_PARTITIONS] = True
 
         if self.public_keys is not None:
             d[C.PUBLIC_KEYS] = [p.to_dict() for p in self.public_keys]
-            d[C.EXHAUSTIVE_PARTITIONS] = True
+
+        if self.exhaustive_partitions is not None:
+            d[C.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
 
         if self.max_num_partitions is not None:
             d[C.MAX_NUM_PARTITIONS] = self.max_num_partitions
@@ -335,6 +337,7 @@ class ColumnMetadata(BaseModel):
             max_length=data.get(C.MAX_LENGTH),
             max_groups_per_unit=data.get(C.MAX_GROUPS),
             max_contributions=data.get(C.MAX_CONTRIB),
+            exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS)
         )
 
         raw_partitions = data.get(C.PUBLIC_PARTITIONS)
@@ -363,6 +366,7 @@ class ColumnGroupMetadata(BaseModel):
     partitions: Optional[List[MultiColumnPartition]] = None
     public_keys: Optional[List[MultiColumnKeys]] = None
     max_num_partitions: Optional[int] = None
+    exhaustive_partitions: Optional[bool] = None
 
     max_length: Optional[int] = None
     max_groups_per_unit: Optional[int] = None
@@ -377,11 +381,12 @@ class ColumnGroupMetadata(BaseModel):
 
         if self.partitions is not None:
             result[C.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
-            result[C.EXHAUSTIVE_PARTITIONS] = True
 
         if self.public_keys is not None:
             result[C.PUBLIC_KEYS] = [k.to_dict() for k in self.public_keys]
-            result[C.EXHAUSTIVE_PARTITIONS] = True
+
+        if self.exhaustive_partitions is not None:
+            result[C.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
 
         if self.max_num_partitions is not None:
             result[C.MAX_NUM_PARTITIONS] = self.max_num_partitions
@@ -406,6 +411,7 @@ class ColumnGroupMetadata(BaseModel):
             max_length=data.get(C.MAX_LENGTH),
             max_groups_per_unit=data.get(C.MAX_GROUPS),
             max_contributions=data.get(C.MAX_CONTRIB),
+            exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS)
         )
         raw_partitions = data.get(C.PUBLIC_PARTITIONS)
         raw_public_keys = data.get(C.PUBLIC_KEYS)

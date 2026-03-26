@@ -452,12 +452,14 @@ def make_column_groups(
                 max_length=max_length,
                 max_groups_per_unit=max_groups_per_unit,
                 max_contributions=max_contributions,
+                exhaustive_partitions=True
             )
         else:  # ContributionLevel.PARTITION
             group_meta = ColumnGroupMetadata(
                 columns=col_group,
                 partitions=partitions_meta,
                 max_num_partitions=len(partitions_meta),
+                exhaustive_partitions=True
             )
 
         column_groups_metadata.append(group_meta)
@@ -652,6 +654,7 @@ def build_column_metadata(
         required=series.isna().sum() == 0,
         privacy_id=(column_name == privacy_unit),
         nullable_proportion=np.ceil(series.isna().mean() * 1000) / 1000,
+        exhaustive_partitions=True
     )
 
     if datatype != DataTypes.STRING:
