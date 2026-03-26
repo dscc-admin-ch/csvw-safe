@@ -15,7 +15,6 @@ The resulting dataset respects the structural information contained in
 CSVW-SAFE metadata but does not guarantee semantic correctness.
 """
 
-import string
 from typing import Any, Dict, List
 
 import numpy as np
@@ -35,6 +34,7 @@ from csvw_safe.constants import (
     PREDICATE,
     PUBLIC_KEYS,
     PUBLIC_PARTITIONS,
+    RANDOM_STRINGS,
     VALUE_MAP,
     DependencyType,
 )
@@ -45,8 +45,6 @@ from csvw_safe.datatypes import (
     T,
     to_pandas_dtype,
 )
-
-RANDOM_STRINGS = list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
 
 
 def get_bounds(col_meta: Dict[str, Any]) -> tuple[T, T]:
@@ -125,7 +123,7 @@ def generate_string_column(
         for key in col_meta[PUBLIC_KEYS]:
             if isinstance(key, str):
                 public_keys.append(key)
-            elif isinstance(key, dict) and PARTITION_VALUE in key:
+            else:  # isinstance(key, dict) and PARTITION_VALUE in key:
                 public_keys.append(key[PARTITION_VALUE])
 
     elif PUBLIC_PARTITIONS in col_meta:
@@ -254,16 +252,7 @@ def _bigger_series(  # pylint: disable=too-many-locals
         base = depend_serie.astype("Int64").to_numpy()
 
         series = pd.Series(base + offsets, index=depend_serie.index, dtype="Int64")
-
-        # Clip to original bounds, preserving XSD subtype
-        if datatype == DataTypes.POSITIVE_INTEGER:
-            series = series.clip(lower=0, upper=upper)
-        elif datatype == DataTypes.NEGATIVE_INTEGER:
-            series = series.clip(lower=lower, upper=0)
-        else:
-            series = series.clip(lower=lower, upper=upper)
-
-        return series
+        return series.clip(lower=lower, upper=upper)
 
     # ---- FLOAT ----
     if group == DataTypesGroups.FLOAT:

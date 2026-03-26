@@ -5,11 +5,19 @@ import pytest
 from csvw_safe.constants import (
     COL_NAME,
     DATATYPE,
+    DEFAULT_NUMBER_PARTITIONS,
     DEPENDENCY_TYPE,
     DEPENDS_ON,
+    EXHAUSTIVE_PARTITIONS,
+    MAX_NUM_PARTITIONS,
     MAXIMUM,
     MINIMUM,
     NULL_PROP,
+    PARTITION_VALUE,
+    PREDICATE,
+    PUBLIC_KEYS,
+    PUBLIC_PARTITIONS,
+    RANDOM_STRINGS,
     VALUE_MAP,
     DependencyType,
 )
@@ -45,7 +53,13 @@ def test_get_bounds():
 
 
 def test_generate_column_series_integer(rng):
-    col_meta = {DATATYPE: DataTypes.INTEGER, MINIMUM: 0, MAXIMUM: 5, NULL_PROP: 0}
+    col_meta = {DATATYPE: DataTypes.INTEGER, MINIMUM: -10, MAXIMUM: 10, NULL_PROP: 0}
+    s = generate_column_series(col_meta, 10, rng)
+    assert s.min() >= -10 and s.max() <= 10
+
+
+def test_generate_column_series_positive_integer(rng):
+    col_meta = {DATATYPE: DataTypes.POSITIVE_INTEGER, MINIMUM: 0, MAXIMUM: 5, NULL_PROP: 0}
     s = generate_column_series(col_meta, 10, rng)
     assert s.min() >= 0 and s.max() <= 5
 
@@ -68,10 +82,69 @@ def test_generate_column_series_boolean(rng):
     assert s.dropna().isin([True, False]).all()
 
 
-def test_generate_column_series_string(rng):
-    col_meta = {DATATYPE: DataTypes.STRING, "max_num_partitions": 5, NULL_PROP: 0}
-    s = generate_column_series(col_meta, 10, rng)
-    assert len(s) == 10
+@pytest.mark.parametrize(
+    "col_meta,nb_rows,expected_values",
+    [
+        # PUBLIC_KEYS as strings
+        ({DATATYPE: DataTypes.STRING, PUBLIC_KEYS: ["x", "y"]}, 10, {"x", "y"}),
+        # PUBLIC_KEYS as dicts
+        (
+            {
+                DATATYPE: DataTypes.STRING,
+                PUBLIC_KEYS: [{PARTITION_VALUE: "p1"}, {PARTITION_VALUE: "p2"}],
+            },
+            5,
+            {"p1", "p2"},
+        ),
+        # PUBLIC_KEYS as strings + dict with PARTITION_VALUE
+        (
+            {
+                DATATYPE: DataTypes.STRING,
+                PUBLIC_KEYS: ["k1", {PARTITION_VALUE: "k2"}],
+            },
+            5,
+            {"k1", "k2"},
+        ),
+        # PUBLIC_PARTITIONS as strings
+        ({DATATYPE: DataTypes.STRING, PUBLIC_PARTITIONS: ["pp1", "pp2"]}, 8, {"pp1", "pp2"}),
+        # PUBLIC_PARTITIONS as dicts with PREDICATE
+        (
+            {
+                DATATYPE: DataTypes.STRING,
+                PUBLIC_PARTITIONS: [
+                    {PREDICATE: {PARTITION_VALUE: "pp3"}},
+                    {PREDICATE: {PARTITION_VALUE: "pp4"}},
+                ],
+            },
+            6,
+            {"pp3", "pp4"},
+        ),
+        # EXHAUSTIVE_PARTITIONS=False triggers extra randoms
+        (
+            {
+                DATATYPE: DataTypes.STRING,
+                PUBLIC_PARTITIONS: ["p1"],
+                EXHAUSTIVE_PARTITIONS: False,
+                MAX_NUM_PARTITIONS: 3,
+            },
+            6,
+            {"p1", "a", "b"},
+        ),
+        # MAX_NUM_PARTITIONS branch
+        ({DATATYPE: DataTypes.STRING, MAX_NUM_PARTITIONS: 4}, 5, {"a", "b", "c", "d"}),
+        # Default fallback
+        ({DATATYPE: DataTypes.STRING}, 3, set(RANDOM_STRINGS[:DEFAULT_NUMBER_PARTITIONS])),
+    ],
+)
+def test_generate_string_column_branches(col_meta, nb_rows, expected_values):
+    rng = np.random.default_rng(42)
+    s = generate_column_series(col_meta, nb_rows, rng)
+    # Check length
+    assert len(s) == nb_rows
+    # Check all values are strings
+    assert all(isinstance(v, str) for v in s)
+    # Check all values are in expected set
+    assert set(s).issubset(expected_values)
 
 
 def test_generate_column_series_datetime(rng):
@@ -128,6 +201,21 @@ def test_bigger_series_datetime(rng):
     col_meta = {DATATYPE: DataTypes.DATETIME, MINIMUM: "2023-01-01", MAXIMUM: "2023-01-10"}
     s = _bigger_series(base, col_meta, 5, rng)
     assert (s > base).all()
+
+
+def test_bigger_series_duration(rng):
+    base = pd.Series(pd.to_timedelta([1, 2, 3], unit="s"))
+    col_meta = {
+        DATATYPE: DataTypes.DURATION,
+        MINIMUM: "0s",
+        MAXIMUM: "10s",
+    }
+    s = _bigger_series(base, col_meta, 3, rng)
+    # Each value must be bigger than the base
+    assert (s > base).all()
+    # Values must stay within bounds
+    assert (s <= pd.to_timedelta("10s")).all()
+    assert (s >= pd.to_timedelta("0s")).all()
 
 
 def test_mapping_series(rng):
@@ -249,3 +337,43 @@ def test_generate_column_circular_dependency(rng):
     assert "col1" in data_dict
     assert isinstance(data_dict["col1"], pd.Series)
     assert len(data_dict["col1"]) == nb_rows
+
+
+def test_generate_series_already_generated(rng):
+    nb_rows = 3
+    columns_meta = [
+        {COL_NAME: "x", DATATYPE: DataTypes.INTEGER, MINIMUM: 0, MAXIMUM: 5},
+    ]
+    depends_map = {col[COL_NAME]: col.get(DEPENDS_ON) for col in columns_meta}
+    data_dict = {"x": pd.Series([1, 2, 3])}  # Already generated
+
+    # Should return data_dict without modifying it
+    result = generate_series("x", columns_meta, depends_map, data_dict, nb_rows, rng)
+    assert result is data_dict
+    assert (result["x"] == pd.Series([1, 2, 3])).all()
+
+
+def test_generate_series_max_recursion(rng):
+    nb_rows = 2
+    columns_meta = [
+        {COL_NAME: "y", DATATYPE: DataTypes.INTEGER, MINIMUM: 0, MAXIMUM: 5},
+    ]
+    depends_map = {"y": "y"}  # self-dependency triggers max recursion
+
+    data_dict = {}
+    result = generate_series(
+        "y",
+        columns_meta,
+        depends_map,
+        data_dict,
+        nb_rows,
+        rng,
+        visited=set(),
+        max_recursion=0,  # force max recursion branch
+        depth=1,
+    )
+
+    # Should generate column normally via generate_column_series
+    assert "y" in result
+    assert isinstance(result["y"], pd.Series)
+    assert len(result["y"]) == nb_rows
