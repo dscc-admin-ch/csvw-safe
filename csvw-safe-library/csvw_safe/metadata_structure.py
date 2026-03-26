@@ -258,9 +258,9 @@ class ColumnMetadata(BaseModel):
     public_keys: Optional[List[SingleColumnKey]] = None
     max_num_partitions: Optional[int] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:  # pylint: disable=too-many-branches
         """Convert the column metadata to CSVW-SAFE JSON format."""
-        d = {
+        d: Dict[str, Any] = {
             "@type": C.COL_TYPE,
             C.COL_NAME: self.name,
             C.DATATYPE: self.datatype,
@@ -337,7 +337,7 @@ class ColumnMetadata(BaseModel):
             max_length=data.get(C.MAX_LENGTH),
             max_groups_per_unit=data.get(C.MAX_GROUPS),
             max_contributions=data.get(C.MAX_CONTRIB),
-            exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS)
+            exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS),
         )
 
         raw_partitions = data.get(C.PUBLIC_PARTITIONS)
@@ -411,7 +411,7 @@ class ColumnGroupMetadata(BaseModel):
             max_length=data.get(C.MAX_LENGTH),
             max_groups_per_unit=data.get(C.MAX_GROUPS),
             max_contributions=data.get(C.MAX_CONTRIB),
-            exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS)
+            exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS),
         )
         raw_partitions = data.get(C.PUBLIC_PARTITIONS)
         raw_public_keys = data.get(C.PUBLIC_KEYS)

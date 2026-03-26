@@ -265,10 +265,12 @@ def test_validate_metadata_column_groups():
     keys_dict = keys.to_dict()
     print(keys_dict)
     assert keys_dict[C.COLUMNS] == ["col1", "col2"]
-    assert keys_dict[C.PUBLIC_KEYS] == [{
-        'col1': {C.PARTITION_VALUE: 'a'},
-        'col2': {C.LOWER_BOUND: 1.0, C.UPPER_BOUND: 10.0},
-    }]
+    assert keys_dict[C.PUBLIC_KEYS] == [
+        {
+            'col1': {C.PARTITION_VALUE: 'a'},
+            'col2': {C.LOWER_BOUND: 1.0, C.UPPER_BOUND: 10.0},
+        }
+    ]
 
     partitions = column_groups[1]
     partitions_dict = partitions.to_dict()
