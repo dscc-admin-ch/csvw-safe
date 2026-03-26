@@ -32,12 +32,13 @@ def big_df():
 
 
 def test_basic_metadata_small(small_df):
-    metadata = make_metadata_from_data(small_df, privacy_unit="user_id")
+    metadata = make_metadata_from_data(small_df, privacy_unit="user_id", with_dependencies=False)
 
     assert metadata["@type"] == "csvw:Table"
     assert metadata[C.PRIVACY_UNIT] == "user_id"
     assert metadata[C.MAX_LENGTH] == len(small_df)
     assert metadata[C.PUBLIC_LENGTH] == len(small_df)
+    assert C.ADD_INFO not in metadata
 
     columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
     assert len(columns) == len(small_df.columns)

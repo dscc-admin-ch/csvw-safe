@@ -1,5 +1,6 @@
 """Defaults, constants and metadata objects for csvw-safe."""
 
+import string
 from enum import StrEnum
 from pathlib import Path
 
@@ -93,3 +94,4 @@ DEFAULT_LOWER_INCLUSIVE = True
 DEFAULT_UPPER_INCLUSIVE = True
 
 DEFAULT_NUMBER_PARTITIONS = 10
+RANDOM_STRINGS = list(string.ascii_lowercase + string.ascii_uppercase + string.digits)

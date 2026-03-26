@@ -1,7 +1,6 @@
 """
-Csvw_to_smartnoise.py.
-
 Convert CSVW-SAFE JSON metadata to SmartNoise SQL metadata format.
+
 See smarntoise-sql documentation: https://docs.smartnoise.org/sql/metadata.html
 """
 
