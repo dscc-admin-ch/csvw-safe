@@ -50,6 +50,12 @@ def test_generate_column_series_integer(rng):
     assert s.min() >= 0 and s.max() <= 5
 
 
+def test_generate_column_series_negative_integer(rng):
+    col_meta = {DATATYPE: DataTypes.NEGATIVE_INTEGER, MINIMUM: -10, MAXIMUM: -5, NULL_PROP: 0}
+    s = generate_column_series(col_meta, 10, rng)
+    assert s.min() >= -10 and s.max() <= -5
+
+
 def test_generate_column_series_double(rng):
     col_meta = {DATATYPE: DataTypes.DOUBLE, MINIMUM: 0.0, MAXIMUM: 1.0, NULL_PROP: 0}
     s = generate_column_series(col_meta, 10, rng)
@@ -83,6 +89,30 @@ def test_generate_column_series_datetime(rng):
     # Check all values within bounds
     lower = pd.to_datetime(col_meta[MINIMUM])
     upper = pd.to_datetime(col_meta[MAXIMUM])
+    assert (s >= lower).all() and (s <= upper).all()
+
+
+def test_generate_column_series_duration(rng):
+    """Test generating a duration column using generate_column_series."""
+    col_meta = {
+        DATATYPE: DataTypes.DURATION,
+        MINIMUM: 0,  # seconds
+        MAXIMUM: 3600,  # 1 hour in seconds
+        NULL_PROP: 0,
+    }
+
+    s = generate_column_series(col_meta, 10, rng)
+
+    # Length
+    assert len(s) == 10
+
+    # Check dtype
+    assert pd.api.types.is_timedelta64_dtype(s)
+
+    # Bounds
+    lower = pd.to_timedelta(col_meta[MINIMUM], unit="s")
+    upper = pd.to_timedelta(col_meta[MAXIMUM], unit="s")
+
     assert (s >= lower).all() and (s <= upper).all()
 
 

@@ -139,8 +139,7 @@ def is_categorical(series: pd.Series, max_unique: int = 20) -> bool:
 
     inferred = infer_xmlschema_datatype(series)
     group = XSD_GROUP_MAP[inferred]
-    print("********")
-    print(group)
+
     # string and boolean: categorical
     if group in {DataTypesGroups.STRING, DataTypesGroups.BOOLEAN}:
         return True
@@ -169,7 +168,7 @@ def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
     return not is_categorical(series, max_unique)
 
 
-def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements, too-many-branches
+def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements, too-many-branches,
     series: pd.Series,
 ) -> DataTypes:
     """Infer xml schema datatype."""
@@ -181,38 +180,45 @@ def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements, too
     # Native pandas types
     if pd.api.types.is_bool_dtype(s):
         return DataTypes.BOOLEAN
-    if s.dtype == object and s.map(lambda x: isinstance(x, bool)).all():
-        return DataTypes.BOOLEAN
-
     if pd.api.types.is_datetime64_any_dtype(s):
         return DataTypes.DATETIME
-
+    if pd.api.types.is_timedelta64_dtype(s):
+        return DataTypes.DURATION
     if pd.api.types.is_integer_dtype(s):
         return refine_integer_type(s)
-
     if pd.api.types.is_float_dtype(s):
-        if (s % 1 == 0).all():
-            return refine_integer_type(s)
-        return DataTypes.DOUBLE
+        return refine_integer_type(s) if (s % 1 == 0).all() else DataTypes.DOUBLE
 
     # String
-    if pd.api.types.is_string_dtype(s) or s.dtype == object:
-
-        if s.map(lambda v: v.lower() in {"true", "false"}).all():
-            return DataTypes.BOOLEAN
-
+    if pd.api.types.is_string_dtype(s):
         if s.map(is_date).all():
             return DataTypes.DATE
-
         if s.map(is_datetime).all():
             return DataTypes.DATETIME
+        return DataTypes.STRING
 
-        # Numeric inside strings
-        nums = pd.to_numeric(s, errors="coerce")
-        if not nums.isna().any():
-            if (nums % 1 == 0).all():
-                return refine_integer_type(nums)
-            return DataTypes.DOUBLE
+    # Recover dtype from object (if s.dtype == object)
+    # Boolean
+    if s.map(lambda x: isinstance(x, bool)).all():
+        return DataTypes.BOOLEAN
+
+    # Datetime
+    if s.map(lambda x: isinstance(x, pd.Timestamp)).all():
+        return DataTypes.DATETIME
+
+    # Duration
+    if s.map(lambda x: isinstance(x, pd.Timedelta)).all():
+        return DataTypes.DURATION
+
+    # Numeric
+    try:
+        nums = pd.to_numeric(s, errors="raise")
+        if (nums % 1 == 0).all():
+            return refine_integer_type(nums)
+        return DataTypes.DOUBLE
+    except (ValueError, TypeError):
+        pass
+
     return DataTypes.STRING
 
 
@@ -234,6 +240,9 @@ def to_pandas_dtype(csvw_type: DataTypes) -> str:
 
     if group == DataTypesGroups.DATETIME:
         return "datetime64[ns]"
+
+    if group == DataTypesGroups.DURATION:
+        return "timedelta64[ns]"
 
     return "string"
 
