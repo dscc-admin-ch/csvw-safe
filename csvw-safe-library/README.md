@@ -25,14 +25,14 @@ Note: pyshacl only if additional validation with `validate_metadata_shacl.py`.
 Install the library via pip:
 ```
 pip install csvw-safe-library
-pip install csvw-safe[full]
+pip install csvw-safe[dp_lib,rdf]
 ```
 
 or for development: 
 ```
 git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
 cd csvw-safe-library
-pip install -e .[dev,full]
+pip install -e .[dev,dp_lib,rdf]
 ```
 
 
@@ -204,7 +204,7 @@ assert_same_structure(df, dummy_df)
 ## Tests
 ```
 cd csvw-safe-library
-pip install -e .[dev,full]
+pip install -e .[dev,dp_lib,rdf]
 pytest tests/
 ```
 

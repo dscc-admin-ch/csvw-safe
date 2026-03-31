@@ -15,7 +15,7 @@ The resulting dataset respects the structural information contained in
 CSVW-SAFE metadata but does not guarantee semantic correctness.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -47,7 +47,7 @@ from csvw_safe.datatypes import (
 )
 
 
-def get_bounds(col_meta: Dict[str, Any]) -> tuple[T, T]:
+def get_bounds(col_meta: dict[str, Any]) -> tuple[T, T]:
     """Get min and max."""
     assert MINIMUM in col_meta, f"Missing {MINIMUM} in column {col_meta[COL_NAME]}"
     assert MAXIMUM in col_meta, f"Missing {MAXIMUM} in column {col_meta[COL_NAME]}"
@@ -55,7 +55,7 @@ def get_bounds(col_meta: Dict[str, Any]) -> tuple[T, T]:
 
 
 def generate_datetime_column(
-    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
 ) -> pd.Series:
     """Generate datetime column between min and max values."""
     lower, upper = get_bounds(col_meta)
@@ -64,7 +64,7 @@ def generate_datetime_column(
 
 
 def generate_duration_column(
-    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
 ) -> pd.Series:
     """Generate duration column between min and max values."""
     lower, upper = get_bounds(col_meta)
@@ -76,7 +76,7 @@ def generate_duration_column(
 
 
 def generate_integer_column(
-    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
 ) -> pd.Series:
     """Generate numeric column integer between min and max values respecting XSD subtype."""
     lower, upper = get_bounds(col_meta)
@@ -101,7 +101,7 @@ def generate_integer_column(
 
 
 def generate_double_column(
-    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
 ) -> pd.Series:
     """Generate numeric column double between min and max values."""
     lower, upper = get_bounds(col_meta)
@@ -114,7 +114,7 @@ def generate_boolean_column(nb_rows: int, rng: np.random.Generator) -> pd.Series
 
 
 def generate_string_column(
-    col_meta: Dict[str, Any], nb_rows: int, rng: np.random.Generator
+    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
 ) -> pd.Series:
     """Generate string column depending on available information."""
     public_keys = []
@@ -137,17 +137,16 @@ def generate_string_column(
             diff = col_meta[MAX_NUM_PARTITIONS] - len(col_meta[PUBLIC_PARTITIONS])
             public_keys.extend(RANDOM_STRINGS[0:diff])
 
+    elif col_meta.get(MAX_NUM_PARTITIONS):
+        public_keys = RANDOM_STRINGS[0 : col_meta[MAX_NUM_PARTITIONS]]
     else:
-        if MAX_NUM_PARTITIONS in col_meta and col_meta[MAX_NUM_PARTITIONS]:
-            public_keys = RANDOM_STRINGS[0 : col_meta[MAX_NUM_PARTITIONS]]
-        else:
-            public_keys = RANDOM_STRINGS[0:DEFAULT_NUMBER_PARTITIONS]
+        public_keys = RANDOM_STRINGS[0:DEFAULT_NUMBER_PARTITIONS]
 
     return pd.Series(rng.choice(public_keys, size=nb_rows))
 
 
 def generate_column_series(
-    col_meta: Dict[str, Any],
+    col_meta: dict[str, Any],
     nb_rows: int,
     rng: np.random.Generator,
 ) -> pd.Series:
@@ -185,7 +184,7 @@ def generate_column_series(
 
 def _bigger_series(  # pylint: disable=too-many-locals
     depend_serie: pd.Series,
-    col_meta: Dict[str, Any],
+    col_meta: dict[str, Any],
     nb_rows: int,
     rng: np.random.Generator,
 ) -> pd.Series:
@@ -269,7 +268,7 @@ def _bigger_series(  # pylint: disable=too-many-locals
 
 def _mapping_series(
     depend_serie: pd.Series,
-    col_meta: Dict[str, Any],
+    col_meta: dict[str, Any],
     rng: np.random.Generator,
 ) -> pd.Series:
     """
@@ -305,7 +304,7 @@ def _mapping_series(
 
 def _fixed_series(
     depend_serie: pd.Series,
-    col_meta: Dict[str, Any],
+    col_meta: dict[str, Any],
     rng: np.random.Generator,
 ) -> pd.Series:
     """
@@ -339,7 +338,7 @@ def _fixed_series(
 
 def generate_dependant_column_series(
     depend_serie: pd.Series,
-    col_meta: Dict[str, Any],
+    col_meta: dict[str, Any],
     nb_rows: int,
     rng: np.random.Generator,
 ) -> pd.Series:
@@ -383,15 +382,15 @@ def generate_dependant_column_series(
 
 def generate_series(
     name: str,
-    columns_meta: List[dict[str, Any]],
-    depends_map: Dict[str, str],
-    data_dict: Dict[str, pd.Series],
+    columns_meta: list[dict[str, Any]],
+    depends_map: dict[str, str],
+    data_dict: dict[str, pd.Series],
     nb_rows: int,
     rng: np.random.Generator,
     visited: set[str] | None = None,
     max_recursion: int = 10,
     depth: int = 0,
-) -> Dict[str, pd.Series]:
+) -> dict[str, pd.Series]:
     """Recursively generate a column and its dependencies with cycle protection."""
     if visited is None:
         visited = set()

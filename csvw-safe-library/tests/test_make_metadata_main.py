@@ -129,7 +129,7 @@ def test_partition_contribution_level_big(big_df):
 
     first_partition = partitions[0]
     expected_first_partition = {
-        '@type': C.PARTITION,
+        "@type": C.PARTITION,
         C.PREDICATE: {
             C.LOWER_BOUND: 0.0,
             C.UPPER_BOUND: 25.0,

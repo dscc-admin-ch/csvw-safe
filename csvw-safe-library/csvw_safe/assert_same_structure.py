@@ -55,8 +55,7 @@ def assert_same_structure(
     # Columns: order and names
     if list(df1.columns) != list(df2.columns):
         raise AssertionError(
-            f"Column names/order differ:"
-            f"\nOriginal: {list(df1.columns)}\nDummy:{list(df2.columns)}"
+            f"Column names/order differ:\nOriginal: {list(df1.columns)}\nDummy:{list(df2.columns)}"
         )
 
     # Data types

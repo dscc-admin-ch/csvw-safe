@@ -12,7 +12,7 @@ The resulting context can be used for differentially private queries.
 
 import argparse
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 import opendp.prelude as dp
 import polars as pl
@@ -22,9 +22,9 @@ from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
 
 
 def get_privacy_loss(
-    epsilon: Optional[float] = None,
-    rho: Optional[float] = None,
-    delta: Optional[float] = None,
+    epsilon: float | None = None,
+    rho: float | None = None,
+    delta: float | None = None,
 ) -> Any:
     """
     Create an opendp privacy loss object.
@@ -48,7 +48,6 @@ def get_privacy_loss(
     ValueError
         If neither epsilon nor rho is provided.
     """
-
     if epsilon is None and rho is None:
         raise ValueError("Either epsilon or rho must be provided")
 
@@ -61,7 +60,7 @@ def get_privacy_loss(
     return dp.loss_of(rho=rho, delta=delta)
 
 
-def get_privacy_unit(csvw_meta: Dict[str, Any], distance: str) -> Any:
+def get_privacy_unit(csvw_meta: dict[str, Any], distance: str) -> Any:
     """
     Construct an OpenDP privacy unit from CSVW-SAFE metadata.
 
@@ -81,7 +80,7 @@ def get_privacy_unit(csvw_meta: Dict[str, Any], distance: str) -> Any:
     max_contrib = csvw_meta[MAX_CONTRIB]
     identifier = csvw_meta.get(PRIVACY_UNIT)
 
-    kwargs: Dict[str, Any] = {}
+    kwargs: dict[str, Any] = {}
 
     # Map distance type → correct argument
     if distance == "contributions":
@@ -104,13 +103,13 @@ def get_privacy_unit(csvw_meta: Dict[str, Any], distance: str) -> Any:
 
 
 def csvw_to_opendp_context(
-    csvw_meta: Dict[str, Any],
+    csvw_meta: dict[str, Any],
     data: pl.LazyFrame,
-    epsilon: Optional[float] = None,
-    rho: Optional[float] = None,
-    delta: Optional[float] = None,
-    split_evenly_over: Optional[int] = None,
-    split_by_weights: Optional[list[float]] = None,
+    epsilon: float | None = None,
+    rho: float | None = None,
+    delta: float | None = None,
+    split_evenly_over: int | None = None,
+    split_by_weights: list[float] | None = None,
     distance: str = "contributions",
 ) -> dp.Context:
     """
@@ -150,7 +149,7 @@ def csvw_to_opendp_context(
     if split_evenly_over is not None and split_by_weights is not None:
         raise ValueError("Specify only one of split_evenly_over or split_by_weights")
 
-    kwargs: Dict[str, Any] = {
+    kwargs: dict[str, Any] = {
         "data": data,
         "privacy_unit": get_privacy_unit(csvw_meta, distance),
         "privacy_loss": get_privacy_loss(epsilon, rho, delta),
@@ -208,7 +207,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load metadata
-    with open(args.metadata, "r", encoding="utf-8") as f:
+    with open(args.metadata, encoding="utf-8") as f:
         csvw_meta = json.load(f)
 
     # Load data as LazyFrame (recommended by OpenDP)

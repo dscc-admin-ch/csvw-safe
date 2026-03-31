@@ -1,6 +1,6 @@
 """Pydantic models for CSVW-SAFE metadata structure."""
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 
 from pydantic import BaseModel, Field
 
@@ -18,11 +18,11 @@ class Dependency(BaseModel):
 
     depends_on: str
     dependency_type: C.DependencyType
-    value_map: Optional[Dict[Any, Any]] = None
+    value_map: dict[Any, Any] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the dependency to a CSVW-SAFE compliant dictionary."""
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             C.DEPENDS_ON: self.depends_on,
             C.DEPENDENCY_TYPE: self.dependency_type,
         }
@@ -33,7 +33,7 @@ class Dependency(BaseModel):
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Dependency":
+    def from_dict(cls, data: dict[str, Any]) -> "Dependency":
         """Create a Dependency instance from CSVW-SAFE metadata."""
         return cls(
             depends_on=data[C.DEPENDS_ON],
@@ -45,14 +45,14 @@ class Dependency(BaseModel):
 class CategoricalPredicate(BaseModel):
     """Predicate describing how a categorical partition is defined."""
 
-    partition_value: Optional[Any]
+    partition_value: Any | None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the predicate into CSVW-SAFE JSON format."""
         return {C.PARTITION_VALUE: self.partition_value}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CategoricalPredicate":
+    def from_dict(cls, data: dict[str, Any]) -> "CategoricalPredicate":
         """Create a Predicate from CSVW-SAFE metadata."""
         return cls(partition_value=data[C.PARTITION_VALUE])
 
@@ -60,10 +60,10 @@ class CategoricalPredicate(BaseModel):
 class ContinuousPredicate(BaseModel):
     """Predicate describing how a continuous partition is defined."""
 
-    lower_bound: Optional[Union[float, str]]  # TODO type
-    upper_bound: Optional[Union[float, str]]
+    lower_bound: float | str | None  # TODO type
+    upper_bound: float | str | None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the predicate into CSVW-SAFE JSON format."""
         return {
             C.LOWER_BOUND: self.lower_bound,
@@ -71,7 +71,7 @@ class ContinuousPredicate(BaseModel):
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ContinuousPredicate":
+    def from_dict(cls, data: dict[str, Any]) -> "ContinuousPredicate":
         """Create a Predicate from CSVW-SAFE metadata."""
         return cls(
             lower_bound=data[C.LOWER_BOUND],
@@ -82,7 +82,7 @@ class ContinuousPredicate(BaseModel):
 Predicate = Union[CategoricalPredicate, ContinuousPredicate]
 
 
-def parse_predicate(data: Dict[str, Any]) -> Predicate:
+def parse_predicate(data: dict[str, Any]) -> Predicate:
     """Parse predicate depending on its type."""
     if C.PARTITION_VALUE in data:
         return CategoricalPredicate.from_dict(data)
@@ -100,11 +100,11 @@ class Partition(BaseModel):
     max_groups_per_unit: int
     max_contributions: int
 
-    def _predicate_to_dict(self) -> Dict[str, Any]:
+    def _predicate_to_dict(self) -> dict[str, Any]:
         """Serialize the predicate component."""
         raise NotImplementedError
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the partition to CSVW-SAFE JSON format."""
         return {
             "@type": C.PARTITION,
@@ -120,11 +120,11 @@ class SingleColumnPartition(Partition):
 
     predicate: Predicate
 
-    def _predicate_to_dict(self) -> Dict[str, Any]:
+    def _predicate_to_dict(self) -> dict[str, Any]:
         return self.predicate.to_dict()
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SingleColumnPartition":
+    def from_dict(cls, data: dict[str, Any]) -> "SingleColumnPartition":
         """Parse a single-column partition from metadata."""
         return cls(
             predicate=parse_predicate(data[C.PREDICATE]),
@@ -137,13 +137,13 @@ class SingleColumnPartition(Partition):
 class MultiColumnPartition(Partition):
     """Partition defined across multiple columns with details."""
 
-    predicate: Dict[str, Predicate]
+    predicate: dict[str, Predicate]
 
-    def _predicate_to_dict(self) -> Dict[str, Any]:
+    def _predicate_to_dict(self) -> dict[str, Any]:
         return {k: v.to_dict() for k, v in self.predicate.items()}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MultiColumnPartition":
+    def from_dict(cls, data: dict[str, Any]) -> "MultiColumnPartition":
         """
         Parse a multi-column partition from metadata.
 
@@ -203,20 +203,20 @@ class SingleColumnKey(BaseModel):
 class MultiColumnKeys(BaseModel):
     """Partition defined for multiple columns with only key informations."""
 
-    predicate: Dict[str, Predicate]
+    predicate: dict[str, Predicate]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the partition to CSVW-SAFE JSON format."""
         return {k: v.to_dict() for k, v in self.predicate.items()}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MultiColumnKeys":
+    def from_dict(cls, data: dict[str, Any]) -> "MultiColumnKeys":
         """Create a MultiColumnKeys from CSVW-SAFE metadata."""
         predicates = {k: parse_predicate(v) for k, v in data.items()}
         return cls(predicate=predicates)
 
 
-def full_partition_to_key_single(partitions: List[SingleColumnPartition]) -> List[SingleColumnKey]:
+def full_partition_to_key_single(partitions: list[SingleColumnPartition]) -> list[SingleColumnKey]:
     """
     Convert a list of SingleColumnPartition to SingleColumnKey,.
 
@@ -225,7 +225,7 @@ def full_partition_to_key_single(partitions: List[SingleColumnPartition]) -> Lis
     return [SingleColumnKey(predicate=p.predicate) for p in partitions]
 
 
-def full_partition_to_key_multi(partitions: List[MultiColumnPartition]) -> List[MultiColumnKeys]:
+def full_partition_to_key_multi(partitions: list[MultiColumnPartition]) -> list[MultiColumnKeys]:
     """
     Convert a list of MultiColumnPartition to MultiColumnKeys,.
 
@@ -240,27 +240,27 @@ class ColumnMetadata(BaseModel):
     name: str
     datatype: DataTypes
 
-    required: Optional[bool] = None
-    privacy_id: Optional[bool] = None
-    nullable_proportion: Optional[float] = None
+    required: bool | None = None
+    privacy_id: bool | None = None
+    nullable_proportion: float | None = None
 
-    dependencies: List[Dependency] = Field(default_factory=list)
+    dependencies: list[Dependency] = Field(default_factory=list)
 
-    minimum: Optional[Any] = None
-    maximum: Optional[Any] = None
+    minimum: Any | None = None
+    maximum: Any | None = None
 
-    max_length: Optional[int] = None
-    max_groups_per_unit: Optional[int] = None
-    max_contributions: Optional[int] = None
-    exhaustive_partitions: Optional[bool] = None
+    max_length: int | None = None
+    max_groups_per_unit: int | None = None
+    max_contributions: int | None = None
+    exhaustive_partitions: bool | None = None
 
-    partitions: Optional[List[SingleColumnPartition]] = None
-    public_keys: Optional[List[SingleColumnKey]] = None
-    max_num_partitions: Optional[int] = None
+    partitions: list[SingleColumnPartition] | None = None
+    public_keys: list[SingleColumnKey] | None = None
+    max_num_partitions: int | None = None
 
-    def to_dict(self) -> Dict[str, Any]:  # pylint: disable=too-many-branches
+    def to_dict(self) -> dict[str, Any]:  # pylint: disable=too-many-branches
         """Convert the column metadata to CSVW-SAFE JSON format."""
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "@type": C.COL_TYPE,
             C.COL_NAME: self.name,
             C.DATATYPE: self.datatype,
@@ -310,7 +310,7 @@ class ColumnMetadata(BaseModel):
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ColumnMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "ColumnMetadata":
         """
         Parse column metadata from CSVW-SAFE JSON.
 
@@ -344,12 +344,12 @@ class ColumnMetadata(BaseModel):
         raw_public_keys = data.get(C.PUBLIC_KEYS)
 
         if raw_partitions:
-            partitions: List[SingleColumnPartition] = [
+            partitions: list[SingleColumnPartition] = [
                 SingleColumnPartition.from_dict(p) for p in raw_partitions
             ]
             col_metadata.partitions = partitions
         if raw_public_keys:
-            public_keys: List[SingleColumnKey] = [
+            public_keys: list[SingleColumnKey] = [
                 SingleColumnKey.from_dict(p) for p in raw_public_keys
             ]
             col_metadata.public_keys = public_keys
@@ -360,21 +360,21 @@ class ColumnMetadata(BaseModel):
 class ColumnGroupMetadata(BaseModel):
     """Metadata describing a group of columns that share partition definitions."""
 
-    columns: List[str]
+    columns: list[str]
 
     # one of the two is necessary
-    partitions: Optional[List[MultiColumnPartition]] = None
-    public_keys: Optional[List[MultiColumnKeys]] = None
-    max_num_partitions: Optional[int] = None
-    exhaustive_partitions: Optional[bool] = None
+    partitions: list[MultiColumnPartition] | None = None
+    public_keys: list[MultiColumnKeys] | None = None
+    max_num_partitions: int | None = None
+    exhaustive_partitions: bool | None = None
 
-    max_length: Optional[int] = None
-    max_groups_per_unit: Optional[int] = None
-    max_contributions: Optional[int] = None
+    max_length: int | None = None
+    max_groups_per_unit: int | None = None
+    max_contributions: int | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the column group metadata."""
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "@type": C.COLUMN_GROUP,
             C.COLUMNS_IN_GROUP: self.columns,
         }
@@ -403,7 +403,7 @@ class ColumnGroupMetadata(BaseModel):
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ColumnGroupMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "ColumnGroupMetadata":
         """Parse grouped column metadata from JSON."""
         col_group_metadata = ColumnGroupMetadata(
             columns=data[C.COLUMNS_IN_GROUP],
@@ -417,12 +417,12 @@ class ColumnGroupMetadata(BaseModel):
         raw_public_keys = data.get(C.PUBLIC_KEYS)
 
         if raw_partitions:
-            partitions: List[MultiColumnPartition] = [
+            partitions: list[MultiColumnPartition] = [
                 MultiColumnPartition.from_dict(p) for p in raw_partitions
             ]
             col_group_metadata.partitions = partitions
         if raw_public_keys:
-            public_keys: List[MultiColumnKeys] = [
+            public_keys: list[MultiColumnKeys] = [
                 MultiColumnKeys.from_dict(p) for p in raw_public_keys
             ]
             col_group_metadata.public_keys = public_keys
@@ -438,16 +438,16 @@ class TableMetadata(BaseModel):
     max_length: int
     public_length: int
 
-    columns: List[ColumnMetadata] = Field(default_factory=list)
-    column_groups: Optional[List[ColumnGroupMetadata]] = None
+    columns: list[ColumnMetadata] = Field(default_factory=list)
+    column_groups: list[ColumnGroupMetadata] | None = None
 
-    context: List[str] = Field(default_factory=lambda: [C.CSVW_CONTEXT, C.CSVW_SAFE_CONTEXT])
+    context: list[str] = Field(default_factory=lambda: [C.CSVW_CONTEXT, C.CSVW_SAFE_CONTEXT])
 
     table_type: str = C.TABLE_TYPE
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the full metadata object to CSVW-SAFE JSON."""
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "@context": self.context,
             "@type": self.table_type,
             C.PRIVACY_UNIT: self.privacy_unit,
@@ -463,7 +463,7 @@ class TableMetadata(BaseModel):
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TableMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "TableMetadata":
         """
         Parse a CSVW-SAFE metadata document.
 

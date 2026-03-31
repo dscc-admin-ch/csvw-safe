@@ -267,8 +267,8 @@ def test_validate_metadata_column_groups():
     assert keys_dict[C.COLUMNS_IN_GROUP] == ["col1", "col2"]
     assert keys_dict[C.PUBLIC_KEYS] == [
         {
-            'col1': {C.PARTITION_VALUE: 'a'},
-            'col2': {C.LOWER_BOUND: 1.0, C.UPPER_BOUND: 10.0},
+            "col1": {C.PARTITION_VALUE: "a"},
+            "col2": {C.LOWER_BOUND: 1.0, C.UPPER_BOUND: 10.0},
         }
     ]
 
