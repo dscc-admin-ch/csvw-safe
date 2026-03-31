@@ -32,7 +32,8 @@ or for development:
 ```
 git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
 cd csvw-safe-library
-pip install -e .[dev]```
+pip install -e .[dev,full]
+```
 
 
 ## Scripts Overview
@@ -202,7 +203,8 @@ assert_same_structure(df, dummy_df)
 
 ## Tests
 ```
-pip install -r requirements.txt
+cd csvw-safe-library
+pip install -e .[dev,full]
 pytest tests/
 ```
 

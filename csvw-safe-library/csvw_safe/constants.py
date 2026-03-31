@@ -7,77 +7,59 @@ from pathlib import Path
 # ============================================================
 # CSVW
 # ============================================================
-CSVW = "csvw"
-COL_NAME = f"{CSVW}:name"
-DATATYPE = f"{CSVW}:datatype"
-REQUIRED = f"{CSVW}:required"
-MINIMUM = f"{CSVW}:minimum"
-MAXIMUM = f"{CSVW}:maximum"
-TABLE_SCHEMA = f"{CSVW}:tableSchema"
-COL_LIST = f"{CSVW}:columns"
-COL_TYPE = f"{CSVW}:Column"
-TABLE_TYPE = f"{CSVW}:Table"
-
 CSVW_CONTEXT = "http://www.w3.org/ns/csvw"
+COL_NAME = "name"
+DATATYPE = "datatype"
+REQUIRED = "required"
+MINIMUM = "minimum"
+MAXIMUM = "maximum"
+TABLE_SCHEMA = "tableSchema"
+COL_LIST = "columns"
+COL_TYPE = "Column"
+TABLE_TYPE = "Table"
 
 # ============================================================
 # CSVW_SAFE Namespaces
 # ============================================================
-CSVW_SAFE = "csvw-safe"
 CSVW_SAFE_CONTEXT = str(
     (Path(__file__).resolve().parents[2] / "csvw-safe-context.jsonld").resolve()
 )  # tmp
 
-# ============================================================
 # Column groups / partitions
-# ============================================================
-COLUMN_GROUP = f"{CSVW_SAFE}:ColumnGroup"
-PARTITION = f"{CSVW_SAFE}:Partition"
+COLUMN_GROUP = "ColumnGroup"
+PARTITION = "Partition"
+COLUMNS_IN_GROUP = "columnsInGroup"
+PUBLIC_PARTITIONS = "partitions"
+PUBLIC_KEYS = "keys"
+EXHAUSTIVE_PARTITIONS = "exhaustivePartitions"
+MAX_NUM_PARTITIONS = "maxNumPartitions"
+PUBLIC_LENGTH = "length"
+PRIVACY_UNIT = "privacyUnit"
+PRIVACY_ID = "privacyId"
+ADD_INFO = "additionalInformation"
 
-COLUMNS = f"{CSVW_SAFE}:columns"
-PUBLIC_PARTITIONS = f"{CSVW_SAFE}:partitions"
-PUBLIC_KEYS = f"{CSVW_SAFE}:keys"
-EXHAUSTIVE_PARTITIONS = f"{CSVW_SAFE}:exhaustivePartitions"
-MAX_NUM_PARTITIONS = f"{CSVW_SAFE}:maxNumPartitions"
-
-PUBLIC_LENGTH = f"{CSVW_SAFE}:length"
-PRIVACY_UNIT = f"{CSVW_SAFE}:privacyUnit"
-PRIVACY_ID = f"{CSVW_SAFE}:privacyId"
-ADD_INFO = f"{CSVW_SAFE}:additionalInformation"
-
-
-# ============================================================
 # Differential privacy bounds
-# ============================================================
-DP = f"{CSVW_SAFE}:dp"
+MAX_LENGTH = "maxLength"
+MAX_GROUPS = "maxGroupsPerUnit"
+MAX_CONTRIB = "maxContributions"
 
-MAX_LENGTH = f"{DP}.maxLength"
-MAX_GROUPS = f"{DP}.maxGroupsPerUnit"
-MAX_CONTRIB = f"{DP}.maxContributions"
-
-# ============================================================
 # Partition predicates
-# ============================================================
-PARTS = f"{CSVW_SAFE}:part"
+PREDICATE = "predicate"
+PARTITION_VALUE = "partitionValue"
+LOWER_BOUND = "lowerBound"
+UPPER_BOUND = "upperBound"
 
-PREDICATE = f"{PARTS}.predicate"
-PARTITION_VALUE = f"{PARTS}.partitionValue"
-LOWER_BOUND = f"{PARTS}.lowerBound"
-UPPER_BOUND = f"{PARTS}.upperBound"
-
-# ============================================================
 # Synthetic modeling
+NULL_PROP = "nullableProportion"
+ROW_DEP = "rowDependencies"
+DEPENDS_ON = "dependsOn"
+DEPENDENCY_TYPE = "dependencyType"
+VALUE_MAP = "valueMap"
+
+
 # ============================================================
-SYNTH = f"{CSVW_SAFE}:synth"
-
-NULL_PROP = f"{SYNTH}.nullableProportion"
-ROW_DEP = f"{SYNTH}.rowDependencies"
-
-DEPENDS_ON = f"{SYNTH}.dependsOn"
-DEPENDENCY_TYPE = f"{SYNTH}.dependencyType"
-VALUE_MAP = f"{SYNTH}.valueMap"
-
-
+# Make and generate metadata
+# ============================================================
 class DependencyType(StrEnum):
     """Types of column dependency relationships."""
 

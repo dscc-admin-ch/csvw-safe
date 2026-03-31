@@ -376,7 +376,7 @@ class ColumnGroupMetadata(BaseModel):
         """Serialize the column group metadata."""
         result: Dict[str, Any] = {
             "@type": C.COLUMN_GROUP,
-            C.COLUMNS: self.columns,
+            C.COLUMNS_IN_GROUP: self.columns,
         }
 
         if self.partitions is not None:
@@ -406,7 +406,7 @@ class ColumnGroupMetadata(BaseModel):
     def from_dict(cls, data: Dict[str, Any]) -> "ColumnGroupMetadata":
         """Parse grouped column metadata from JSON."""
         col_group_metadata = ColumnGroupMetadata(
-            columns=data[C.COLUMNS],
+            columns=data[C.COLUMNS_IN_GROUP],
             max_num_partitions=data.get(C.MAX_NUM_PARTITIONS),
             max_length=data.get(C.MAX_LENGTH),
             max_groups_per_unit=data.get(C.MAX_GROUPS),

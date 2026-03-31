@@ -228,7 +228,7 @@ def test_validate_metadata_column_groups():
         C.ADD_INFO: [
             {
                 "@type": C.COLUMN_GROUP,
-                C.COLUMNS: ["col1", "col2"],
+                C.COLUMNS_IN_GROUP: ["col1", "col2"],
                 C.PUBLIC_KEYS: [
                     {
                         "col1": {C.PARTITION_VALUE: "a"},
@@ -238,7 +238,7 @@ def test_validate_metadata_column_groups():
             },
             {
                 "@type": C.COLUMN_GROUP,
-                C.COLUMNS: ["col3", "col4"],
+                C.COLUMNS_IN_GROUP: ["col3", "col4"],
                 C.PUBLIC_PARTITIONS: [
                     {
                         "@type": C.PARTITION,
@@ -264,7 +264,7 @@ def test_validate_metadata_column_groups():
     keys = column_groups[0]
     keys_dict = keys.to_dict()
     print(keys_dict)
-    assert keys_dict[C.COLUMNS] == ["col1", "col2"]
+    assert keys_dict[C.COLUMNS_IN_GROUP] == ["col1", "col2"]
     assert keys_dict[C.PUBLIC_KEYS] == [
         {
             'col1': {C.PARTITION_VALUE: 'a'},
@@ -275,7 +275,7 @@ def test_validate_metadata_column_groups():
     partitions = column_groups[1]
     partitions_dict = partitions.to_dict()
     print(partitions_dict)
-    assert partitions_dict[C.COLUMNS] == ["col3", "col4"]
+    assert partitions_dict[C.COLUMNS_IN_GROUP] == ["col3", "col4"]
     assert C.PUBLIC_PARTITIONS in partitions_dict
     assert partitions_dict[C.MAX_NUM_PARTITIONS] == 2
     assert partitions_dict[C.EXHAUSTIVE_PARTITIONS]

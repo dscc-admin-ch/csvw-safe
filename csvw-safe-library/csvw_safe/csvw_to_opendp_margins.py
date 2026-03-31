@@ -27,7 +27,7 @@ from csvw_safe.constants import (
     ADD_INFO,
     COL_LIST,
     COL_NAME,
-    COLUMNS,
+    COLUMNS_IN_GROUP,
     EXHAUSTIVE_PARTITIONS,
     MAX_GROUPS,
     MAX_LENGTH,
@@ -118,7 +118,7 @@ def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
 
     # Multi-columns-level margins: groupby queries (by=['col_1', 'col_2'], max_length=100, ...)
     for cols_meta in csvw_meta.get(ADD_INFO, []):
-        margin_kwargs = get_margins(cols_meta, by=cols_meta[COLUMNS])
+        margin_kwargs = get_margins(cols_meta, by=cols_meta[COLUMNS_IN_GROUP])
         margins.append(Margin(**margin_kwargs))
 
     return margins
