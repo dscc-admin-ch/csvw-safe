@@ -20,6 +20,7 @@ from .make_dummy_from_metadata import main as make_dummy_from_metadata_main
 from .make_dummy_from_metadata import make_dummy_from_metadata
 from .make_metadata_from_data import main as make_metadata_from_data_main
 from .make_metadata_from_data import make_metadata_from_data
+from .metadata_structure import TableMetadata
 from .validate_metadata import main as validate_metadata_main
 from .validate_metadata import validate_metadata
 from .validate_metadata_shacl import main as validate_metadata_shacl_main
@@ -38,4 +39,5 @@ __all__ = [
     "validate_metadata_main",
     "validate_metadata_shacl",
     "validate_metadata_shacl_main",
+    "TableMetadata",
 ]
