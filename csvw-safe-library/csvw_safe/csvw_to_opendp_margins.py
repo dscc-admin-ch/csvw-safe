@@ -20,7 +20,6 @@ import argparse
 import json
 from typing import Any
 
-import opendp.prelude as dp
 from opendp.extras.polars import Margin
 
 from csvw_safe.constants import (
@@ -159,7 +158,7 @@ def main() -> None:
     margins = csvw_to_opendp_margins(csvw_meta)
 
     # Convert Margin objects → dict (for JSON output)
-    def margin_to_dict(m: dp.polars.Margin) -> dict[str, Any]:  # type: ignore[name-defined]
+    def margin_to_dict(m: Margin) -> dict[str, Any]:
         return {
             "by": getattr(m, "by", []),
             "max_length": getattr(m, "max_length", None),
