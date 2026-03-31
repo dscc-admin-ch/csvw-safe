@@ -2,7 +2,7 @@ from csvw_safe.constants import (
     ADD_INFO,
     COL_LIST,
     COL_NAME,
-    COLUMNS,
+    COLUMNS_IN_GROUP,
     EXHAUSTIVE_PARTITIONS,
     MAX_CONTRIB,
     MAX_GROUPS,
@@ -118,7 +118,7 @@ def test_column_group():
         COL_LIST: [{COL_NAME: "col1"}],
         ADD_INFO: [
             {
-                COLUMNS: ["species", "island"],
+                COLUMNS_IN_GROUP: ["species", "island"],
                 EXHAUSTIVE_PARTITIONS: True,
             },
         ],

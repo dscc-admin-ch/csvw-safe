@@ -14,13 +14,12 @@ rdflib
 import argparse
 import sys
 from pathlib import Path
-from typing import Tuple
 
 from pyshacl import validate as shacl_validate
 from rdflib import Graph
 
 
-def validate_metadata_shacl(metadata_file: Path, shacl_file: Path) -> Tuple[bool, str]:
+def validate_metadata_shacl(metadata_file: Path, shacl_file: Path) -> tuple[bool, str]:
     """
     Validate CSVW-SAFE metadata against a SHACL schema.
 

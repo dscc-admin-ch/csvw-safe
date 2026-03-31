@@ -34,7 +34,7 @@ def big_df():
 def test_basic_metadata_small(small_df):
     metadata = make_metadata_from_data(small_df, privacy_unit="user_id", with_dependencies=False)
 
-    assert metadata["@type"] == "csvw:Table"
+    assert metadata["@type"] == C.TABLE_TYPE
     assert metadata[C.PRIVACY_UNIT] == "user_id"
     assert metadata[C.MAX_LENGTH] == len(small_df)
     assert metadata[C.PUBLIC_LENGTH] == len(small_df)
@@ -129,14 +129,14 @@ def test_partition_contribution_level_big(big_df):
 
     first_partition = partitions[0]
     expected_first_partition = {
-        '@type': 'csvw-safe:Partition',
-        'csvw-safe:part.predicate': {
-            'csvw-safe:part.lowerBound': 0.0,
-            'csvw-safe:part.upperBound': 25.0,
+        "@type": C.PARTITION,
+        C.PREDICATE: {
+            C.LOWER_BOUND: 0.0,
+            C.UPPER_BOUND: 25.0,
         },
-        'csvw-safe:dp.maxLength': 15,
-        'csvw-safe:dp.maxGroupsPerUnit': 3,
-        'csvw-safe:dp.maxContributions': 1,
+        C.MAX_LENGTH: 15,
+        C.MAX_GROUPS: 3,
+        C.MAX_CONTRIB: 1,
     }
     assert first_partition == expected_first_partition
 
@@ -157,7 +157,7 @@ def test_column_groups_big_partition_level(big_df):
 
     group = groups[0]
     assert group["@type"] == C.COLUMN_GROUP
-    assert group["csvw-safe:columns"] == ["color", "value"]
+    assert group[C.COLUMNS_IN_GROUP] == ["color", "value"]
     assert C.PUBLIC_PARTITIONS in group
 
 
@@ -177,7 +177,7 @@ def test_column_groups_big_column_level(big_df):
 
     group = groups[0]
     assert group["@type"] == C.COLUMN_GROUP
-    assert group["csvw-safe:columns"] == ["color", "value"]
+    assert group[C.COLUMNS_IN_GROUP] == ["color", "value"]
     assert C.PUBLIC_PARTITIONS not in group
     assert group[C.MAX_NUM_PARTITIONS] == 12
 

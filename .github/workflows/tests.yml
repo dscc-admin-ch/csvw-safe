@@ -25,7 +25,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           cd csvw-safe-library
-          pip install -e .[full,dev]
+          pip install -e .[dp_lib,rdf,dev]
 
       - name: Run tests with coverage
         run: |

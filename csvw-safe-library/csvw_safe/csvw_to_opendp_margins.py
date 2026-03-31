@@ -18,16 +18,15 @@ The resulting margins can be used in an OpenDP context, for example:
 
 import argparse
 import json
-from typing import Any, Dict, List
+from typing import Any
 
-import opendp.prelude as dp
 from opendp.extras.polars import Margin
 
 from csvw_safe.constants import (
     ADD_INFO,
     COL_LIST,
     COL_NAME,
-    COLUMNS,
+    COLUMNS_IN_GROUP,
     EXHAUSTIVE_PARTITIONS,
     MAX_GROUPS,
     MAX_LENGTH,
@@ -36,7 +35,7 @@ from csvw_safe.constants import (
 )
 
 
-def get_margins(col_meta: Dict[str, Any], by: List[str]) -> Dict[str, Any]:
+def get_margins(col_meta: dict[str, Any], by: list[str]) -> dict[str, Any]:
     """
     Build margin keyword arguments for a given column or column group.
 
@@ -54,7 +53,7 @@ def get_margins(col_meta: Dict[str, Any], by: List[str]) -> Dict[str, Any]:
         Dictionary of keyword arguments suitable for constructing an
         OpenDP Margin object.
     """
-    margin_kwargs: Dict[str, Any] = {"by": by}
+    margin_kwargs: dict[str, Any] = {"by": by}
 
     # max_length per column
     if MAX_LENGTH in col_meta:
@@ -76,7 +75,7 @@ def get_margins(col_meta: Dict[str, Any], by: List[str]) -> Dict[str, Any]:
     return margin_kwargs
 
 
-def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
+def csvw_to_opendp_margins(csvw_meta: dict[str, Any]) -> list["Margin"]:
     """
     Convert CSVW-SAFE metadata to a list of OpenDP Margin objects.
 
@@ -95,10 +94,10 @@ def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
     ValueError
         If required metadata (e.g., max_contributions) is missing.
     """
-    margins: List["Margin"] = []
+    margins: list[Margin] = []
 
     # Table-level margins: non groupby queries (by=[], max_length=10, ...)
-    margin_kwargs: Dict[str, Any] = {}
+    margin_kwargs: dict[str, Any] = {}
 
     # Max length (for non count queries)
     if csvw_meta.get(MAX_LENGTH, False):
@@ -118,7 +117,7 @@ def csvw_to_opendp_margins(csvw_meta: Dict[str, Any]) -> List["Margin"]:
 
     # Multi-columns-level margins: groupby queries (by=['col_1', 'col_2'], max_length=100, ...)
     for cols_meta in csvw_meta.get(ADD_INFO, []):
-        margin_kwargs = get_margins(cols_meta, by=cols_meta[COLUMNS])
+        margin_kwargs = get_margins(cols_meta, by=cols_meta[COLUMNS_IN_GROUP])
         margins.append(Margin(**margin_kwargs))
 
     return margins
@@ -153,13 +152,13 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load metadata
-    with open(args.input, "r", encoding="utf-8") as f:
+    with open(args.input, encoding="utf-8") as f:
         csvw_meta = json.load(f)
 
     margins = csvw_to_opendp_margins(csvw_meta)
 
     # Convert Margin objects → dict (for JSON output)
-    def margin_to_dict(m: dp.polars.Margin) -> Dict[str, Any]:  # type: ignore[name-defined]
+    def margin_to_dict(m: Margin) -> dict[str, Any]:
         return {
             "by": getattr(m, "by", []),
             "max_length": getattr(m, "max_length", None),

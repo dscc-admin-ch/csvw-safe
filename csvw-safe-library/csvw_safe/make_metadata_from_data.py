@@ -12,7 +12,7 @@ privacy-preserving data synthesis and differential privacy pipelines.
 
 import argparse
 import json
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -46,7 +46,7 @@ from csvw_safe.utils import ContributionLevel, sanitize
 
 def get_effective_contrib_level(
     column_name: str,
-    fine_contributions_level: Dict[str, ContributionLevel],
+    fine_contributions_level: dict[str, ContributionLevel],
     default_contributions_level: ContributionLevel,
 ) -> ContributionLevel:
     """
@@ -86,7 +86,7 @@ def identify_dependency(  # pylint: disable=too-many-locals
     column_name: str,
     max_mapping_keys: int = 25,
     max_mapping_values: int = 10,
-) -> List[Dependency]:
+) -> list[Dependency]:
     """
     Detect dependencies between columns.
 
@@ -109,7 +109,7 @@ def identify_dependency(  # pylint: disable=too-many-locals
     list
         Dependency descriptions.
     """
-    results: List[Dependency] = []
+    results: list[Dependency] = []
     for col in df.columns:
         if col == column_name:
             continue
@@ -162,7 +162,7 @@ def identify_dependency(  # pylint: disable=too-many-locals
     return results
 
 
-def make_predicate(spec: Dict[str, Any], value: Any) -> Predicate:
+def make_predicate(spec: dict[str, Any], value: Any) -> Predicate:
     """
     Build a Predicate object from a column specification and a partition value.
 
@@ -198,7 +198,7 @@ def make_predicate(spec: Dict[str, Any], value: Any) -> Predicate:
 
 def make_categorical_partitions(
     df: pd.DataFrame, privacy_unit: str, column_name: str
-) -> List[SingleColumnPartition]:
+) -> list[SingleColumnPartition]:
     """Generate partitions for a categorical column."""
     partitions_meta = build_partitions(
         df,
@@ -212,8 +212,8 @@ def make_numeric_partitions(
     df: pd.DataFrame,
     privacy_unit: str,
     column_name: str,
-    bounds: List[Any],
-) -> List[SingleColumnPartition]:
+    bounds: list[Any],
+) -> list[SingleColumnPartition]:
     """Generate partitions for a numeric column using provided bins."""
     partitions_meta = build_partitions(
         df,
@@ -232,10 +232,10 @@ def make_numeric_partitions(
 
 def get_multi_group_partitions(
     df: pd.DataFrame,
-    col_group: List[str],
-    continuous_partitions: Dict[str, List[Any]],
+    col_group: list[str],
+    continuous_partitions: dict[str, list[Any]],
     privacy_unit: str,
-) -> List[MultiColumnPartition]:
+) -> list[MultiColumnPartition]:
     """Generate partitions when grouping by multiple columns."""
     specs = []
     for col in col_group:
@@ -263,8 +263,8 @@ def get_multi_group_partitions(
 def build_partitions(
     df: pd.DataFrame,
     privacy_unit: str,
-    column_specs: List[Dict[str, Any]],
-) -> List[Partition]:
+    column_specs: list[dict[str, Any]],
+) -> list[Partition]:
     """
     Build CSVW-SAFE partitions and compute contribution bounds per partition.
 
@@ -333,7 +333,7 @@ def build_partitions(
         else:
             raise ValueError(f"Unknown column kind {spec['kind']}")
 
-    partitions_meta: List[Partition] = []
+    partitions_meta: list[Partition] = []
     for group_key, group_df in df_work.groupby(grouping_columns, dropna=True, observed=True):
         per_privacy_unit_contrib = group_df.groupby(privacy_unit).size()
         max_contrib = max(
@@ -367,8 +367,8 @@ def build_partitions(
 
 
 def get_column_level_contribution(
-    partitions_meta: Union[List[SingleColumnPartition], List[MultiColumnPartition]],
-) -> Tuple[int, int, int]:
+    partitions_meta: list[SingleColumnPartition] | list[MultiColumnPartition],
+) -> tuple[int, int, int]:
     """Compute maximum contribution over all partition of column."""
     max_length = max(p.max_length for p in partitions_meta)
     max_groups_per_unit = max(p.max_groups_per_unit for p in partitions_meta)
@@ -379,12 +379,12 @@ def get_column_level_contribution(
 
 def make_column_groups(
     df: pd.DataFrame,
-    column_groups: List[List[str]],
-    fine_contributions_level: Dict[str, ContributionLevel],
+    column_groups: list[list[str]],
+    fine_contributions_level: dict[str, ContributionLevel],
     default_contributions_level: ContributionLevel,
-    continuous_partitions: Dict[str, List[Any]],
+    continuous_partitions: dict[str, list[Any]],
     privacy_unit: str,
-) -> List[ColumnGroupMetadata]:
+) -> list[ColumnGroupMetadata]:
     """
     Build CSVW-SAFE metadata for column groups.
 
@@ -425,7 +425,6 @@ def make_column_groups(
     column_groups_metadata = []
 
     for col_group in column_groups:
-
         for col in col_group:
             col_contrib_level = get_effective_contrib_level(
                 col, fine_contributions_level, default_contributions_level
@@ -469,10 +468,10 @@ def make_column_groups(
 
 def prepare_metadata_inputs(
     default_contributions_level: str,
-    fine_contributions_level: Optional[Dict[str, str]],
-    continuous_partitions: Optional[Dict[str, List[Any]]],
-    column_groups: Optional[List[List[str]]],
-) -> Tuple[ContributionLevel, Dict[str, ContributionLevel], Dict[str, List[Any]], List[List[str]]]:
+    fine_contributions_level: dict[str, str] | None,
+    continuous_partitions: dict[str, list[Any]] | None,
+    column_groups: list[list[str]] | None,
+) -> tuple[ContributionLevel, dict[str, ContributionLevel], dict[str, list[Any]], list[list[str]]]:
     """
     Normalize optional metadata configuration inputs.
 
@@ -534,7 +533,7 @@ def attach_partitions_to_column(
     column_meta: ColumnMetadata,
     column_name: str,
     privacy_unit: str,
-    continuous_partitions: Dict[str, List[Any]],
+    continuous_partitions: dict[str, list[Any]],
     col_contrib_level: ContributionLevel,
 ) -> None:
     """
@@ -575,7 +574,6 @@ def attach_partitions_to_column(
     series = df[column_name]
 
     if is_categorical(series):
-
         partitions_meta = make_categorical_partitions(df, privacy_unit, column_name)
         column_meta.max_num_partitions = len(partitions_meta)
 
@@ -591,7 +589,6 @@ def attach_partitions_to_column(
             column_meta.partitions = partitions_meta
 
     elif column_name in continuous_partitions:
-
         bounds = sorted(continuous_partitions[column_name])
         partitions_meta = make_numeric_partitions(df, privacy_unit, column_name, bounds)
 
@@ -603,8 +600,8 @@ def build_column_metadata(
     df: pd.DataFrame,
     column_name: str,
     privacy_unit: str,
-    continuous_partitions: Dict[str, List[Any]],
-    fine_contributions_level: Dict[str, ContributionLevel],
+    continuous_partitions: dict[str, list[Any]],
+    fine_contributions_level: dict[str, ContributionLevel],
     default_contributions_level: ContributionLevel,
     with_dependencies: bool,
 ) -> ColumnMetadata:
@@ -688,10 +685,10 @@ def make_metadata_from_data(
     with_dependencies: bool = True,
     privacy_unit: str = "",
     max_contributions: int = 0,  # TODO: compute
-    continuous_partitions: Optional[Dict[str, List[Any]]] = None,
-    column_groups: Optional[List[List[str]]] = None,
+    continuous_partitions: dict[str, list[Any]] | None = None,
+    column_groups: list[list[str]] | None = None,
     default_contributions_level: str = "table",
-    fine_contributions_level: Optional[Dict[str, str]] = None,
+    fine_contributions_level: dict[str, str] | None = None,
 ) -> Any:
     """
     Generate CSVW-SAFE metadata from a dataset and return JSON-serializable dictionary.

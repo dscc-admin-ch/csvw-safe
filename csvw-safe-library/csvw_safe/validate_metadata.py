@@ -3,12 +3,12 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from csvw_safe.metadata_structure import TableMetadata
 
 
-def validate_metadata(metadata: Dict[str, Any]) -> TableMetadata:
+def validate_metadata(metadata: dict[str, Any]) -> TableMetadata:
     """
     Validate CSVW-SAFE metadata against the pydantic model.
 

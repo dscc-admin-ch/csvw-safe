@@ -19,7 +19,7 @@ import argparse
 import json
 import string
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -100,7 +100,7 @@ def _apply_value_mask(series: pd.Series, value: Any) -> pd.Series:
     return series == value
 
 
-def _predicate_mask(df: pd.DataFrame, predicate: Dict[str, Any]) -> pd.Series:
+def _predicate_mask(df: pd.DataFrame, predicate: dict[str, Any]) -> pd.Series:
     """Return mask for a full predicate."""
     mask = pd.Series(True, index=df.index)
     for col, value in predicate.items():
@@ -110,7 +110,7 @@ def _predicate_mask(df: pd.DataFrame, predicate: Dict[str, Any]) -> pd.Series:
 
 def column_group_partitions(
     df: pd.DataFrame,
-    columns_group_meta: List[Dict[str, Any]],
+    columns_group_meta: list[dict[str, Any]],
 ) -> pd.DataFrame:
     """Keep only rows belonging to allowed column-group partitions."""
     global_mask = pd.Series(True, index=df.index)
@@ -130,7 +130,7 @@ def column_group_partitions(
 
 
 def apply_nulls_dataframe(
-    df: pd.DataFrame, columns_meta: List[dict[str, Any]], rng: np.random.Generator
+    df: pd.DataFrame, columns_meta: list[dict[str, Any]], rng: np.random.Generator
 ) -> pd.DataFrame:
     """Apply null proportion on dataframe."""
     columns_meta_map = {c[COL_NAME]: c for c in columns_meta}
@@ -144,7 +144,7 @@ def apply_nulls_dataframe(
 
 
 def make_dummy_from_metadata(
-    metadata: Dict[str, Any],
+    metadata: dict[str, Any],
     nb_rows: int = 100,
     seed: int = 0,
 ) -> pd.DataFrame:
@@ -173,9 +173,9 @@ def make_dummy_from_metadata(
     depends_map = {col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta}
     columns_group_meta = metadata.get(ADD_INFO, [])
 
-    generated: List[pd.DataFrame] = []
+    generated: list[pd.DataFrame] = []
     while sum(len(df) for df in generated) < nb_rows:
-        data_dict: Dict[str, pd.Series] = {}
+        data_dict: dict[str, pd.Series] = {}
         for col_meta in columns_meta:
             data_dict = generate_series(
                 col_meta[COL_NAME],
@@ -249,8 +249,8 @@ def main() -> None:
     df_dummy.to_csv(args.output, index=False)
 
     print(
-        f"Dummy dataset written to {args.output} "
-        f"({len(df_dummy)} rows, {len(df_dummy.columns)} columns)"
+        f"Dummy dataset written to {args.output} ({len(df_dummy)} rows,"
+        f"{len(df_dummy.columns)} columns)."
     )
 
 

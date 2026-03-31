@@ -6,7 +6,7 @@ See smarntoise-sql documentation: https://docs.smartnoise.org/sql/metadata.html
 
 import argparse
 import json
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -24,7 +24,7 @@ from csvw_safe.constants import (
 from csvw_safe.datatypes import to_snsql_datatype
 
 
-def csvw_to_snsql_column(col_meta: Dict[str, Any]) -> Dict[str, Any]:
+def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
     """
     Convert a single CSVW column metadata to SmartNoise SQL column metadata.
 
@@ -50,7 +50,7 @@ def csvw_to_snsql_column(col_meta: Dict[str, Any]) -> Dict[str, Any]:
         nullable_prop = col_meta.get(NULL_PROP, 1.0)
         nullable = nullable_prop > 0.0
 
-    col_dict: Dict[str, Any] = {
+    col_dict: dict[str, Any] = {
         "name": col_meta[COL_NAME],
         "type": to_snsql_datatype(col_meta[DATATYPE]),
         "nullable": nullable,
@@ -70,7 +70,7 @@ def csvw_to_snsql_column(col_meta: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def csvw_to_smartnoise_sql(
-    csvw_meta: Dict[str, Any],
+    csvw_meta: dict[str, Any],
     schema_name: str,
     table_name: str,
     row_privacy: bool = False,
@@ -79,7 +79,7 @@ def csvw_to_smartnoise_sql(
     clamp_counts: bool = False,
     clamp_columns: bool = True,
     use_dpsu: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convert a CSVW-SAFE table metadata dictionary to SmartNoise SQL metadata.
 
@@ -147,7 +147,7 @@ def csvw_to_smartnoise_sql(
     max_ids = csvw_meta[MAX_CONTRIB]
 
     # Initialize table metadata
-    table_meta: Dict[str, Any] = {
+    table_meta: dict[str, Any] = {
         "max_ids": max_ids,
         "row_privacy": row_privacy,
         "sample_max_ids": sample_max_ids,
@@ -224,7 +224,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load CSVW metadata
-    with open(args.input, "r", encoding="utf-8") as f:
+    with open(args.input, encoding="utf-8") as f:
         csvw_meta = json.load(f)
 
     # Call conversion function
@@ -249,3 +249,33 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# def convert_to_smartnoise_metadata(metadata: Metadata, query_columns: list[str]) -> dict:
+#     """Convert Lomas metadata to smartnoise metadata format (for SQL).
+
+#     Args:
+#         metadata (Metadata): Dataset metadata from admin database
+#         query_columns (list[str]): List of column names used in the query
+
+#     Returns:
+#         dict: metadata of the dataset in smartnoise-sql format
+#     """
+#     metadata_dict = metadata.model_dump()
+
+#     # Keep only query columns in metadata
+#     metadata_dict["columns"] = {
+#         col: val for col, val in metadata_dict["columns"].items() if col in query_columns
+#     }
+
+#     # No bounds on datetime for Smartnoise-SQL
+#     for _, val in metadata_dict["columns"].items():
+#         if val["private_id"] or val["type"] == MetadataColumnType.DATETIME:
+#             for k in ["lower", "upper"]:
+#                 if val.get(k) is not None:
+#                     del val[k]
+#         val["nullable"] = val["nullable_proportion"] > 0
+
+#     metadata_dict.update(metadata_dict["columns"])
+#     del metadata_dict["columns"]
+#     return {"": {"": {"df": metadata_dict}}}

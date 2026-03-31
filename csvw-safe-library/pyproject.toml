@@ -12,12 +12,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-full = [
+dp_lib = [
     "polars==1.32.0",
     "pyarrow>=23.0.1",
-    "pyshacl>=0.17.2",
     "opendp>=0.14",
-    "rdflib>=6.0"
+]
+rdf = [
+    "rdflib>=6.0", 
+    "pyshacl>=0.17.2"
 ]
 dev = [
     "isort==6.0.0",
@@ -31,6 +33,12 @@ dev = [
     "pytest==8.3.3",
     "pytest-cov==6.0.0",
     "types-PyYAML==6.0.12.20250402"
+]
+
+# GitHub install for development (editable)
+[tool.pip]
+install = [
+    "csvw-safe[dp_lib,rdf] @ git+https://github.com/dscc-admin-ch/csvw-safe.git@main#subdirectory=csvw-safe/csvw-safe-library"
 ]
 
 [build-system]
