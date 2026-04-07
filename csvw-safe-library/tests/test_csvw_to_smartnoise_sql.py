@@ -36,7 +36,13 @@ def mock_csvw_metadata():
                 MINIMUM: 0,
                 MAXIMUM: 120,
             },
-            {COL_NAME: "signup_date", DATATYPE: "dateTime", NULL_PROP: 0.1},
+            {
+                COL_NAME: "signup_date",
+                DATATYPE: "dateTime",
+                NULL_PROP: 0.1,
+                MINIMUM: "2016/04/27",
+                MAXIMUM: "2026/04/17",
+            },
         ],
     }
 
@@ -75,13 +81,13 @@ def test_csvw_to_smartnoise_sql_basic():
     user_col = table_meta["user_id"]
     assert user_col["type"] == "int"
     assert user_col["private_id"] is True
-    assert user_col["lower"] == 1
-    assert user_col["upper"] == 100
+    assert "lower" not in user_col
+    assert "upper" not in user_col
     assert user_col["nullable"] is False
 
     age_col = table_meta["age"]
     assert age_col["type"] == "int"
-    assert "private_id" not in age_col
+    assert age_col["private_id"] is False
     assert age_col["lower"] == 0
     assert age_col["upper"] == 120
     assert age_col["nullable"] is False
@@ -89,6 +95,8 @@ def test_csvw_to_smartnoise_sql_basic():
     signup_col = table_meta["signup_date"]
     assert signup_col["type"] == "datetime"
     assert signup_col["nullable"] is True
+    assert "lower" not in signup_col
+    assert "upper" not in signup_col
 
 
 def test_yaml_output(tmp_path):

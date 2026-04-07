@@ -21,7 +21,7 @@ from csvw_safe.constants import (
     PRIVACY_ID,
     REQUIRED,
 )
-from csvw_safe.datatypes import to_snsql_datatype
+from csvw_safe.datatypes import XSD_GROUP_MAP, DataTypesGroups, to_snsql_datatype
 
 
 def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
@@ -47,32 +47,32 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
         nullable = not col_meta[REQUIRED]
     else:
         # Default fallback to nullable_proportion
-        nullable_prop = col_meta.get(NULL_PROP, 1.0)
-        nullable = nullable_prop > 0.0
+        nullable = col_meta.get(NULL_PROP, 1.0) > 0.0
 
+    xsd_datatype = col_meta[DATATYPE]
     col_dict: dict[str, Any] = {
         "name": col_meta[COL_NAME],
-        "type": to_snsql_datatype(col_meta[DATATYPE]),
+        "type": to_snsql_datatype(xsd_datatype),
         "nullable": nullable,
     }
 
     # Mark privacy unit
-    if col_meta.get(PRIVACY_ID, False):
-        col_dict["private_id"] = True
+    col_dict["private_id"] = col_meta.get(PRIVACY_ID, False)
 
-    # Add numeric bounds if present
-    if MINIMUM in col_meta:
-        col_dict["lower"] = col_meta[MINIMUM]
-    if MAXIMUM in col_meta:
-        col_dict["upper"] = col_meta[MAXIMUM]
+    if XSD_GROUP_MAP[xsd_datatype] != DataTypesGroups.DATETIME and not col_dict["private_id"]:
+        # Add numeric bounds if present
+        if MINIMUM in col_meta:
+            col_dict["lower"] = col_meta[MINIMUM]
+        if MAXIMUM in col_meta:
+            col_dict["upper"] = col_meta[MAXIMUM]
 
     return col_dict
 
 
 def csvw_to_smartnoise_sql(
     csvw_meta: dict[str, Any],
-    schema_name: str,
-    table_name: str,
+    schema_name: str = "",
+    table_name: str = "df",
     row_privacy: bool = False,
     sample_max_ids: bool = True,
     censor_dims: bool = True,
@@ -88,9 +88,9 @@ def csvw_to_smartnoise_sql(
     csvw_meta : Dict[str, Any]
         The CSVW-SAFE metadata dictionary for a single table.
         Must include "columns" list and "max_contributions" (used as max_ids).
-    schema_name : str
+    schema_name : str, default=""
         Name of the SmartNoise schema (top-level namespace) for the table.
-    table_name : str
+    table_name : str, default="df"
         Name of the table in SmartNoise metadata.
     row_privacy : bool, default=False
         Whether to enable row-level privacy for the table.
@@ -249,33 +249,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-# def convert_to_smartnoise_metadata(metadata: Metadata, query_columns: list[str]) -> dict:
-#     """Convert Lomas metadata to smartnoise metadata format (for SQL).
-
-#     Args:
-#         metadata (Metadata): Dataset metadata from admin database
-#         query_columns (list[str]): List of column names used in the query
-
-#     Returns:
-#         dict: metadata of the dataset in smartnoise-sql format
-#     """
-#     metadata_dict = metadata.model_dump()
-
-#     # Keep only query columns in metadata
-#     metadata_dict["columns"] = {
-#         col: val for col, val in metadata_dict["columns"].items() if col in query_columns
-#     }
-
-#     # No bounds on datetime for Smartnoise-SQL
-#     for _, val in metadata_dict["columns"].items():
-#         if val["private_id"] or val["type"] == MetadataColumnType.DATETIME:
-#             for k in ["lower", "upper"]:
-#                 if val.get(k) is not None:
-#                     del val[k]
-#         val["nullable"] = val["nullable_proportion"] > 0
-
-#     metadata_dict.update(metadata_dict["columns"])
-#     del metadata_dict["columns"]
-#     return {"": {"": {"df": metadata_dict}}}
