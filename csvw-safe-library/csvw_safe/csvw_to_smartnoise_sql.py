@@ -19,7 +19,9 @@ from csvw_safe.constants import (
     MINIMUM,
     NULL_PROP,
     PRIVACY_ID,
+    PUBLIC_LENGTH,
     REQUIRED,
+    TABLE_SCHEMA
 )
 from csvw_safe.datatypes import XSD_GROUP_MAP, DataTypesGroups, to_snsql_datatype
 
@@ -57,14 +59,18 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
     }
 
     # Mark privacy unit
-    col_dict["private_id"] = col_meta.get(PRIVACY_ID, False)
+    # Mark privacy unit
+    if col_meta.get(PRIVACY_ID, False):
+        col_dict["private_id"] = True
 
-    if XSD_GROUP_MAP[xsd_datatype] != DataTypesGroups.DATETIME and not col_dict["private_id"]:
-        # Add numeric bounds if present
-        if MINIMUM in col_meta:
-            col_dict["lower"] = col_meta[MINIMUM]
-        if MAXIMUM in col_meta:
-            col_dict["upper"] = col_meta[MAXIMUM]
+    if XSD_GROUP_MAP[xsd_datatype] != DataTypesGroups.DATETIME:
+        if PRIVACY_ID in col_meta and col_meta[PRIVACY_ID]:
+            pass
+        else:
+            if MINIMUM in col_meta:
+                col_dict["lower"] = col_meta[MINIMUM]
+            if MAXIMUM in col_meta:
+                col_dict["upper"] = col_meta[MAXIMUM]
 
     return col_dict
 
@@ -73,12 +79,12 @@ def csvw_to_smartnoise_sql(
     csvw_meta: dict[str, Any],
     schema_name: str = "",
     table_name: str = "df",
-    row_privacy: bool = False,
-    sample_max_ids: bool = True,
-    censor_dims: bool = True,
-    clamp_counts: bool = False,
-    clamp_columns: bool = True,
-    use_dpsu: bool = False,
+    row_privacy: bool | None = None,
+    sample_max_ids: bool | None = None,
+    censor_dims: bool | None = None,
+    clamp_counts: bool | None = None,
+    clamp_columns: bool | None = None,
+    use_dpsu: bool | None = None,
 ) -> dict[str, Any]:
     """
     Convert a CSVW-SAFE table metadata dictionary to SmartNoise SQL metadata.
@@ -146,9 +152,16 @@ def csvw_to_smartnoise_sql(
         raise ValueError(f"CSVW metadata must include '{MAX_CONTRIB}' (max_ids for SNSQL)")
     max_ids = csvw_meta[MAX_CONTRIB]
 
-    # Initialize table metadata
+    # Required fields only
     table_meta: dict[str, Any] = {
         "max_ids": max_ids,
+    }
+
+    if csvw_meta.get(PUBLIC_LENGTH , False):
+        table_meta["rows"] = csvw_meta[PUBLIC_LENGTH]
+        
+    # Optional fields (only include if explicitly provided)
+    optional_fields = {
         "row_privacy": row_privacy,
         "sample_max_ids": sample_max_ids,
         "censor_dims": censor_dims,
@@ -156,11 +169,24 @@ def csvw_to_smartnoise_sql(
         "clamp_columns": clamp_columns,
         "use_dpsu": use_dpsu,
     }
+    for key, value in optional_fields.items():
+        if value is not None:
+            table_meta[key] = value
 
     # Convert columns
-    for col_meta in csvw_meta.get(COL_LIST, []):
+    has_private_id = False
+    for col_meta in csvw_meta[TABLE_SCHEMA][COL_LIST]:
         col_dict = csvw_to_snsql_column(col_meta)
-        table_meta[col_dict["name"]] = col_dict
+        table_meta[col_meta[COL_NAME]] = col_dict
+
+        if col_dict.get("private_id", False):
+            has_private_id = True
+
+    # Override row_privacy if needed
+    if has_private_id:
+        if row_privacy == True:
+            raise ValueError("Row privacy is set, but metadata specifies a private_id")
+        table_meta["row_privacy"] = False
 
     # Wrap into schema/table hierarchy
     return {"": {schema_name: {table_name: table_meta}}}
@@ -206,19 +232,19 @@ def main() -> None:
     parser.add_argument("--output", required=True, help="Output SmartNoise YAML metadata file")
     parser.add_argument("--schema", default="MySchema", help="SmartNoise SQL schema name")
     parser.add_argument("--table", default="MyTable", help="SmartNoise SQL table name")
-    parser.add_argument("--row_privacy", type=bool, default=False, help="Enable row privacy")
+    parser.add_argument("--row_privacy", type=bool, default=None, help="Enable row privacy")
     parser.add_argument(
-        "--sample_max_ids", type=bool, default=True, help="Skip sampling if max_ids enforced"
+        "--sample_max_ids", type=bool, default=None, help="Skip sampling if max_ids enforced"
     )
     parser.add_argument(
-        "--censor_dims", type=bool, default=True, help="Drop GROUP BY rows revealing individuals"
+        "--censor_dims", type=bool, default=None, help="Drop GROUP BY rows revealing individuals"
     )
     parser.add_argument(
-        "--clamp_counts", type=bool, default=False, help="Clamp negative counts to zero"
+        "--clamp_counts", type=bool, default=None, help="Clamp negative counts to zero"
     )
-    parser.add_argument("--clamp_columns", type=bool, default=True, help="Clamp columns to bounds")
+    parser.add_argument("--clamp_columns", type=bool, default=None, help="Clamp columns to bounds")
     parser.add_argument(
-        "--use_dpsu", type=bool, default=False, help="Use Differential Private Set Union"
+        "--use_dpsu", type=bool, default=None, help="Use Differential Private Set Union"
     )
 
     args = parser.parse_args()

@@ -730,7 +730,7 @@ def make_metadata_from_data(
         raise ValueError(f"Privacy unit is None, only '{ContributionLevel.TABLE}' possible.")
     if privacy_unit not in df.columns:
         raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
-
+    
     # Column
     columns_meta = [
         build_column_metadata(
@@ -753,7 +753,7 @@ def make_metadata_from_data(
 
     table_metadata = TableMetadata(
         privacy_unit=privacy_unit,
-        max_contributions=max_contributions,
+        max_contributions=df.groupby(privacy_unit).size().max(),
         max_length=len(df),
         public_length=len(df),
         columns=columns_meta,
