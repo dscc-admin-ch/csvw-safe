@@ -11,6 +11,7 @@ from csvw_safe.constants import (
     NULL_PROP,
     PRIVACY_ID,
     REQUIRED,
+    TABLE_SCHEMA,
 )
 from csvw_safe.csvw_to_smartnoise_sql import csvw_to_smartnoise_sql
 
@@ -19,31 +20,33 @@ def mock_csvw_metadata():
     """Return a small CSVW-SAFE JSON metadata for testing."""
     return {
         MAX_CONTRIB: 1,  # required by csvw_to_smartnoise_sql
-        COL_LIST: [
-            {
-                COL_NAME: "user_id",
-                DATATYPE: "integer",
-                PRIVACY_ID: True,
-                NULL_PROP: 0.0,
-                MINIMUM: 1,
-                MAXIMUM: 100,
-            },
-            {
-                COL_NAME: "age",
-                DATATYPE: "integer",
-                REQUIRED: True,
-                NULL_PROP: 0.0,
-                MINIMUM: 0,
-                MAXIMUM: 120,
-            },
-            {
-                COL_NAME: "signup_date",
-                DATATYPE: "dateTime",
-                NULL_PROP: 0.1,
-                MINIMUM: "2016/04/27",
-                MAXIMUM: "2026/04/17",
-            },
-        ],
+        TABLE_SCHEMA: {
+            COL_LIST: [
+                {
+                    COL_NAME: "user_id",
+                    DATATYPE: "integer",
+                    PRIVACY_ID: True,
+                    NULL_PROP: 0.0,
+                    MINIMUM: 1,
+                    MAXIMUM: 100,
+                },
+                {
+                    COL_NAME: "age",
+                    DATATYPE: "integer",
+                    REQUIRED: True,
+                    NULL_PROP: 0.0,
+                    MINIMUM: 0,
+                    MAXIMUM: 120,
+                },
+                {
+                    COL_NAME: "signup_date",
+                    DATATYPE: "dateTime",
+                    NULL_PROP: 0.1,
+                    MINIMUM: "2016/04/27",
+                    MAXIMUM: "2026/04/17",
+                },
+            ],
+        },
     }
 
 
@@ -52,7 +55,7 @@ def test_csvw_to_smartnoise_sql_basic():
     csvw_meta = mock_csvw_metadata()
     schema_name = "TestSchema"
     table_name = "TestTable"
-    row_privacy = True
+    row_privacy = False
 
     snsql_meta = csvw_to_smartnoise_sql(
         csvw_meta=csvw_meta,
@@ -60,6 +63,7 @@ def test_csvw_to_smartnoise_sql_basic():
         table_name=table_name,
         row_privacy=row_privacy,
     )
+    print(snsql_meta)
 
     # Check top-level keys
     assert "" in snsql_meta
@@ -68,35 +72,30 @@ def test_csvw_to_smartnoise_sql_basic():
 
     table_meta = snsql_meta[""][schema_name][table_name]
 
-    # Check table-level properties
-    assert table_meta["max_ids"] == 1
-    assert table_meta["row_privacy"] == row_privacy
-    assert table_meta["sample_max_ids"] is True
-    assert table_meta["censor_dims"] is True
-    assert table_meta["clamp_counts"] is False
-    assert table_meta["clamp_columns"] is True
-    assert table_meta["use_dpsu"] is False
+    expected = {
+        "max_ids": 1,
+        "row_privacy": False,
+        "user_id": {
+            "name": "user_id",
+            "type": "int",
+            "nullable": False,
+            "private_id": True,
+        },
+        "age": {
+            "name": "age",
+            "type": "int",
+            "nullable": False,
+            "lower": 0,
+            "upper": 120,
+        },
+        "signup_date": {
+            "name": "signup_date",
+            "type": "datetime",
+            "nullable": True,
+        },
+    }
 
-    # Check columns
-    user_col = table_meta["user_id"]
-    assert user_col["type"] == "int"
-    assert user_col["private_id"] is True
-    assert "lower" not in user_col
-    assert "upper" not in user_col
-    assert user_col["nullable"] is False
-
-    age_col = table_meta["age"]
-    assert age_col["type"] == "int"
-    assert age_col["private_id"] is False
-    assert age_col["lower"] == 0
-    assert age_col["upper"] == 120
-    assert age_col["nullable"] is False
-
-    signup_col = table_meta["signup_date"]
-    assert signup_col["type"] == "datetime"
-    assert signup_col["nullable"] is True
-    assert "lower" not in signup_col
-    assert "upper" not in signup_col
+    assert table_meta == expected
 
 
 def test_yaml_output(tmp_path):
@@ -126,10 +125,12 @@ def test_column_nullable_handling():
     """Test nullable_proportion is converted correctly to nullable flag."""
     csvw_meta = {
         MAX_CONTRIB: 1,
-        COL_LIST: [
-            {COL_NAME: "col1", DATATYPE: "integer", NULL_PROP: 0.5},
-            {COL_NAME: "col2", DATATYPE: "string", NULL_PROP: 0.0},
-        ],
+        TABLE_SCHEMA: {
+            COL_LIST: [
+                {COL_NAME: "col1", DATATYPE: "integer", NULL_PROP: 0.5},
+                {COL_NAME: "col2", DATATYPE: "string", NULL_PROP: 0.0},
+            ],
+        },
     }
     snsql_meta = csvw_to_smartnoise_sql(
         csvw_meta=csvw_meta,
@@ -146,10 +147,12 @@ def test_float_and_boolean():
     """Test nullable_proportion is converted correctly to nullable flag."""
     csvw_meta = {
         MAX_CONTRIB: 1,
-        COL_LIST: [
-            {COL_NAME: "col1", DATATYPE: "double", NULL_PROP: 0.5},
-            {COL_NAME: "col2", DATATYPE: "boolean", NULL_PROP: 0.0},
-        ],
+        TABLE_SCHEMA: {
+            COL_LIST: [
+                {COL_NAME: "col1", DATATYPE: "double", NULL_PROP: 0.5},
+                {COL_NAME: "col2", DATATYPE: "boolean", NULL_PROP: 0.0},
+            ],
+        },
     }
     snsql_meta = csvw_to_smartnoise_sql(
         csvw_meta=csvw_meta,

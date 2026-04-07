@@ -21,7 +21,7 @@ from csvw_safe.constants import (
     PRIVACY_ID,
     PUBLIC_LENGTH,
     REQUIRED,
-    TABLE_SCHEMA
+    TABLE_SCHEMA,
 )
 from csvw_safe.datatypes import XSD_GROUP_MAP, DataTypesGroups, to_snsql_datatype
 
@@ -75,7 +75,7 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
     return col_dict
 
 
-def csvw_to_smartnoise_sql(
+def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
     csvw_meta: dict[str, Any],
     schema_name: str = "",
     table_name: str = "df",
@@ -157,9 +157,9 @@ def csvw_to_smartnoise_sql(
         "max_ids": max_ids,
     }
 
-    if csvw_meta.get(PUBLIC_LENGTH , False):
+    if csvw_meta.get(PUBLIC_LENGTH, False):
         table_meta["rows"] = csvw_meta[PUBLIC_LENGTH]
-        
+
     # Optional fields (only include if explicitly provided)
     optional_fields = {
         "row_privacy": row_privacy,
@@ -184,7 +184,7 @@ def csvw_to_smartnoise_sql(
 
     # Override row_privacy if needed
     if has_private_id:
-        if row_privacy == True:
+        if row_privacy:
             raise ValueError("Row privacy is set, but metadata specifies a private_id")
         table_meta["row_privacy"] = False
 

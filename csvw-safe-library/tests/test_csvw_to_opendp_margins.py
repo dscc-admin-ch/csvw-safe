@@ -9,6 +9,7 @@ from csvw_safe.constants import (
     MAX_LENGTH,
     MAX_NUM_PARTITIONS,
     PUBLIC_LENGTH,
+    TABLE_SCHEMA,
 )
 from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
 
@@ -18,15 +19,17 @@ def mock_csvw_metadata():
     return {
         MAX_LENGTH: 1000,
         PUBLIC_LENGTH: 1000,
-        COL_LIST: [
-            {COL_NAME: "age", MAX_GROUPS: 120, PUBLIC_LENGTH: 500},
-            {COL_NAME: "income", MAX_LENGTH: 10, MAX_NUM_PARTITIONS: 40},
-            {
-                COL_NAME: "city",
-                MAX_GROUPS: 50,
-                EXHAUSTIVE_PARTITIONS: True,
-            },
-        ],
+        TABLE_SCHEMA: {
+            COL_LIST: [
+                {COL_NAME: "age", MAX_GROUPS: 120, PUBLIC_LENGTH: 500},
+                {COL_NAME: "income", MAX_LENGTH: 10, MAX_NUM_PARTITIONS: 40},
+                {
+                    COL_NAME: "city",
+                    MAX_GROUPS: 50,
+                    EXHAUSTIVE_PARTITIONS: True,
+                },
+            ],
+        },
     }
 
 
@@ -97,7 +100,7 @@ def test_no_optional_fields():
     """Test minimal metadata still produces valid margins."""
     csvw_meta = {
         MAX_CONTRIB: 10,
-        COL_LIST: [{COL_NAME: "col1"}],
+        TABLE_SCHEMA: {COL_LIST: [{COL_NAME: "col1"}]},
     }
 
     margins = csvw_to_opendp_margins(csvw_meta)
@@ -115,7 +118,7 @@ def test_column_group():
     """CSVW-SAFE metadata for margins testing."""
     csvw_meta = {
         MAX_CONTRIB: 10,
-        COL_LIST: [{COL_NAME: "col1"}],
+        TABLE_SCHEMA: {COL_LIST: [{COL_NAME: "col1"}]},
         ADD_INFO: [
             {
                 COLUMNS_IN_GROUP: ["species", "island"],
