@@ -79,7 +79,6 @@ def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
     csvw_meta: dict[str, Any],
     schema_name: str = "",
     table_name: str = "df",
-    row_privacy: bool | None = None,
     sample_max_ids: bool | None = None,
     censor_dims: bool | None = None,
     clamp_counts: bool | None = None,
@@ -98,8 +97,6 @@ def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
         Name of the SmartNoise schema (top-level namespace) for the table.
     table_name : str, default="df"
         Name of the table in SmartNoise metadata.
-    row_privacy : bool, default=False
-        Whether to enable row-level privacy for the table.
     sample_max_ids : bool, default=True
         If True, skips reservoir sampling when users appear at most max_ids times.
     censor_dims : bool, default=True
@@ -121,7 +118,6 @@ def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
                 schema_name: {
                     table_name: {
                         "max_ids": ...,
-                        "row_privacy": ...,
                         "sample_max_ids": ...,
                         "censor_dims": ...,
                         "clamp_counts": ...,
@@ -153,16 +149,13 @@ def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
     max_ids = csvw_meta[MAX_CONTRIB]
 
     # Required fields only
-    table_meta: dict[str, Any] = {
-        "max_ids": max_ids,
-    }
+    table_meta: dict[str, Any] = {"max_ids": max_ids}
 
     if csvw_meta.get(PUBLIC_LENGTH, False):
         table_meta["rows"] = csvw_meta[PUBLIC_LENGTH]
 
     # Optional fields (only include if explicitly provided)
     optional_fields = {
-        "row_privacy": row_privacy,
         "sample_max_ids": sample_max_ids,
         "censor_dims": censor_dims,
         "clamp_counts": clamp_counts,
@@ -182,11 +175,7 @@ def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
         if col_dict.get("private_id", False):
             has_private_id = True
 
-    # Override row_privacy if needed
-    if has_private_id:
-        if row_privacy:
-            raise ValueError("Row privacy is set, but metadata specifies a private_id")
-        table_meta["row_privacy"] = False
+    table_meta["row_privacy"] = not has_private_id  # TODO: verify and document
 
     # Wrap into schema/table hierarchy
     return {"": {schema_name: {table_name: table_meta}}}
@@ -212,8 +201,6 @@ def main() -> None:
         SmartNoise schema name.
     --table : str (default="MyTable")
         SmartNoise table name.
-    --row_privacy : bool (default=False)
-        Treat each row as a single individual.
     --sample_max_ids : bool (default=True)
         Skip reservoir sampling if users appear at most max_ids times.
     --censor_dims : bool (default=True)
@@ -232,7 +219,6 @@ def main() -> None:
     parser.add_argument("--output", required=True, help="Output SmartNoise YAML metadata file")
     parser.add_argument("--schema", default="MySchema", help="SmartNoise SQL schema name")
     parser.add_argument("--table", default="MyTable", help="SmartNoise SQL table name")
-    parser.add_argument("--row_privacy", type=bool, default=None, help="Enable row privacy")
     parser.add_argument(
         "--sample_max_ids", type=bool, default=None, help="Skip sampling if max_ids enforced"
     )
@@ -258,7 +244,6 @@ def main() -> None:
         csvw_meta=csvw_meta,
         schema_name=args.schema,
         table_name=args.table,
-        row_privacy=args.row_privacy,
         sample_max_ids=args.sample_max_ids,
         censor_dims=args.censor_dims,
         clamp_counts=args.clamp_counts,

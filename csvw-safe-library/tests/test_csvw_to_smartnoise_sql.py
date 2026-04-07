@@ -55,13 +55,11 @@ def test_csvw_to_smartnoise_sql_basic():
     csvw_meta = mock_csvw_metadata()
     schema_name = "TestSchema"
     table_name = "TestTable"
-    row_privacy = False
 
     snsql_meta = csvw_to_smartnoise_sql(
         csvw_meta=csvw_meta,
         schema_name=schema_name,
         table_name=table_name,
-        row_privacy=row_privacy,
     )
     print(snsql_meta)
 

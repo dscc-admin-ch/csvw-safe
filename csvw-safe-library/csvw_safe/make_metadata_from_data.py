@@ -723,13 +723,11 @@ def make_metadata_from_data(
         continuous_partitions,
         column_groups,
     )
-    if (
-        privacy_unit is None
-    ):  # TODO: further improvements enabling no privacy unit given (little dp)
-        if default_level != ContributionLevel.TABLE or any(
-            level != ContributionLevel.TABLE for level in fine_level.values()
-        ):
-            raise ValueError(f"Privacy unit is None, only '{ContributionLevel.TABLE}' possible.")
+    if privacy_unit is None and (
+        default_level != ContributionLevel.TABLE
+        or any(level != ContributionLevel.TABLE for level in fine_level.values())
+    ):
+        raise ValueError(f"Privacy unit is None, only '{ContributionLevel.TABLE}' possible.")
 
     if privacy_unit not in df.columns:
         raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
