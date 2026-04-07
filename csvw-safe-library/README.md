@@ -246,7 +246,6 @@ csvw-safe-library/
 │  └─ Notebooks.ipynb
 ├─ tests/
 ├─ README.md
-├─ setup.py
 ├─ pyproject.toml
 └─ requirements.txt
 ```
