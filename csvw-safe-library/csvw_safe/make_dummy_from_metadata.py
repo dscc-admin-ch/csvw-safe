@@ -166,9 +166,8 @@ def make_dummy_from_metadata(
         Generated dataset
     """
     rng = np.random.default_rng(seed)
-    table_schema = metadata.get(TABLE_SCHEMA, {})
 
-    columns_meta = table_schema.get(COL_LIST, [])
+    columns_meta = metadata[TABLE_SCHEMA][COL_LIST]
 
     depends_map = {col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta}
     columns_group_meta = metadata.get(ADD_INFO, [])

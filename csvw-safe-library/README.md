@@ -247,6 +247,5 @@ csvw-safe-library/
 ├─ tests/
 ├─ README.md
 ├─ setup.py
-├─ pyproject.toml
-└─ requirements.txt
+└─pyproject.toml
 ```

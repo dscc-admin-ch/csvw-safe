@@ -32,6 +32,7 @@ from csvw_safe.constants import (
     MAX_LENGTH,
     MAX_NUM_PARTITIONS,
     PUBLIC_LENGTH,
+    TABLE_SCHEMA,
 )
 
 
@@ -111,7 +112,7 @@ def csvw_to_opendp_margins(csvw_meta: dict[str, Any]) -> list["Margin"]:
         margins.append(Margin(**margin_kwargs))
 
     # Column-level margins: groupby queries (by=['col_name'], max_length=100, ...)
-    for col_meta in csvw_meta.get(COL_LIST, []):
+    for col_meta in csvw_meta[TABLE_SCHEMA][COL_LIST]:
         margin_kwargs = get_margins(col_meta, by=[col_meta[COL_NAME]])
         margins.append(Margin(**margin_kwargs))
 

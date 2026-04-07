@@ -19,9 +19,11 @@ from csvw_safe.constants import (
     MINIMUM,
     NULL_PROP,
     PRIVACY_ID,
+    PUBLIC_LENGTH,
     REQUIRED,
+    TABLE_SCHEMA,
 )
-from csvw_safe.datatypes import to_snsql_datatype
+from csvw_safe.datatypes import XSD_GROUP_MAP, DataTypesGroups, to_snsql_datatype
 
 
 def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
@@ -47,38 +49,41 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
         nullable = not col_meta[REQUIRED]
     else:
         # Default fallback to nullable_proportion
-        nullable_prop = col_meta.get(NULL_PROP, 1.0)
-        nullable = nullable_prop > 0.0
+        nullable = col_meta.get(NULL_PROP, 1.0) > 0.0
 
+    xsd_datatype = col_meta[DATATYPE]
     col_dict: dict[str, Any] = {
         "name": col_meta[COL_NAME],
-        "type": to_snsql_datatype(col_meta[DATATYPE]),
+        "type": to_snsql_datatype(xsd_datatype),
         "nullable": nullable,
     }
 
     # Mark privacy unit
+    # Mark privacy unit
     if col_meta.get(PRIVACY_ID, False):
         col_dict["private_id"] = True
 
-    # Add numeric bounds if present
-    if MINIMUM in col_meta:
-        col_dict["lower"] = col_meta[MINIMUM]
-    if MAXIMUM in col_meta:
-        col_dict["upper"] = col_meta[MAXIMUM]
+    if XSD_GROUP_MAP[xsd_datatype] != DataTypesGroups.DATETIME:
+        if PRIVACY_ID in col_meta and col_meta[PRIVACY_ID]:
+            pass
+        else:
+            if MINIMUM in col_meta:
+                col_dict["lower"] = col_meta[MINIMUM]
+            if MAXIMUM in col_meta:
+                col_dict["upper"] = col_meta[MAXIMUM]
 
     return col_dict
 
 
-def csvw_to_smartnoise_sql(
+def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
     csvw_meta: dict[str, Any],
-    schema_name: str,
-    table_name: str,
-    row_privacy: bool = False,
-    sample_max_ids: bool = True,
-    censor_dims: bool = True,
-    clamp_counts: bool = False,
-    clamp_columns: bool = True,
-    use_dpsu: bool = False,
+    schema_name: str = "",
+    table_name: str = "df",
+    sample_max_ids: bool | None = None,
+    censor_dims: bool | None = None,
+    clamp_counts: bool | None = None,
+    clamp_columns: bool | None = None,
+    use_dpsu: bool | None = None,
 ) -> dict[str, Any]:
     """
     Convert a CSVW-SAFE table metadata dictionary to SmartNoise SQL metadata.
@@ -88,12 +93,10 @@ def csvw_to_smartnoise_sql(
     csvw_meta : Dict[str, Any]
         The CSVW-SAFE metadata dictionary for a single table.
         Must include "columns" list and "max_contributions" (used as max_ids).
-    schema_name : str
+    schema_name : str, default=""
         Name of the SmartNoise schema (top-level namespace) for the table.
-    table_name : str
+    table_name : str, default="df"
         Name of the table in SmartNoise metadata.
-    row_privacy : bool, default=False
-        Whether to enable row-level privacy for the table.
     sample_max_ids : bool, default=True
         If True, skips reservoir sampling when users appear at most max_ids times.
     censor_dims : bool, default=True
@@ -115,7 +118,6 @@ def csvw_to_smartnoise_sql(
                 schema_name: {
                     table_name: {
                         "max_ids": ...,
-                        "row_privacy": ...,
                         "sample_max_ids": ...,
                         "censor_dims": ...,
                         "clamp_counts": ...,
@@ -146,21 +148,34 @@ def csvw_to_smartnoise_sql(
         raise ValueError(f"CSVW metadata must include '{MAX_CONTRIB}' (max_ids for SNSQL)")
     max_ids = csvw_meta[MAX_CONTRIB]
 
-    # Initialize table metadata
-    table_meta: dict[str, Any] = {
-        "max_ids": max_ids,
-        "row_privacy": row_privacy,
+    # Required fields only
+    table_meta: dict[str, Any] = {"max_ids": max_ids}
+
+    if csvw_meta.get(PUBLIC_LENGTH, False):
+        table_meta["rows"] = csvw_meta[PUBLIC_LENGTH]
+
+    # Optional fields (only include if explicitly provided)
+    optional_fields = {
         "sample_max_ids": sample_max_ids,
         "censor_dims": censor_dims,
         "clamp_counts": clamp_counts,
         "clamp_columns": clamp_columns,
         "use_dpsu": use_dpsu,
     }
+    for key, value in optional_fields.items():
+        if value is not None:
+            table_meta[key] = value
 
     # Convert columns
-    for col_meta in csvw_meta.get(COL_LIST, []):
+    has_private_id = False
+    for col_meta in csvw_meta[TABLE_SCHEMA][COL_LIST]:
         col_dict = csvw_to_snsql_column(col_meta)
-        table_meta[col_dict["name"]] = col_dict
+        table_meta[col_meta[COL_NAME]] = col_dict
+
+        if col_dict.get("private_id", False):
+            has_private_id = True
+
+    table_meta["row_privacy"] = not has_private_id  # TODO: verify and document
 
     # Wrap into schema/table hierarchy
     return {"": {schema_name: {table_name: table_meta}}}
@@ -186,8 +201,6 @@ def main() -> None:
         SmartNoise schema name.
     --table : str (default="MyTable")
         SmartNoise table name.
-    --row_privacy : bool (default=False)
-        Treat each row as a single individual.
     --sample_max_ids : bool (default=True)
         Skip reservoir sampling if users appear at most max_ids times.
     --censor_dims : bool (default=True)
@@ -206,19 +219,18 @@ def main() -> None:
     parser.add_argument("--output", required=True, help="Output SmartNoise YAML metadata file")
     parser.add_argument("--schema", default="MySchema", help="SmartNoise SQL schema name")
     parser.add_argument("--table", default="MyTable", help="SmartNoise SQL table name")
-    parser.add_argument("--row_privacy", type=bool, default=False, help="Enable row privacy")
     parser.add_argument(
-        "--sample_max_ids", type=bool, default=True, help="Skip sampling if max_ids enforced"
+        "--sample_max_ids", type=bool, default=None, help="Skip sampling if max_ids enforced"
     )
     parser.add_argument(
-        "--censor_dims", type=bool, default=True, help="Drop GROUP BY rows revealing individuals"
+        "--censor_dims", type=bool, default=None, help="Drop GROUP BY rows revealing individuals"
     )
     parser.add_argument(
-        "--clamp_counts", type=bool, default=False, help="Clamp negative counts to zero"
+        "--clamp_counts", type=bool, default=None, help="Clamp negative counts to zero"
     )
-    parser.add_argument("--clamp_columns", type=bool, default=True, help="Clamp columns to bounds")
+    parser.add_argument("--clamp_columns", type=bool, default=None, help="Clamp columns to bounds")
     parser.add_argument(
-        "--use_dpsu", type=bool, default=False, help="Use Differential Private Set Union"
+        "--use_dpsu", type=bool, default=None, help="Use Differential Private Set Union"
     )
 
     args = parser.parse_args()
@@ -232,7 +244,6 @@ def main() -> None:
         csvw_meta=csvw_meta,
         schema_name=args.schema,
         table_name=args.table,
-        row_privacy=args.row_privacy,
         sample_max_ids=args.sample_max_ids,
         censor_dims=args.censor_dims,
         clamp_counts=args.clamp_counts,
@@ -249,33 +260,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-# def convert_to_smartnoise_metadata(metadata: Metadata, query_columns: list[str]) -> dict:
-#     """Convert Lomas metadata to smartnoise metadata format (for SQL).
-
-#     Args:
-#         metadata (Metadata): Dataset metadata from admin database
-#         query_columns (list[str]): List of column names used in the query
-
-#     Returns:
-#         dict: metadata of the dataset in smartnoise-sql format
-#     """
-#     metadata_dict = metadata.model_dump()
-
-#     # Keep only query columns in metadata
-#     metadata_dict["columns"] = {
-#         col: val for col, val in metadata_dict["columns"].items() if col in query_columns
-#     }
-
-#     # No bounds on datetime for Smartnoise-SQL
-#     for _, val in metadata_dict["columns"].items():
-#         if val["private_id"] or val["type"] == MetadataColumnType.DATETIME:
-#             for k in ["lower", "upper"]:
-#                 if val.get(k) is not None:
-#                     del val[k]
-#         val["nullable"] = val["nullable_proportion"] > 0
-
-#     metadata_dict.update(metadata_dict["columns"])
-#     del metadata_dict["columns"]
-#     return {"": {"": {"df": metadata_dict}}}

@@ -682,9 +682,9 @@ def build_column_metadata(
 
 def make_metadata_from_data(
     df: pd.DataFrame,
+    privacy_unit: str,
     with_dependencies: bool = True,
-    privacy_unit: str = "",
-    max_contributions: int = 0,  # TODO: compute
+    # max_contributions: int,
     continuous_partitions: dict[str, list[Any]] | None = None,
     column_groups: list[list[str]] | None = None,
     default_contributions_level: str = "table",
@@ -728,6 +728,7 @@ def make_metadata_from_data(
         or any(level != ContributionLevel.TABLE for level in fine_level.values())
     ):
         raise ValueError(f"Privacy unit is None, only '{ContributionLevel.TABLE}' possible.")
+
     if privacy_unit not in df.columns:
         raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
 
@@ -753,7 +754,7 @@ def make_metadata_from_data(
 
     table_metadata = TableMetadata(
         privacy_unit=privacy_unit,
-        max_contributions=max_contributions,
+        max_contributions=df.groupby(privacy_unit).size().max(),
         max_length=len(df),
         public_length=len(df),
         columns=columns_meta,
@@ -828,14 +829,12 @@ def main() -> None:
     )
 
     parser.add_argument(
-        "--privacy_unit",
-        help="Column defining the privacy unit (e.g., patient_id)",
+        "--privacy_unit", help="Column defining the privacy unit (e.g., patient_id)"
     )
 
-    parser.add_argument(
-        "--max_contributions",
-        help="Declared bounds.maxContributions (l_infinity)",
-    )
+    # parser.add_argument(
+    #     "--max_contributions", help="Declared bounds.maxContributions (l_infinity)", default=None
+    # )
 
     parser.add_argument(
         "--continuous_partitions",
@@ -874,7 +873,7 @@ def main() -> None:
         df=df,
         with_dependencies=args.with_dependencies,
         privacy_unit=args.privacy_unit,
-        max_contributions=args.max_contributions,
+        # max_contributions=args.max_contributions,
         continuous_partitions=continuous_partitions,
         column_groups=column_groups,
     )
