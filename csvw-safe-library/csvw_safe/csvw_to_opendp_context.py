@@ -16,9 +16,12 @@ from typing import Any
 
 import opendp.prelude as dp
 import polars as pl
+from opendp.mod import enable_features
 
 from csvw_safe.constants import MAX_CONTRIB, PRIVACY_UNIT
 from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
+
+enable_features("contrib")
 
 
 def get_privacy_loss(
