@@ -433,10 +433,10 @@ class ColumnGroupMetadata(BaseModel):
 class TableMetadata(BaseModel):
     """Top-level metadata object describing a CSVW-SAFE table."""
 
-    privacy_unit: str
-    max_contributions: int
-    max_length: int
-    public_length: int
+    privacy_unit: str | None = None
+    max_contributions: int | None = None
+    max_length: int | None = None
+    public_length: int | None = None
 
     columns: list[ColumnMetadata] = Field(default_factory=list)
     column_groups: list[ColumnGroupMetadata] | None = None
@@ -485,10 +485,10 @@ class TableMetadata(BaseModel):
             column_groups = [ColumnGroupMetadata.from_dict(g) for g in data[C.ADD_INFO]]
 
         return cls(
-            privacy_unit=data[C.PRIVACY_UNIT],
-            max_contributions=data[C.MAX_CONTRIB],
-            max_length=data[C.MAX_LENGTH],
-            public_length=data[C.PUBLIC_LENGTH],
+            privacy_unit=data.get(C.PRIVACY_UNIT, None),
+            max_contributions=data.get(C.MAX_CONTRIB, None),
+            max_length=data.get(C.MAX_LENGTH, None),
+            public_length=data.get(C.PUBLIC_LENGTH, None),
             columns=columns,
             column_groups=column_groups,
             context=data.get("@context", []),
