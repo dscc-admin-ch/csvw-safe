@@ -10,15 +10,13 @@ This module:
 The resulting context can be used for differentially private queries.
 """
 
-import argparse
-import json
 from typing import Any
 
 import opendp.prelude as dp
 import polars as pl
 from opendp.mod import enable_features
 
-from csvw_safe.constants import MAX_CONTRIB, PRIVACY_UNIT
+from csvw_safe.constants import MAX_CONTRIB  # , PRIVACY_UNIT
 from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
 
 enable_features("contrib")
@@ -81,7 +79,6 @@ def get_privacy_unit(csvw_meta: dict[str, Any], distance: str) -> Any:
         raise ValueError("Missing max_contributions in metadata")
 
     max_contrib = csvw_meta[MAX_CONTRIB]
-    identifier = csvw_meta.get(PRIVACY_UNIT)
 
     kwargs: dict[str, Any] = {}
 
@@ -99,8 +96,9 @@ def get_privacy_unit(csvw_meta: dict[str, Any], distance: str) -> Any:
     else:
         raise ValueError(f"Unsupported distance type: {distance}")
 
-    if identifier is not None:
-        kwargs["identifier"] = pl.col(identifier)
+    # identifier = csvw_meta.get(PRIVACY_UNIT)
+    # if identifier is not None:
+    #     kwargs["identifier"] = pl.col(identifier)  # TODO: investigate more
 
     return dp.unit_of(**kwargs)
 
@@ -164,72 +162,3 @@ def csvw_to_opendp_context(
         kwargs["split_evenly_over"] = split_evenly_over
 
     return dp.Context.compositor(**kwargs)
-
-
-def main() -> None:
-    """
-    CLI to build an OpenDP Context from CSVW-SAFE metadata and a CSV file.
-
-    Command-line arguments
-    ----------------------
-    --metadata : str (required)
-        Path to CSVW-SAFE JSON metadata file.
-    --data : str (required)
-        Path to CSV file.
-    --epsilon : float, optional
-        Privacy budget epsilon (Laplace DP).
-    --rho : float, optional
-        Privacy budget rho (Gaussian DP / zCDP).
-    --delta : float, optional
-        Privacy budget delta (for approximate DP).
-    --split_evenly_over : int (default=1)
-        Number of queries to split privacy budget across.
-    """
-    parser = argparse.ArgumentParser(
-        description="Create an OpenDP Context from CSVW-SAFE metadata and a dataset."
-    )
-    parser.add_argument("--metadata", required=True, help="CSVW-SAFE metadata JSON file")
-    parser.add_argument("--data", required=True, help="CSV file")
-    parser.add_argument("--epsilon", type=float, default=None, help="Privacy budget epsilon")
-    parser.add_argument("--rho", type=float, default=None, help="Privacy budget rho")
-    parser.add_argument("--delta", type=float, default=None, help="Privacy budget delta")
-    parser.add_argument("--split_evenly_over", type=int, default=1)
-    parser.add_argument(
-        "--split_by_weights",
-        type=float,
-        nargs="+",
-        help="Split privacy budget by weights (e.g. 1 2 3)",
-    )
-    parser.add_argument(
-        "--distance",
-        choices=["contributions", "changes"],  # "absolute", "l1", "l2"
-        default="contributions",
-        help="Distance metric for privacy unit",
-    )
-
-    args = parser.parse_args()
-
-    # Load metadata
-    with open(args.metadata, encoding="utf-8") as f:
-        csvw_meta = json.load(f)
-
-    # Load data as LazyFrame (recommended by OpenDP)
-    data = pl.scan_csv(args.data, ignore_errors=True)
-
-    # Build context
-    context = csvw_to_opendp_context(
-        csvw_meta=csvw_meta,
-        data=data,
-        epsilon=args.epsilon,
-        rho=args.rho,
-        delta=args.delta,
-        split_evenly_over=args.split_evenly_over,
-        split_by_weights=args.split_by_weights,
-    )
-
-    print("OpenDP Context successfully created.")
-    print(context)
-
-
-if __name__ == "__main__":
-    main()

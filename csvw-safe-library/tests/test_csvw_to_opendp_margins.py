@@ -3,7 +3,7 @@ from csvw_safe.constants import (
     COL_LIST,
     COL_NAME,
     COLUMNS_IN_GROUP,
-    EXHAUSTIVE_PARTITIONS,
+    INVARIANT_PUBLIC_KEYS,
     MAX_CONTRIB,
     MAX_GROUPS,
     MAX_LENGTH,
@@ -26,7 +26,7 @@ def mock_csvw_metadata():
                 {
                     COL_NAME: "city",
                     MAX_GROUPS: 50,
-                    EXHAUSTIVE_PARTITIONS: True,
+                    INVARIANT_PUBLIC_KEYS: True,
                 },
             ],
         },
@@ -81,7 +81,7 @@ def test_column_max_length():
 
 
 def test_invariant_keys():
-    """Test PUBLIC_KEYS → invariant='keys'."""
+    """Test KEY_VALUES → invariant='keys'."""
     csvw_meta = mock_csvw_metadata()
     margins = csvw_to_opendp_margins(csvw_meta)
 
@@ -122,7 +122,7 @@ def test_column_group():
         ADD_INFO: [
             {
                 COLUMNS_IN_GROUP: ["species", "island"],
-                EXHAUSTIVE_PARTITIONS: True,
+                INVARIANT_PUBLIC_KEYS: True,
             },
         ],
     }

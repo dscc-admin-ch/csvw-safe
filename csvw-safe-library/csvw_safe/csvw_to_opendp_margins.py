@@ -16,8 +16,6 @@ The resulting margins can be used in an OpenDP context, for example:
     )
 """
 
-import argparse
-import json
 from typing import Any
 
 from opendp.extras.polars import Margin
@@ -27,7 +25,7 @@ from csvw_safe.constants import (
     COL_LIST,
     COL_NAME,
     COLUMNS_IN_GROUP,
-    EXHAUSTIVE_PARTITIONS,
+    INVARIANT_PUBLIC_KEYS,
     MAX_GROUPS,
     MAX_LENGTH,
     MAX_NUM_PARTITIONS,
@@ -67,7 +65,7 @@ def get_margins(col_meta: dict[str, Any], by: list[str]) -> dict[str, Any]:
         margin_kwargs["max_groups"] = col_meta[MAX_NUM_PARTITIONS]
 
     # Exhaustive partitions --> invariant keys
-    if col_meta.get(EXHAUSTIVE_PARTITIONS):
+    if col_meta.get(INVARIANT_PUBLIC_KEYS):
         margin_kwargs["invariant"] = "keys"
 
     if col_meta.get(PUBLIC_LENGTH):
@@ -122,60 +120,3 @@ def csvw_to_opendp_margins(csvw_meta: dict[str, Any]) -> list["Margin"]:
         margins.append(Margin(**margin_kwargs))
 
     return margins
-
-
-def main() -> None:
-    """
-    CLI for converting CSVW-SAFE metadata to OpenDP margins.
-
-    Reads a CSVW-SAFE JSON file and produces a Python representation
-    of OpenDP margins (printed or saved).
-
-    Command-line arguments
-    ----------------------
-    --input : str (required)
-        Path to CSVW-SAFE JSON metadata file.
-
-    --output : str (optional)
-        Path to output JSON file containing margin descriptions.
-        If not provided, prints to stdout.
-
-    Behavior
-    --------
-    - Parses CSVW-SAFE metadata
-    - Converts to OpenDP Margin objects
-    - Serializes margins into JSON-friendly format
-    """
-    parser = argparse.ArgumentParser(description="Convert CSVW-SAFE metadata to OpenDP margins.")
-    parser.add_argument("--input", required=True, help="Input CSVW-SAFE JSON file")
-    parser.add_argument("--output", help="Optional output JSON file")
-
-    args = parser.parse_args()
-
-    # Load metadata
-    with open(args.input, encoding="utf-8") as f:
-        csvw_meta = json.load(f)
-
-    margins = csvw_to_opendp_margins(csvw_meta)
-
-    # Convert Margin objects → dict (for JSON output)
-    def margin_to_dict(m: Margin) -> dict[str, Any]:
-        return {
-            "by": getattr(m, "by", []),
-            "max_length": getattr(m, "max_length", None),
-            "max_groups": getattr(m, "max_groups", None),
-            "invariant": getattr(m, "invariant", None),
-        }
-
-    margins_dict = [margin_to_dict(m) for m in margins]
-
-    if args.output:
-        with open(args.output, "w", encoding="utf-8") as f:
-            json.dump(margins_dict, f, indent=2)
-        print(f"opendp margins written to {args.output}")
-    else:
-        print(json.dumps(margins_dict, indent=2))
-
-
-if __name__ == "__main__":
-    main()

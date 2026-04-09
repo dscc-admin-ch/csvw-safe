@@ -131,7 +131,7 @@ def test_validate_metadata_with_single_column_partitions():
                             C.MAX_CONTRIB: 1,
                         },
                     ],
-                    C.PUBLIC_KEYS: ["a", "b"],
+                    C.KEY_VALUES: ["a", "b"],
                     C.EXHAUSTIVE_PARTITIONS: True,
                 }
             ]
@@ -151,12 +151,12 @@ def test_validate_metadata_with_single_column_partitions():
     key = partition.to_dict()
     assert key[C.PREDICATE][C.PARTITION_VALUE] == "a"
 
-    assert col1.public_keys
-    public_keys = col1.public_keys[0]
-    assert isinstance(public_keys, SingleColumnKey)
-    assert public_keys.predicate.partition_value == "a"
+    assert col1.public_keys_values
+    public_keys_values = col1.public_keys_values[0]
+    assert isinstance(public_keys_values, SingleColumnKey)
+    assert public_keys_values.predicate.partition_value == "a"
     # Convert partition to key
-    key = public_keys.to_dict()
+    key = public_keys_values.to_dict()
     assert key == "a"
 
 
@@ -229,7 +229,7 @@ def test_validate_metadata_column_groups():
             {
                 "@type": C.COLUMN_GROUP,
                 C.COLUMNS_IN_GROUP: ["col1", "col2"],
-                C.PUBLIC_KEYS: [
+                C.KEY_VALUES: [
                     {
                         "col1": {C.PARTITION_VALUE: "a"},
                         "col2": {C.LOWER_BOUND: 1.0, C.UPPER_BOUND: 10.0},
@@ -265,7 +265,7 @@ def test_validate_metadata_column_groups():
     keys_dict = keys.to_dict()
     print(keys_dict)
     assert keys_dict[C.COLUMNS_IN_GROUP] == ["col1", "col2"]
-    assert keys_dict[C.PUBLIC_KEYS] == [
+    assert keys_dict[C.KEY_VALUES] == [
         {
             "col1": {C.PARTITION_VALUE: "a"},
             "col2": {C.LOWER_BOUND: 1.0, C.UPPER_BOUND: 10.0},

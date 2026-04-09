@@ -252,10 +252,13 @@ class ColumnMetadata(BaseModel):
     max_length: int | None = None
     max_groups_per_unit: int | None = None
     max_contributions: int | None = None
-    exhaustive_partitions: bool | None = None
 
     partitions: list[SingleColumnPartition] | None = None
-    public_keys: list[SingleColumnKey] | None = None
+    exhaustive_partitions: bool | None = None
+
+    public_keys_values: list[SingleColumnKey] | None = None
+    invariant_public_keys: bool | None = None
+
     max_num_partitions: int | None = None
 
     def to_dict(self) -> dict[str, Any]:  # pylint: disable=too-many-branches
@@ -289,8 +292,11 @@ class ColumnMetadata(BaseModel):
         if self.partitions is not None:
             d[C.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
 
-        if self.public_keys is not None:
-            d[C.PUBLIC_KEYS] = [p.to_dict() for p in self.public_keys]
+        if self.public_keys_values is not None:
+            d[C.KEY_VALUES] = [p.to_dict() for p in self.public_keys_values]
+
+        if self.invariant_public_keys is not None:
+            d[C.INVARIANT_PUBLIC_KEYS] = self.invariant_public_keys
 
         if self.exhaustive_partitions is not None:
             d[C.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
@@ -338,21 +344,22 @@ class ColumnMetadata(BaseModel):
             max_groups_per_unit=data.get(C.MAX_GROUPS),
             max_contributions=data.get(C.MAX_CONTRIB),
             exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS),
+            invariant_public_keys=data.get(C.INVARIANT_PUBLIC_KEYS),
         )
 
         raw_partitions = data.get(C.PUBLIC_PARTITIONS)
-        raw_public_keys = data.get(C.PUBLIC_KEYS)
+        raw_public_keys_values = data.get(C.KEY_VALUES)
 
         if raw_partitions:
             partitions: list[SingleColumnPartition] = [
                 SingleColumnPartition.from_dict(p) for p in raw_partitions
             ]
             col_metadata.partitions = partitions
-        if raw_public_keys:
-            public_keys: list[SingleColumnKey] = [
-                SingleColumnKey.from_dict(p) for p in raw_public_keys
+        if raw_public_keys_values:
+            public_keys_values: list[SingleColumnKey] = [
+                SingleColumnKey.from_dict(p) for p in raw_public_keys_values
             ]
-            col_metadata.public_keys = public_keys
+            col_metadata.public_keys_values = public_keys_values
 
         return col_metadata
 
@@ -364,9 +371,13 @@ class ColumnGroupMetadata(BaseModel):
 
     # one of the two is necessary
     partitions: list[MultiColumnPartition] | None = None
-    public_keys: list[MultiColumnKeys] | None = None
-    max_num_partitions: int | None = None
     exhaustive_partitions: bool | None = None
+
+    public_keys_values: list[MultiColumnKeys] | None = None
+    invariant_public_keys: bool | None = None
+
+    max_num_partitions: int | None = None
+    public_keys_invariant: bool | None = None
 
     max_length: int | None = None
     max_groups_per_unit: int | None = None
@@ -382,8 +393,11 @@ class ColumnGroupMetadata(BaseModel):
         if self.partitions is not None:
             result[C.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
 
-        if self.public_keys is not None:
-            result[C.PUBLIC_KEYS] = [k.to_dict() for k in self.public_keys]
+        if self.public_keys_values is not None:
+            result[C.KEY_VALUES] = [k.to_dict() for k in self.public_keys_values]
+
+        if self.invariant_public_keys is not None:
+            result[C.INVARIANT_PUBLIC_KEYS] = self.invariant_public_keys
 
         if self.exhaustive_partitions is not None:
             result[C.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
@@ -412,20 +426,21 @@ class ColumnGroupMetadata(BaseModel):
             max_groups_per_unit=data.get(C.MAX_GROUPS),
             max_contributions=data.get(C.MAX_CONTRIB),
             exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS),
+            invariant_public_keys=data.get(C.INVARIANT_PUBLIC_KEYS),
         )
         raw_partitions = data.get(C.PUBLIC_PARTITIONS)
-        raw_public_keys = data.get(C.PUBLIC_KEYS)
+        raw_public_keys_values = data.get(C.KEY_VALUES)
 
         if raw_partitions:
             partitions: list[MultiColumnPartition] = [
                 MultiColumnPartition.from_dict(p) for p in raw_partitions
             ]
             col_group_metadata.partitions = partitions
-        if raw_public_keys:
-            public_keys: list[MultiColumnKeys] = [
-                MultiColumnKeys.from_dict(p) for p in raw_public_keys
+        if raw_public_keys_values:
+            public_keys_values: list[MultiColumnKeys] = [
+                MultiColumnKeys.from_dict(p) for p in raw_public_keys_values
             ]
-            col_group_metadata.public_keys = public_keys
+            col_group_metadata.public_keys_values = public_keys_values
 
         return col_group_metadata
 

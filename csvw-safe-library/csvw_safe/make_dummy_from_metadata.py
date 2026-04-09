@@ -31,11 +31,11 @@ from csvw_safe.constants import (
     DATATYPE,
     DEPENDS_ON,
     EXHAUSTIVE_PARTITIONS,
+    KEY_VALUES,
     LOWER_BOUND,
     NULL_PROP,
     PARTITION_VALUE,
     PREDICATE,
-    PUBLIC_KEYS,
     PUBLIC_PARTITIONS,
     TABLE_SCHEMA,
     UPPER_BOUND,
@@ -118,7 +118,7 @@ def column_group_partitions(
         if not col_group.get(EXHAUSTIVE_PARTITIONS, False):
             continue
 
-        partitions = col_group.get(PUBLIC_PARTITIONS) or col_group.get(PUBLIC_KEYS, [])
+        partitions = col_group.get(PUBLIC_PARTITIONS) or col_group.get(KEY_VALUES, [])
         group_mask = pd.Series(False, index=df.index)
         for p in partitions:
             predicate = p.get(PREDICATE, p)

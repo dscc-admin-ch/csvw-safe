@@ -446,12 +446,12 @@ def make_column_groups(
             )
             group_meta = ColumnGroupMetadata(
                 columns=col_group,
-                public_keys=full_partition_to_key_multi(partitions_meta),
+                public_keys_values=full_partition_to_key_multi(partitions_meta),
                 max_num_partitions=len(partitions_meta),
                 max_length=max_length,
                 max_groups_per_unit=max_groups_per_unit,
                 max_contributions=max_contributions,
-                exhaustive_partitions=True,
+                invariant_public_keys=True,
             )
         else:  # ContributionLevel.PARTITION
             group_meta = ColumnGroupMetadata(
@@ -459,6 +459,7 @@ def make_column_groups(
                 partitions=partitions_meta,
                 max_num_partitions=len(partitions_meta),
                 exhaustive_partitions=True,
+                invariant_public_keys=True,
             )
 
         column_groups_metadata.append(group_meta)
@@ -584,9 +585,12 @@ def attach_partitions_to_column(
             column_meta.max_length = max_length
             column_meta.max_groups_per_unit = max_groups_per_unit
             column_meta.max_contributions = max_contributions
-            column_meta.public_keys = full_partition_to_key_single(partitions_meta)
+            column_meta.public_keys_values = full_partition_to_key_single(partitions_meta)
+            column_meta.invariant_public_keys = True
         else:
             column_meta.partitions = partitions_meta
+            column_meta.exhaustive_partitions = True
+            column_meta.invariant_public_keys = True
 
     elif column_name in continuous_partitions:
         bounds = sorted(continuous_partitions[column_name])
@@ -651,7 +655,6 @@ def build_column_metadata(
         required=series.isna().sum() == 0,
         privacy_id=(column_name == privacy_unit),
         nullable_proportion=np.ceil(series.isna().mean() * 1000) / 1000,
-        exhaustive_partitions=True,
     )
 
     if datatype != DataTypes.STRING:

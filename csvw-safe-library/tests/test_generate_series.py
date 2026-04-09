@@ -9,13 +9,13 @@ from csvw_safe.constants import (
     DEPENDENCY_TYPE,
     DEPENDS_ON,
     EXHAUSTIVE_PARTITIONS,
+    KEY_VALUES,
     MAX_NUM_PARTITIONS,
     MAXIMUM,
     MINIMUM,
     NULL_PROP,
     PARTITION_VALUE,
     PREDICATE,
-    PUBLIC_KEYS,
     PUBLIC_PARTITIONS,
     RANDOM_STRINGS,
     VALUE_MAP,
@@ -85,22 +85,22 @@ def test_generate_column_series_boolean(rng):
 @pytest.mark.parametrize(
     "col_meta,nb_rows,expected_values",
     [
-        # PUBLIC_KEYS as strings
-        ({DATATYPE: DataTypes.STRING, PUBLIC_KEYS: ["x", "y"]}, 10, {"x", "y"}),
-        # PUBLIC_KEYS as dicts
+        # KEY_VALUES as strings
+        ({DATATYPE: DataTypes.STRING, KEY_VALUES: ["x", "y"]}, 10, {"x", "y"}),
+        # KEY_VALUES as dicts
         (
             {
                 DATATYPE: DataTypes.STRING,
-                PUBLIC_KEYS: [{PARTITION_VALUE: "p1"}, {PARTITION_VALUE: "p2"}],
+                KEY_VALUES: [{PARTITION_VALUE: "p1"}, {PARTITION_VALUE: "p2"}],
             },
             5,
             {"p1", "p2"},
         ),
-        # PUBLIC_KEYS as strings + dict with PARTITION_VALUE
+        # KEY_VALUES as strings + dict with PARTITION_VALUE
         (
             {
                 DATATYPE: DataTypes.STRING,
-                PUBLIC_KEYS: ["k1", {PARTITION_VALUE: "k2"}],
+                KEY_VALUES: ["k1", {PARTITION_VALUE: "k2"}],
             },
             5,
             {"k1", "k2"},

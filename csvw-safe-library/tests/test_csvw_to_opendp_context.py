@@ -2,14 +2,15 @@ import opendp.prelude as dp
 import polars as pl
 import pytest
 
-from csvw_safe.constants import (
+from csvw_safe.constants import (  # PRIVACY_ID,
+    ADD_INFO,
     COL_LIST,
     COL_NAME,
+    COLUMNS_IN_GROUP,
     DATATYPE,
-    EXHAUSTIVE_PARTITIONS,
+    INVARIANT_PUBLIC_KEYS,
     MAX_CONTRIB,
     MAX_LENGTH,
-    PRIVACY_ID,
     PRIVACY_UNIT,
     TABLE_SCHEMA,
 )
@@ -25,7 +26,7 @@ def mock_csvw_meta():
         MAX_CONTRIB: 3,
         TABLE_SCHEMA: {
             COL_LIST: [
-                {COL_NAME: "user_id", DATATYPE: "integer", PRIVACY_ID: True},
+                {COL_NAME: "user_id", DATATYPE: "integer"},  # , PRIVACY_ID: True},
                 {COL_NAME: "age", DATATYPE: "integer"},
                 {COL_NAME: "signup_date", DATATYPE: "datetime"},
             ],
@@ -40,6 +41,7 @@ def mock_data():
         {
             "user_id": [1, 2, 3],
             "age": [25, 30, 40],
+            "income": [10_000, 100_000, 1_000_000],
             "signup_date": ["2021-01-01", "2021-06-01", "2022-01-01"],
         }
     )
@@ -89,7 +91,7 @@ def test_missing_max_contrib(mock_data):
 def test_split_evenly_over(mock_csvw_meta, mock_data):
     """Test split_evenly_over parameter."""
     mock_csvw_meta[MAX_LENGTH] = 10  # second query
-    mock_csvw_meta[TABLE_SCHEMA][COL_LIST][2][EXHAUSTIVE_PARTITIONS] = True  # third query
+    mock_csvw_meta[TABLE_SCHEMA][COL_LIST][2][INVARIANT_PUBLIC_KEYS] = True  # third query
     context = csvw_to_opendp_context(
         csvw_meta=mock_csvw_meta,
         data=mock_data,
@@ -154,3 +156,68 @@ def test_changes_distance(mock_csvw_meta, mock_data):
     res = query.release().collect()
 
     assert res.select("len").item() is not None
+
+
+def test_column_group_context(mock_data):
+    """CSVW-SAFE metadata for margins testing."""
+    mock_csvw_meta = {
+        MAX_CONTRIB: 10,
+        MAX_LENGTH: 100,
+        TABLE_SCHEMA: {COL_LIST: [{COL_NAME: "income"}]},
+        ADD_INFO: [
+            {
+                COLUMNS_IN_GROUP: ["age", "user_id"],
+                INVARIANT_PUBLIC_KEYS: True,
+            },
+        ],
+    }
+    context = csvw_to_opendp_context(
+        csvw_meta=mock_csvw_meta,
+        data=mock_data,
+        epsilon=10.0,  # only espilon is fine because INVARIANT_PUBLIC_KEYS
+        split_evenly_over=1,
+        distance="contributions",
+    )
+    plan = (
+        context.query()
+        .group_by(["age", "user_id"])
+        .agg([pl.col("income").cast(int).dp.sum(bounds=(0, 1_000_000))])
+    )
+    result = plan.release().collect()
+    assert result.shape[0] > 2
+    assert result.columns == ["age", "user_id", "income"]
+
+
+def test_column_group_context_not_invariant(mock_data):
+    """CSVW-SAFE metadata for margins testing."""
+    mock_csvw_meta = {
+        MAX_CONTRIB: 10,
+        MAX_LENGTH: 100,
+        TABLE_SCHEMA: {COL_LIST: [{COL_NAME: "income"}]},
+        ADD_INFO: [
+            {
+                COLUMNS_IN_GROUP: ["age", "user_id"],
+                INVARIANT_PUBLIC_KEYS: False,
+            },
+        ],
+    }
+    context = csvw_to_opendp_context(
+        csvw_meta=mock_csvw_meta,
+        data=mock_data,
+        epsilon=10.0,
+        delta=0.001,  # delta required because not INVARIANT_PUBLIC_KEYS
+        split_evenly_over=1,
+        distance="contributions",
+    )
+    plan = (
+        context.query()
+        .group_by(["age", "user_id"])
+        .agg(
+            [
+                dp.len(),  # dp.len required because not INVARIANT_PUBLIC_KEYS
+                pl.col("income").cast(int).dp.sum(bounds=(0, 1_000_000)),
+            ]
+        )
+    )
+    result = plan.release().collect()
+    assert result.columns == ["age", "user_id", "len", "income"]

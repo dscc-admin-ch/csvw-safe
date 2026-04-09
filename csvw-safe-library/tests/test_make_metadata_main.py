@@ -77,11 +77,11 @@ def test_categorical_partitions_small(small_df):
     columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
     color_col = next(c for c in columns if c[C.COL_NAME] == "color")
 
-    assert C.PUBLIC_KEYS in color_col
+    assert C.KEY_VALUES in color_col
     assert color_col[C.MAX_NUM_PARTITIONS] == 2
 
     # Partition values at column-level are just values
-    partition_values = set(color_col[C.PUBLIC_KEYS])
+    partition_values = set(color_col[C.KEY_VALUES])
     assert partition_values == {"red", "blue"}
 
 

@@ -40,5 +40,5 @@
 | `csvw-safe.maxNumPartitions`    | upper bound of `bounds.maxGroupsPerUnit` if unknown              |
 | `csvw-safe.length`              | `margins=[dp.polars.Margin(invariant="length")]`                 |
 | `csvw-safe.PUBLIC_PARTITIONS`   | `margins=[dp.polars.Margin(invariant="keys")]` if csvw-safe.exhaustivePartitions True |
-| `csvw-safe.PUBLIC_KEYS`         | `margins=[dp.polars.Margin(invariant="keys")]` if csvw-safe.exhaustivePartitions True |
+| `csvw-safe.KEY_VALUES`         | `margins=[dp.polars.Margin(invariant="keys")]` if csvw-safe.exhaustivePartitions True |
 
