@@ -26,13 +26,13 @@ from csvw_safe.constants import (
     DEFAULT_NUMBER_PARTITIONS,
     DEPENDENCY_TYPE,
     EXHAUSTIVE_PARTITIONS,
+    KEY_VALUES,
     MAX_NUM_PARTITIONS,
     MAXIMUM,
     MINIMUM,
     NULL_PROP,
     PARTITION_VALUE,
     PREDICATE,
-    PUBLIC_KEYS,
     PUBLIC_PARTITIONS,
     RANDOM_STRINGS,
     VALUE_MAP,
@@ -117,32 +117,32 @@ def generate_string_column(
     col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
 ) -> pd.Series:
     """Generate string column depending on available information."""
-    public_keys = []
-    if PUBLIC_KEYS in col_meta:
+    public_keys_values = []
+    if KEY_VALUES in col_meta:
         # new key-only format
-        for key in col_meta[PUBLIC_KEYS]:
+        for key in col_meta[KEY_VALUES]:
             if isinstance(key, str):
-                public_keys.append(key)
+                public_keys_values.append(key)
             else:  # isinstance(key, dict) and PARTITION_VALUE in key:
-                public_keys.append(key[PARTITION_VALUE])
+                public_keys_values.append(key[PARTITION_VALUE])
 
     elif PUBLIC_PARTITIONS in col_meta:
         for partition in col_meta[PUBLIC_PARTITIONS]:
             if isinstance(partition, str):
-                public_keys.append(partition)
+                public_keys_values.append(partition)
             else:
-                public_keys.append(partition[PREDICATE][PARTITION_VALUE])
+                public_keys_values.append(partition[PREDICATE][PARTITION_VALUE])
 
         if EXHAUSTIVE_PARTITIONS in col_meta and not col_meta[EXHAUSTIVE_PARTITIONS]:
             diff = col_meta[MAX_NUM_PARTITIONS] - len(col_meta[PUBLIC_PARTITIONS])
-            public_keys.extend(RANDOM_STRINGS[0:diff])
+            public_keys_values.extend(RANDOM_STRINGS[0:diff])
 
     elif col_meta.get(MAX_NUM_PARTITIONS):
-        public_keys = RANDOM_STRINGS[0 : col_meta[MAX_NUM_PARTITIONS]]
+        public_keys_values = RANDOM_STRINGS[0 : col_meta[MAX_NUM_PARTITIONS]]
     else:
-        public_keys = RANDOM_STRINGS[0:DEFAULT_NUMBER_PARTITIONS]
+        public_keys_values = RANDOM_STRINGS[0:DEFAULT_NUMBER_PARTITIONS]
 
-    return pd.Series(rng.choice(public_keys, size=nb_rows))
+    return pd.Series(rng.choice(public_keys_values, size=nb_rows))
 
 
 def generate_column_series(

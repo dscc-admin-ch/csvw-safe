@@ -8,12 +8,12 @@ from csvw_safe.constants import (
     COL_NAME,
     DATATYPE,
     EXHAUSTIVE_PARTITIONS,
+    KEY_VALUES,
     LOWER_BOUND,
     MAXIMUM,
     MINIMUM,
     PARTITION_VALUE,
     PREDICATE,
-    PUBLIC_KEYS,
     PUBLIC_PARTITIONS,
     TABLE_SCHEMA,
     UPPER_BOUND,
@@ -131,12 +131,12 @@ def test_column_group_partitions_public_partitions():
     pd.testing.assert_frame_equal(filtered, expected)
 
 
-def test_column_group_partitions_public_keys_fallback():
+def test_column_group_partitions_public_keys_values_fallback():
     df = pd.DataFrame({"col1": ["a", "b", "a", "b"], "col2": [1, 2, 3, 4]})
     columns_group_meta = [
         {
             EXHAUSTIVE_PARTITIONS: True,
-            PUBLIC_KEYS: [
+            KEY_VALUES: [
                 {"col1": {PARTITION_VALUE: "a"}, "col2": {LOWER_BOUND: 1, UPPER_BOUND: 2}},
                 {"col1": {PARTITION_VALUE: "b"}, "col2": {LOWER_BOUND: 3, UPPER_BOUND: 4}},
             ],
@@ -152,7 +152,7 @@ def test_column_group_partitions_not_exhaustive():
     columns_group_meta = [
         {
             EXHAUSTIVE_PARTITIONS: False,
-            PUBLIC_KEYS: [
+            KEY_VALUES: [
                 {"col1": {PARTITION_VALUE: "a"}, "col2": {LOWER_BOUND: 1, UPPER_BOUND: 2}},
                 {"col1": {PARTITION_VALUE: "b"}, "col2": {LOWER_BOUND: 3, UPPER_BOUND: 4}},
             ],
