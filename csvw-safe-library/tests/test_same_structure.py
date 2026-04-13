@@ -15,19 +15,22 @@ def test_assert_same_structure():
 def test_assert_same_structure_only():
     # Original DataFrame
     df1 = pd.DataFrame(
-        {"name": ["Alice", "Bob", "Charlie"], "age": [25, 30, 22], "is_adult": [True, True, True]}
+        {
+            "name": ["Alice", "Bob", "Charlie"],
+            "age": [25, 30, 22],
+            "is_adult": [True, True, True],
+        }
     )
 
     # Dummy DataFrame with compatible structure
-    df2 = pd.DataFrame(
-        {"name": ["X", "Y", "Z"], "age": [20, 21, 22], "is_adult": [True, False, True]}
-    )
+    df2 = pd.DataFrame({"name": ["X", "Y", "Z"], "age": [20, 21, 22], "is_adult": [True, False, True]})
 
     # Should not raise if not checking categories
     assert_same_structure(df1, df2, check_categories=False)
 
     with pytest.raises(
-        AssertionError, match=r"Column 'name' dummy values .* are not subset of original .*"
+        AssertionError,
+        match=r"Column 'name' dummy values .* are not subset of original .*",
     ):
         assert_same_structure(df1, df2, check_categories=True)
 

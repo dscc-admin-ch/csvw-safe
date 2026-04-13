@@ -59,13 +59,23 @@ def test_generate_column_series_integer(rng):
 
 
 def test_generate_column_series_positive_integer(rng):
-    col_meta = {DATATYPE: DataTypes.POSITIVE_INTEGER, MINIMUM: 0, MAXIMUM: 5, NULL_PROP: 0}
+    col_meta = {
+        DATATYPE: DataTypes.POSITIVE_INTEGER,
+        MINIMUM: 0,
+        MAXIMUM: 5,
+        NULL_PROP: 0,
+    }
     s = generate_column_series(col_meta, 10, rng)
     assert s.min() >= 0 and s.max() <= 5
 
 
 def test_generate_column_series_negative_integer(rng):
-    col_meta = {DATATYPE: DataTypes.NEGATIVE_INTEGER, MINIMUM: -10, MAXIMUM: -5, NULL_PROP: 0}
+    col_meta = {
+        DATATYPE: DataTypes.NEGATIVE_INTEGER,
+        MINIMUM: -10,
+        MAXIMUM: -5,
+        NULL_PROP: 0,
+    }
     s = generate_column_series(col_meta, 10, rng)
     assert s.min() >= -10 and s.max() <= -5
 
@@ -106,7 +116,11 @@ def test_generate_column_series_boolean(rng):
             {"k1", "k2"},
         ),
         # PUBLIC_PARTITIONS as strings
-        ({DATATYPE: DataTypes.STRING, PUBLIC_PARTITIONS: ["pp1", "pp2"]}, 8, {"pp1", "pp2"}),
+        (
+            {DATATYPE: DataTypes.STRING, PUBLIC_PARTITIONS: ["pp1", "pp2"]},
+            8,
+            {"pp1", "pp2"},
+        ),
         # PUBLIC_PARTITIONS as dicts with PREDICATE
         (
             {
@@ -133,7 +147,11 @@ def test_generate_column_series_boolean(rng):
         # MAX_NUM_PARTITIONS branch
         ({DATATYPE: DataTypes.STRING, MAX_NUM_PARTITIONS: 4}, 5, {"a", "b", "c", "d"}),
         # Default fallback
-        ({DATATYPE: DataTypes.STRING}, 3, set(RANDOM_STRINGS[:DEFAULT_NUMBER_PARTITIONS])),
+        (
+            {DATATYPE: DataTypes.STRING},
+            3,
+            set(RANDOM_STRINGS[:DEFAULT_NUMBER_PARTITIONS]),
+        ),
     ],
 )
 def test_generate_string_column_branches(col_meta, nb_rows, expected_values):
@@ -198,7 +216,11 @@ def test_bigger_series_numeric(rng):
 
 def test_bigger_series_datetime(rng):
     base = pd.Series(pd.date_range("2023-01-01", periods=5))
-    col_meta = {DATATYPE: DataTypes.DATETIME, MINIMUM: "2023-01-01", MAXIMUM: "2023-01-10"}
+    col_meta = {
+        DATATYPE: DataTypes.DATETIME,
+        MINIMUM: "2023-01-01",
+        MAXIMUM: "2023-01-10",
+    }
     s = _bigger_series(base, col_meta, 5, rng)
     assert (s > base).all()
 

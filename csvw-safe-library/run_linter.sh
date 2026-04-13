@@ -14,16 +14,16 @@ done
 
 # Install dependencies if flag is set
 if [ "$INSTALL_DEPS" == true ]; then
-    pip install -r requirements_dev.txt
+    pip install .[dev]
 fi
 
-python -m isort csvw_safe/
-python -m black csvw_safe/
-python -m flake8 --toml-config=./pyproject.toml csvw_safe/
-python -m mypy csvw_safe/
-python -m pylint csvw_safe/
-python -m pydocstringformatter -w csvw_safe/
 
-python -m isort tests/
-python -m black tests/
-python -m flake8 --toml-config=./pyproject.toml tests/
+# Enforce formatting
+ruff format src/
+ruff format tests/
+
+# ALL Checks
+ruff check src/ --fix
+
+# Type checking
+python -m mypy src/

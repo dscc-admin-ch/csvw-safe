@@ -51,7 +51,11 @@ def mock_data():
 def test_epsilon_context(mock_csvw_meta, mock_data):
     """Test OpenDP context creation with epsilon (Laplace DP)."""
     context = csvw_to_opendp_context(
-        csvw_meta=mock_csvw_meta, data=mock_data, epsilon=10.0, delta=1e-6, split_evenly_over=1
+        csvw_meta=mock_csvw_meta,
+        data=mock_data,
+        epsilon=10.0,
+        delta=1e-6,
+        split_evenly_over=1,
     )
     query = context.query().select(dp.len())
     res = query.release().collect()
@@ -60,9 +64,7 @@ def test_epsilon_context(mock_csvw_meta, mock_data):
 
 def test_rho_context(mock_csvw_meta, mock_data):
     """Test OpenDP context creation with rho (Gaussian DP)."""
-    context = csvw_to_opendp_context(
-        csvw_meta=mock_csvw_meta, data=mock_data, rho=0.5, split_evenly_over=1
-    )
+    context = csvw_to_opendp_context(csvw_meta=mock_csvw_meta, data=mock_data, rho=0.5, split_evenly_over=1)
     query = context.query().select(dp.len())
     res = query.release().collect()
     assert res.select("len").item() > -1000
@@ -129,7 +131,11 @@ def test_identifier_context(mock_csvw_meta, mock_data):
     """Test OpenDP context creation with identifier."""
     mock_csvw_meta[PRIVACY_UNIT] = "user_id"
     context = csvw_to_opendp_context(
-        csvw_meta=mock_csvw_meta, data=mock_data, epsilon=10.0, delta=1e-6, split_evenly_over=1
+        csvw_meta=mock_csvw_meta,
+        data=mock_data,
+        epsilon=10.0,
+        delta=1e-6,
+        split_evenly_over=1,
     )
     assert context is not None
 

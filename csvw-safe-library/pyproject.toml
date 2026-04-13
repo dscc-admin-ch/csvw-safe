@@ -4,6 +4,15 @@ version = "0.1.0"
 description = "Safe processing utilities for CSVW data"
 readme = "README.md"
 requires-python = ">=3.9"
+authors = [
+  { name = "DSCC, FSO", email = "dscc@example.com" }
+]
+urls = { Homepage = "https://github.com/dsccadminch/csvw-safe-library/csvw-safe" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
+]
 dependencies = [
     "numpy>=1.21",
     "pandas>=1.3",
@@ -18,37 +27,21 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "isort==6.0.0",
-    "black==25.1.0",
-    "flake8-pyproject==1.2.3",
-    "markdown==3.8.2",
+    "ruff>=0.6.0",
     "mypy==1.15.0",
-    "pylint==3.3.4",
     "coverage==7.6.12",
-    "pydocstringformatter==0.7.5",
     "pytest==8.3.3",
     "pytest-cov==6.0.0",
-    "types-PyYAML==6.0.12.20250402"
+    "types-PyYAML==6.0.12.20250402",
+    "markdown==3.8.2"
 ]
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
-line-length = 100
-skip-string-normalization = true # Comply with flake8
-preview = true # enables preview features, specifically line wrapping in our case.
-exclude = '''/(\.ipynb_checkpoints)/'''
-
-[tool.isort]
-profile = "black"
-skip = [".ipynb_checkpoints"]
-
-[tool.flake8]
-max-line-length = 100
-extend-ignore = ["E203", "W503"]  # Compatible with black
-exclude = ["venv", "__pycache__", ".ipynb_checkpoints"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -57,20 +50,35 @@ strict = true
 exclude = "\\.ipynb_checkpoints"
 disable_error_code = []
 
-
-[tool.pylint.'MASTER']
-ignore = ["venv", "__pycache__"]
-jobs = 1
-disable = ["too-many-arguments", "too-many-positional-arguments", "R0801", "fixme"]
-max-line-length = 100
-
 [tool.pydocstringformatter]
 max-line-length = 100
 write = true
 
-[tool.pylint."messages control"]
-disable = []
-ignore = ".ipynb_checkpoints"
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = [
+    "ANN", # strict annotations
+    "ARG", # unused argument detection
+    "B",   # bugbear
+    "C4",  # better comprehensions
+    "D",   # docstrings
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # import sorting
+    "N",   # naming rules
+    "PL",  # pylint like
+    "RUF", # ruf opinion
+    "S",   # security
+    "SIM", # simplification rules
+    "T20", # no print debugging
+    "UP",  # pyupgrade
+]
+ignore = [
+    "D203",
+    "D212",
+]
 
 [tool.coverage.run]
 branch = true
