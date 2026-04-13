@@ -178,7 +178,9 @@ class SingleColumnKey(BaseModel):
             The partition value (e.g., 'blue').
         """
         if not isinstance(self.predicate, CategoricalPredicate):
-            raise TypeError(f"Expected CategoricalPredicate, got {type(self.predicate).__name__}")
+            raise TypeError(
+                f"Expected CategoricalPredicate, got {type(self.predicate).__name__}"
+            )
 
         return self.predicate.partition_value
 
@@ -216,7 +218,9 @@ class MultiColumnKeys(BaseModel):
         return cls(predicate=predicates)
 
 
-def full_partition_to_key_single(partitions: list[SingleColumnPartition]) -> list[SingleColumnKey]:
+def full_partition_to_key_single(
+    partitions: list[SingleColumnPartition],
+) -> list[SingleColumnKey]:
     """
     Convert a list of SingleColumnPartition to SingleColumnKey,.
 
@@ -225,7 +229,9 @@ def full_partition_to_key_single(partitions: list[SingleColumnPartition]) -> lis
     return [SingleColumnKey(predicate=p.predicate) for p in partitions]
 
 
-def full_partition_to_key_multi(partitions: list[MultiColumnPartition]) -> list[MultiColumnKeys]:
+def full_partition_to_key_multi(
+    partitions: list[MultiColumnPartition],
+) -> list[MultiColumnKeys]:
     """
     Convert a list of MultiColumnPartition to MultiColumnKeys,.
 
@@ -456,7 +462,9 @@ class TableMetadata(BaseModel):
     columns: list[ColumnMetadata] = Field(default_factory=list)
     column_groups: list[ColumnGroupMetadata] | None = None
 
-    context: list[str] = Field(default_factory=lambda: [C.CSVW_CONTEXT, C.CSVW_SAFE_CONTEXT])
+    context: list[str] = Field(
+        default_factory=lambda: [C.CSVW_CONTEXT, C.CSVW_SAFE_CONTEXT]
+    )
 
     table_type: str = C.TABLE_TYPE
 

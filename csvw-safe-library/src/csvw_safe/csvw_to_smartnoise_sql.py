@@ -42,7 +42,9 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
         Dictionary representing the column metadata in SmartNoise SQL format.
     """
     if DATATYPE not in col_meta:
-        raise ValueError(f"Column '{col_meta.get('name', '<unknown>')}' is missing 'datatype'")
+        raise ValueError(
+            f"Column '{col_meta.get('name', '<unknown>')}' is missing 'datatype'"
+        )
 
     # Determine nullable
     if REQUIRED in col_meta:
@@ -145,7 +147,9 @@ def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
     """
     # Validate max_ids
     if MAX_CONTRIB not in csvw_meta:
-        raise ValueError(f"CSVW metadata must include '{MAX_CONTRIB}' (max_ids for SNSQL)")
+        raise ValueError(
+            f"CSVW metadata must include '{MAX_CONTRIB}' (max_ids for SNSQL)"
+        )
     max_ids = csvw_meta[MAX_CONTRIB]
 
     # Required fields only
@@ -215,20 +219,34 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Convert CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata."
     )
-    parser.add_argument("--input", required=True, help="Input CSVW-SAFE JSON metadata file")
-    parser.add_argument("--output", required=True, help="Output SmartNoise YAML metadata file")
-    parser.add_argument("--schema", default="MySchema", help="SmartNoise SQL schema name")
-    parser.add_argument("--table", default="MyTable", help="SmartNoise SQL table name")
     parser.add_argument(
-        "--sample_max_ids", type=bool, default=None, help="Skip sampling if max_ids enforced"
+        "--input", required=True, help="Input CSVW-SAFE JSON metadata file"
     )
     parser.add_argument(
-        "--censor_dims", type=bool, default=None, help="Drop GROUP BY rows revealing individuals"
+        "--output", required=True, help="Output SmartNoise YAML metadata file"
+    )
+    parser.add_argument(
+        "--schema", default="MySchema", help="SmartNoise SQL schema name"
+    )
+    parser.add_argument("--table", default="MyTable", help="SmartNoise SQL table name")
+    parser.add_argument(
+        "--sample_max_ids",
+        type=bool,
+        default=None,
+        help="Skip sampling if max_ids enforced",
+    )
+    parser.add_argument(
+        "--censor_dims",
+        type=bool,
+        default=None,
+        help="Drop GROUP BY rows revealing individuals",
     )
     parser.add_argument(
         "--clamp_counts", type=bool, default=None, help="Clamp negative counts to zero"
     )
-    parser.add_argument("--clamp_columns", type=bool, default=None, help="Clamp columns to bounds")
+    parser.add_argument(
+        "--clamp_columns", type=bool, default=None, help="Clamp columns to bounds"
+    )
     parser.add_argument(
         "--use_dpsu", type=bool, default=None, help="Use Differential Private Set Union"
     )

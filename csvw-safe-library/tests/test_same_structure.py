@@ -15,7 +15,11 @@ def test_assert_same_structure():
 def test_assert_same_structure_only():
     # Original DataFrame
     df1 = pd.DataFrame(
-        {"name": ["Alice", "Bob", "Charlie"], "age": [25, 30, 22], "is_adult": [True, True, True]}
+        {
+            "name": ["Alice", "Bob", "Charlie"],
+            "age": [25, 30, 22],
+            "is_adult": [True, True, True],
+        }
     )
 
     # Dummy DataFrame with compatible structure
@@ -27,7 +31,8 @@ def test_assert_same_structure_only():
     assert_same_structure(df1, df2, check_categories=False)
 
     with pytest.raises(
-        AssertionError, match=r"Column 'name' dummy values .* are not subset of original .*"
+        AssertionError,
+        match=r"Column 'name' dummy values .* are not subset of original .*",
     ):
         assert_same_structure(df1, df2, check_categories=True)
 

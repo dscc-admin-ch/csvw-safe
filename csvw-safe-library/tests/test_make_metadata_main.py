@@ -32,7 +32,9 @@ def big_df():
 
 
 def test_basic_metadata_small(small_df):
-    metadata = make_metadata_from_data(small_df, privacy_unit="user_id", with_dependencies=False)
+    metadata = make_metadata_from_data(
+        small_df, privacy_unit="user_id", with_dependencies=False
+    )
 
     assert metadata["@type"] == C.TABLE_TYPE
     assert metadata[C.PRIVACY_UNIT] == "user_id"

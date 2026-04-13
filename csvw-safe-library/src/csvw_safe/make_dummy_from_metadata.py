@@ -47,7 +47,10 @@ RANDOM_STRINGS = list(string.ascii_lowercase + string.ascii_uppercase + string.d
 
 
 def apply_nulls_serie(
-    series: pd.Series, nullable_prop: float, datatype: DataTypes, rng: np.random.Generator
+    series: pd.Series,
+    nullable_prop: float,
+    datatype: DataTypes,
+    rng: np.random.Generator,
 ) -> pd.Series:
     """
     Inject null values into a column according to metadata.
@@ -169,7 +172,9 @@ def make_dummy_from_metadata(
 
     columns_meta = metadata[TABLE_SCHEMA][COL_LIST]
 
-    depends_map = {col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta}
+    depends_map = {
+        col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta
+    }
     columns_group_meta = metadata.get(ADD_INFO, [])
 
     generated: list[pd.DataFrame] = []

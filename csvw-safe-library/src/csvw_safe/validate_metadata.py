@@ -31,7 +31,9 @@ def main() -> None:
     fails, the validation report is printed and the program exits with
     a non-zero status code.
     """
-    parser = argparse.ArgumentParser(description="SHACL validation for CSVW-SAFE metadata")
+    parser = argparse.ArgumentParser(
+        description="SHACL validation for CSVW-SAFE metadata"
+    )
     parser.add_argument("metadata_file", type=str)
     args = parser.parse_args()
 

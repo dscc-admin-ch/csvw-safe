@@ -333,7 +333,9 @@ def _fixed_series(
     for ent in depend_serie.unique():
         value_for_entity[ent] = generate_column_series(entity_meta, 1, rng).iloc[0]
 
-    return pd.Series(depend_serie.map(value_for_entity), dtype=to_pandas_dtype(col_meta[DATATYPE]))
+    return pd.Series(
+        depend_serie.map(value_for_entity), dtype=to_pandas_dtype(col_meta[DATATYPE])
+    )
 
 
 def generate_dependant_column_series(
@@ -375,7 +377,9 @@ def generate_dependant_column_series(
     elif depend_type == DependencyType.FIXED:
         series = _fixed_series(depend_serie, col_meta, rng)
     else:
-        raise ValueError(f"Unknown dependency type {depend_type} in {col_meta[COL_NAME]}")
+        raise ValueError(
+            f"Unknown dependency type {depend_type} in {col_meta[COL_NAME]}"
+        )
 
     return series
 
@@ -428,7 +432,9 @@ def generate_series(
         )
         # Generate dependent column
         col_meta = next(cm for cm in columns_meta if cm[COL_NAME] == name)
-        data_dict[name] = generate_dependant_column_series(data_dict[dep], col_meta, nb_rows, rng)
+        data_dict[name] = generate_dependant_column_series(
+            data_dict[dep], col_meta, nb_rows, rng
+        )
     else:
         # No dependency: generate normally
         col_meta = next(cm for cm in columns_meta if cm[COL_NAME] == name)

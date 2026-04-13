@@ -105,7 +105,10 @@ def test_predicate_mask_single_column():
 
 def test_predicate_mask_multiple_columns():
     df = pd.DataFrame({"col1": ["a", "b", "a"], "col2": [10, 20, 30]})
-    predicate = {"col1": {PARTITION_VALUE: "a"}, "col2": {LOWER_BOUND: 5, UPPER_BOUND: 25}}
+    predicate = {
+        "col1": {PARTITION_VALUE: "a"},
+        "col2": {LOWER_BOUND: 5, UPPER_BOUND: 25},
+    }
     mask = _predicate_mask(df, predicate)
     expected = pd.Series([True, False, False])
     pd.testing.assert_series_equal(mask, expected)
@@ -137,8 +140,14 @@ def test_column_group_partitions_public_keys_values_fallback():
         {
             EXHAUSTIVE_PARTITIONS: True,
             KEY_VALUES: [
-                {"col1": {PARTITION_VALUE: "a"}, "col2": {LOWER_BOUND: 1, UPPER_BOUND: 2}},
-                {"col1": {PARTITION_VALUE: "b"}, "col2": {LOWER_BOUND: 3, UPPER_BOUND: 4}},
+                {
+                    "col1": {PARTITION_VALUE: "a"},
+                    "col2": {LOWER_BOUND: 1, UPPER_BOUND: 2},
+                },
+                {
+                    "col1": {PARTITION_VALUE: "b"},
+                    "col2": {LOWER_BOUND: 3, UPPER_BOUND: 4},
+                },
             ],
         }
     ]
@@ -153,8 +162,14 @@ def test_column_group_partitions_not_exhaustive():
         {
             EXHAUSTIVE_PARTITIONS: False,
             KEY_VALUES: [
-                {"col1": {PARTITION_VALUE: "a"}, "col2": {LOWER_BOUND: 1, UPPER_BOUND: 2}},
-                {"col1": {PARTITION_VALUE: "b"}, "col2": {LOWER_BOUND: 3, UPPER_BOUND: 4}},
+                {
+                    "col1": {PARTITION_VALUE: "a"},
+                    "col2": {LOWER_BOUND: 1, UPPER_BOUND: 2},
+                },
+                {
+                    "col1": {PARTITION_VALUE: "b"},
+                    "col2": {LOWER_BOUND: 3, UPPER_BOUND: 4},
+                },
             ],
         }
     ]

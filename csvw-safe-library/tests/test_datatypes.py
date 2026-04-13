@@ -134,8 +134,14 @@ def test_refine_integer_type():
         (pd.Series([pd.Timestamp("2025-01-01"), pd.NA]), DataTypes.DATETIME),
         (pd.Series(["2023-03-25", "2023-01-01"]), DataTypes.DATE),
         (pd.Series(pd.to_timedelta([1, 2, 3], unit="s")), DataTypes.DURATION),
-        (pd.Series([pd.Timedelta(seconds=1), pd.Timedelta(seconds=2)]), DataTypes.DURATION),
-        (pd.Series([pd.Timedelta(seconds=1), pd.NA, pd.Timedelta(seconds=3)]), DataTypes.DURATION),
+        (
+            pd.Series([pd.Timedelta(seconds=1), pd.Timedelta(seconds=2)]),
+            DataTypes.DURATION,
+        ),
+        (
+            pd.Series([pd.Timedelta(seconds=1), pd.NA, pd.Timedelta(seconds=3)]),
+            DataTypes.DURATION,
+        ),
         (pd.Series(pd.to_timedelta(["1s", "2s", "3s"])), DataTypes.DURATION),
         (pd.Series([pd.NA, pd.NA]), DataTypes.STRING),
         (pd.Series(["a", "b"]), DataTypes.STRING),
