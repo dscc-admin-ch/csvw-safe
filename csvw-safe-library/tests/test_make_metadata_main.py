@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import csvw_safe.constants as C
+from csvw_safe import constants as c
 from csvw_safe.make_metadata_from_data import make_metadata_from_data
 
 
@@ -34,23 +34,23 @@ def big_df():
 def test_basic_metadata_small(small_df):
     metadata = make_metadata_from_data(small_df, privacy_unit="user_id", with_dependencies=False)
 
-    assert metadata["@type"] == C.TABLE_TYPE
-    assert metadata[C.PRIVACY_UNIT] == "user_id"
-    assert metadata[C.MAX_LENGTH] == len(small_df)
-    assert metadata[C.PUBLIC_LENGTH] == len(small_df)
-    assert C.ADD_INFO not in metadata
+    assert metadata["@type"] == c.TABLE_TYPE
+    assert metadata[c.PRIVACY_UNIT] == "user_id"
+    assert metadata[c.MAX_LENGTH] == len(small_df)
+    assert metadata[c.PUBLIC_LENGTH] == len(small_df)
+    assert c.ADD_INFO not in metadata
 
-    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
+    columns = metadata[c.TABLE_SCHEMA][c.COL_LIST]
     assert len(columns) == len(small_df.columns)
 
-    privacy_col = next(c for c in columns if c[C.COL_NAME] == "user_id")
-    assert privacy_col[C.PRIVACY_ID] is True
+    privacy_col = next(col for col in columns if col[c.COL_NAME] == "user_id")
+    assert privacy_col[c.PRIVACY_ID] is True
 
 
 def test_basic_metadata_big(big_df):
     metadata = make_metadata_from_data(big_df, privacy_unit="user_id")
-    assert metadata[C.MAX_LENGTH] == len(big_df)
-    assert metadata[C.PUBLIC_LENGTH] == len(big_df)
+    assert metadata[c.MAX_LENGTH] == len(big_df)
+    assert metadata[c.PUBLIC_LENGTH] == len(big_df)
 
 
 def test_missing_privacy_unit(small_df):
@@ -62,24 +62,24 @@ def test_nullable_proportion_small():
     df = pd.DataFrame({"user_id": [1, 1, 2, 2, 3], "nullable": [1, None, None, 2, 3]})
     metadata = make_metadata_from_data(df, privacy_unit="user_id")
 
-    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
-    nullable_col = next(c for c in columns if c[C.COL_NAME] == "nullable")
+    columns = metadata[c.TABLE_SCHEMA][c.COL_LIST]
+    nullable_col = next(col for col in columns if col[c.COL_NAME] == "nullable")
 
-    assert nullable_col[C.NULL_PROP] == 0.4
-    assert nullable_col[C.REQUIRED] is False
+    assert nullable_col[c.NULL_PROP] == 0.4
+    assert nullable_col[c.REQUIRED] is False
 
 
 def test_categorical_partitions_small(small_df):
     metadata = make_metadata_from_data(small_df, privacy_unit="user_id", default_contributions_level="column")
 
-    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
-    color_col = next(c for c in columns if c[C.COL_NAME] == "color")
+    columns = metadata[c.TABLE_SCHEMA][c.COL_LIST]
+    color_col = next(col for col in columns if col[c.COL_NAME] == "color")
 
-    assert C.KEY_VALUES in color_col
-    assert color_col[C.MAX_NUM_PARTITIONS] == 2
+    assert c.KEY_VALUES in color_col
+    assert color_col[c.MAX_NUM_PARTITIONS] == 2
 
     # Partition values at column-level are just values
-    partition_values = set(color_col[C.KEY_VALUES])
+    partition_values = set(color_col[c.KEY_VALUES])
     assert partition_values == {"red", "blue"}
 
 
@@ -91,22 +91,22 @@ def test_numeric_partitions_big(big_df):
         default_contributions_level="column",
     )
 
-    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
-    value_col = next(c for c in columns if c[C.COL_NAME] == "value")
+    columns = metadata[c.TABLE_SCHEMA][c.COL_LIST]
+    value_col = next(col for col in columns if col[c.COL_NAME] == "value")
 
-    assert C.PUBLIC_PARTITIONS in value_col
-    assert value_col[C.MAX_NUM_PARTITIONS] == 4
+    assert c.PUBLIC_PARTITIONS in value_col
+    assert value_col[c.MAX_NUM_PARTITIONS] == 4
 
-    partitions = value_col[C.PUBLIC_PARTITIONS]
+    partitions = value_col[c.PUBLIC_PARTITIONS]
     expected = [
-        {C.LOWER_BOUND: 0.0, C.UPPER_BOUND: 25.0},
-        {C.LOWER_BOUND: 25.0, C.UPPER_BOUND: 50.0},
-        {C.LOWER_BOUND: 50.0, C.UPPER_BOUND: 75.0},
-        {C.LOWER_BOUND: 75.0, C.UPPER_BOUND: 100.0},
+        {c.LOWER_BOUND: 0.0, c.UPPER_BOUND: 25.0},
+        {c.LOWER_BOUND: 25.0, c.UPPER_BOUND: 50.0},
+        {c.LOWER_BOUND: 50.0, c.UPPER_BOUND: 75.0},
+        {c.LOWER_BOUND: 75.0, c.UPPER_BOUND: 100.0},
     ]
     for p, e in zip(partitions, expected):
-        assert p[C.PREDICATE][C.LOWER_BOUND] == e[C.LOWER_BOUND]
-        assert p[C.PREDICATE][C.UPPER_BOUND] == e[C.UPPER_BOUND]
+        assert p[c.PREDICATE][c.LOWER_BOUND] == e[c.LOWER_BOUND]
+        assert p[c.PREDICATE][c.UPPER_BOUND] == e[c.UPPER_BOUND]
 
 
 def test_partition_contribution_level_big(big_df):
@@ -117,24 +117,24 @@ def test_partition_contribution_level_big(big_df):
         default_contributions_level="partition",
     )
 
-    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
-    value_col = next(c for c in columns if c[C.COL_NAME] == "value")
+    columns = metadata[c.TABLE_SCHEMA][c.COL_LIST]
+    value_col = next(col for col in columns if col[c.COL_NAME] == "value")
 
-    partitions = value_col[C.PUBLIC_PARTITIONS]
+    partitions = value_col[c.PUBLIC_PARTITIONS]
 
     assert isinstance(partitions, list)
     assert len(partitions) > 0
 
     first_partition = partitions[0]
     expected_first_partition = {
-        "@type": C.PARTITION,
-        C.PREDICATE: {
-            C.LOWER_BOUND: 0.0,
-            C.UPPER_BOUND: 25.0,
+        "@type": c.PARTITION,
+        c.PREDICATE: {
+            c.LOWER_BOUND: 0.0,
+            c.UPPER_BOUND: 25.0,
         },
-        C.MAX_LENGTH: 15,
-        C.MAX_GROUPS: 3,
-        C.MAX_CONTRIB: 1,
+        c.MAX_LENGTH: 15,
+        c.MAX_GROUPS: 3,
+        c.MAX_CONTRIB: 1,
     }
     assert first_partition == expected_first_partition
 
@@ -148,15 +148,15 @@ def test_column_groups_big_partition_level(big_df):
         default_contributions_level="partition",
     )
 
-    assert C.ADD_INFO in metadata
+    assert c.ADD_INFO in metadata
 
-    groups = metadata[C.ADD_INFO]
+    groups = metadata[c.ADD_INFO]
     assert len(groups) == 1
 
     group = groups[0]
-    assert group["@type"] == C.COLUMN_GROUP
-    assert group[C.COLUMNS_IN_GROUP] == ["color", "value"]
-    assert C.PUBLIC_PARTITIONS in group
+    assert group["@type"] == c.COLUMN_GROUP
+    assert group[c.COLUMNS_IN_GROUP] == ["color", "value"]
+    assert c.PUBLIC_PARTITIONS in group
 
 
 def test_column_groups_big_column_level(big_df):
@@ -168,16 +168,16 @@ def test_column_groups_big_column_level(big_df):
         default_contributions_level="column",
     )
 
-    assert C.ADD_INFO in metadata
+    assert c.ADD_INFO in metadata
 
-    groups = metadata[C.ADD_INFO]
+    groups = metadata[c.ADD_INFO]
     assert len(groups) == 1
 
     group = groups[0]
-    assert group["@type"] == C.COLUMN_GROUP
-    assert group[C.COLUMNS_IN_GROUP] == ["color", "value"]
-    assert C.PUBLIC_PARTITIONS not in group
-    assert group[C.MAX_NUM_PARTITIONS] == 12
+    assert group["@type"] == c.COLUMN_GROUP
+    assert group[c.COLUMNS_IN_GROUP] == ["color", "value"]
+    assert c.PUBLIC_PARTITIONS not in group
+    assert group[c.MAX_NUM_PARTITIONS] == 12
 
 
 def test_fine_contribution_override_big(big_df):
@@ -189,17 +189,17 @@ def test_fine_contribution_override_big(big_df):
         fine_contributions_level={"value": "column"},
     )
 
-    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
-    value_col = next(c for c in columns if c[C.COL_NAME] == "value")
+    columns = metadata[c.TABLE_SCHEMA][c.COL_LIST]
+    value_col = next(col for col in columns if col[c.COL_NAME] == "value")
 
-    assert C.PUBLIC_PARTITIONS in value_col
+    assert c.PUBLIC_PARTITIONS in value_col
 
 
 def test_numeric_bounds_small(small_df):
     metadata = make_metadata_from_data(small_df, privacy_unit="user_id")
 
-    columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
-    value_col = next(c for c in columns if c[C.COL_NAME] == "value")
+    columns = metadata[c.TABLE_SCHEMA][c.COL_LIST]
+    value_col = next(col for col in columns if col[c.COL_NAME] == "value")
 
-    assert value_col[C.MINIMUM] == 10
-    assert value_col[C.MAXIMUM] == 50
+    assert value_col[c.MINIMUM] == 10
+    assert value_col[c.MAXIMUM] == 50

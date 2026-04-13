@@ -49,7 +49,6 @@ from csvw_safe.datatypes import (
 
 def get_bounds(col_meta: dict[str, Any]) -> tuple[T, T]:
     """Get min and max."""
-
     if MINIMUM not in col_meta:
         raise KeyError(f"Missing {MINIMUM} in column {col_meta[COL_NAME]}")
 
@@ -205,6 +204,7 @@ def _bigger_series(
     -------
     pd.Series
         Generated series satisfying BIGGER dependency.
+
     """
     lower, upper = get_bounds(col_meta)
     datatype: DataTypes = col_meta[DATATYPE]
@@ -283,6 +283,7 @@ def _mapping_series(
     -------
     pd.Series
         Generated series satisfying MAPPING dependency.
+
     """
     mapped = [
         (
@@ -318,6 +319,7 @@ def _fixed_series(
     -------
     pd.Series
         Series satisfying FIXED dependency.
+
     """
     value_for_entity = {}
     entity_meta = col_meta.copy()
@@ -358,6 +360,7 @@ def generate_dependant_column_series(
     -------
     pd.Series
         Generated dependent column series.
+
     """
     depend_type = col_meta[DEPENDENCY_TYPE]
 

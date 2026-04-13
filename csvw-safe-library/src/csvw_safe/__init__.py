@@ -25,7 +25,7 @@ from .metadata_structure import ColumnMetadata, TableMetadata
 from .validate_metadata import validate_metadata
 from .validate_metadata_shacl import validate_metadata_shacl
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # Core functionality
     "assert_same_structure",
     "csvw_to_opendp_context",

@@ -67,11 +67,13 @@ def get_continuous_bounds(series: pd.Series) -> tuple[T, T]:
     Parameters
     ----------
     series : pd.Series
+        Input series containing continuous numeric values.
 
     Returns
     -------
     tuple
         (min_value, max_value)
+
     """
     value_min = series.min()
     value_max = series.max()
@@ -97,6 +99,7 @@ def identify_dependency(
     Parameters
     ----------
     df : pd.DataFrame
+        Input dataframe used for dependency detection.
     column_name : str
         Target column.
     max_mapping_keys : int
@@ -108,6 +111,7 @@ def identify_dependency(
     -------
     list
         Dependency descriptions.
+
     """
     results: list[Dependency] = []
     for col in df.columns:
@@ -174,6 +178,7 @@ def make_predicate(spec: dict[str, Any], value: Any) -> Predicate:  # noqa: ANN4
     -------
     Predicate
         Dataclass representing the partition predicate.
+
     """
     if spec["kind"] == ColumnKind.CATEGORICAL:
         return CategoricalPredicate(partition_value=value)
@@ -297,6 +302,7 @@ def build_partitions(
         - "csvw-safe:bounds.maxLength": maximum rows in partition
         - "csvw-safe:bounds.maxGroupsPerUnit": maximum rows per privacy unit
         - "csvw-safe:bounds.maxContributions": maximum partitions per unit
+
     """
     df_work = df.copy() if any(spec["kind"] == ColumnKind.CONTINUOUS for spec in column_specs) else df
 
@@ -408,6 +414,7 @@ def make_column_groups(  # noqa: PLR0913
     list[dict[str, Any]]
         A list of CSVW-SAFE column group metadata dictionaries including
         partition definitions and contribution bounds.
+
     """
     column_groups_metadata = []
 
@@ -481,15 +488,13 @@ def prepare_metadata_inputs(
     Parameters
     ----------
     default_contributions_level : str
-
+        Default contribution level applied when no column-specific override exists.
     fine_contributions_level : dict[str, str] or None
         Optional mapping specifying per-column contribution levels.
         Values must be one of {"table", "column", "partition"}.
-
     continuous_partitions : dict[str, list[Any]] or None
         Mapping of numeric column names to bin boundaries used
         to generate partitions.
-
     column_groups : list[list[str]] or None
         List of column groups used to create joint partitions.
 
@@ -497,11 +502,11 @@ def prepare_metadata_inputs(
     -------
     tuple
         A tuple containing normalized versions of:
-
         - default_level : ContributionLevel
         - fine_level : dict[str, ContributionLevel]
         - continuous_partitions : dict[str, list[Any]]
         - column_groups : list[list[str]]
+
     """
     default_level = ContributionLevel.from_str(default_contributions_level)
 
@@ -564,6 +569,7 @@ def attach_partitions_to_column(  # noqa: PLR0913
     -------
     None
         The function modifies ``column_meta`` in place.
+
     """
     series = df[column_name]
 
@@ -627,17 +633,23 @@ def build_column_metadata(  # noqa: PLR0913
     fine_contributions_level : dict[str, str]
         Mapping specifying per-column contribution levels.
 
-    default_contributions_level : str
+        default_contributions_level : ContributionLevel
         Default contribution level applied when a column is not explicitly
         listed in ``fine_contributions_level``.
 
-    with_dependencies: bool
+    default_contributions_level : ContributionLevel
+        Default contribution bound level used when a column is not present
+        in ``fine_contributions_level``.
+
+    with_dependencies : bool
+        Whether to compute and attach dependency information for the column.
 
     Returns
     -------
     ColumnMetadata
         Metadata object describing the column according to the CSVW-SAFE
         specification.
+
     """
     # Column by itself (mainly CSVW)
     series = df[column_name]
@@ -712,6 +724,7 @@ def make_metadata_from_data(  # noqa: PLR0913
     -------
     TableMetadata
         CSVW-SAFE metadata structure as a dataclass.
+
     """
     default_level, fine_level, continuous_partitions, column_groups = prepare_metadata_inputs(
         default_contributions_level,
@@ -816,6 +829,7 @@ def main() -> None:
 
     The generated metadata conforms to the CSVW-SAFE specification and
     can be used by downstream privacy-preserving data synthesis systems.
+
     """
     parser = argparse.ArgumentParser(description="Generate CSVW-SAFE metadata from a CSV dataset.")
 

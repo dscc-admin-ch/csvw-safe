@@ -166,6 +166,7 @@ def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
     -------
     bool
         True if the column should be treated as continuous.
+
     """
     return not is_categorical(series, max_unique)
 

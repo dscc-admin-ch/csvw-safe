@@ -16,6 +16,7 @@ def validate_metadata(metadata: dict[str, Any]) -> TableMetadata:
     ----------
     metadata : dict
         CSVW-SAFE metadata structure.
+
     """
     return TableMetadata.from_dict(metadata)
 

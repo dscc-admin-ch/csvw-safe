@@ -50,6 +50,7 @@ def get_privacy_loss(
     ------
     ValueError
         If neither epsilon nor rho is provided.
+
     """
     if epsilon is None and rho is None:
         raise ValueError("Either epsilon or rho must be provided")
@@ -73,11 +74,14 @@ def get_privacy_unit(
     ----------
     csvw_meta : Dict[str, Any]
         CSVW-SAFE metadata dictionary.
+    distance : str
+        Type of privacy distance metric to use (e.g. "contributions", "changes").
 
     Returns
     -------
     privacy_unit
         OpenDP privacy unit descriptor.
+
     """
     if MAX_CONTRIB not in csvw_meta:
         raise ValueError("Missing max_contributions in metadata")
@@ -150,6 +154,7 @@ def csvw_to_opendp_context(  # noqa: PLR0913
     ValueError
         If required metadata (max_contributions) is missing.
         If neither epsilon nor rho is provided.
+
     """
     if split_evenly_over is not None and split_by_weights is not None:
         raise ValueError("Specify only one of split_evenly_over or split_by_weights")

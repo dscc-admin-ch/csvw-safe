@@ -51,6 +51,7 @@ def assert_same_structure(
     ------
     AssertionError
         If any structural mismatch is detected.
+
     """
     # Columns: order and names
     if list(df1.columns) != list(df2.columns):

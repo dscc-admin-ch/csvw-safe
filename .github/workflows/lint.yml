@@ -37,9 +37,3 @@ jobs:
       # -------------------------
       - name: Run mypy
         run: python -m mypy src/
-
-      # -------------------------
-      # Tests / docs
-      # -------------------------
-      - name: Check docstring formatting
-        run: python -m pydocstringformatter --check src/

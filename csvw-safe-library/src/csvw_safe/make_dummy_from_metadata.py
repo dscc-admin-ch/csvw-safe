@@ -70,6 +70,7 @@ def apply_nulls_serie(
     -------
     pandas.Series
         Column with nulls applied.
+
     """
     if nullable_prop <= 0:
         return series
@@ -167,6 +168,7 @@ def make_dummy_from_metadata(
     -------
     pandas.DataFrame
         Generated dataset
+
     """
     rng = np.random.default_rng(seed)
 
@@ -222,6 +224,7 @@ def main() -> None:
 
     --seed : int
         Random seed (default: 0)
+
     """
     parser = argparse.ArgumentParser(description="Generate a dummy dataset from CSVW-SAFE metadata.")
 

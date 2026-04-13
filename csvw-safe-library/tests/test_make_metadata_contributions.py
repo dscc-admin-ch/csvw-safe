@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from csvw_safe import constants as C
+from csvw_safe import constants as c
 from csvw_safe.make_metadata_from_data import (
     build_partitions,
     make_metadata_from_data,
@@ -155,13 +155,13 @@ def test_column_level_partitions(simple_df):
         privacy_unit="user_id",
         fine_contributions_level={"color": "column"},
     )
-    color_column = next(c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color")
+    color_column = next(col for col in metadata[c.TABLE_SCHEMA][c.COL_LIST] if col[c.COL_NAME] == "color")
 
-    assert color_column[C.KEY_VALUES] == ["blue", "red"]
-    assert color_column[C.MAX_NUM_PARTITIONS] == 2
-    assert color_column[C.MAX_LENGTH] == 3
-    assert color_column[C.MAX_GROUPS] == 1
-    assert color_column[C.MAX_CONTRIB] == 2
+    assert color_column[c.KEY_VALUES] == ["blue", "red"]
+    assert color_column[c.MAX_NUM_PARTITIONS] == 2
+    assert color_column[c.MAX_LENGTH] == 3
+    assert color_column[c.MAX_GROUPS] == 1
+    assert color_column[c.MAX_CONTRIB] == 2
 
 
 def test_partition_level_partitions(simple_df):
@@ -172,12 +172,12 @@ def test_partition_level_partitions(simple_df):
         fine_contributions_level={"color": "partition"},
     )
 
-    color_column = next(c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color")
+    color_column = next(col for col in metadata[c.TABLE_SCHEMA][c.COL_LIST] if col[c.COL_NAME] == "color")
 
-    assert isinstance(color_column[C.PUBLIC_PARTITIONS], list)
-    assert isinstance(color_column[C.PUBLIC_PARTITIONS][0], dict)
+    assert isinstance(color_column[c.PUBLIC_PARTITIONS], list)
+    assert isinstance(color_column[c.PUBLIC_PARTITIONS][0], dict)
 
-    assert color_column[C.MAX_NUM_PARTITIONS] == 2
+    assert color_column[c.MAX_NUM_PARTITIONS] == 2
 
 
 def test_datetime_partition(simple_df):

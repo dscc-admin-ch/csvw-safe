@@ -4,7 +4,7 @@ from typing import Any, Union
 
 from pydantic import BaseModel, Field
 
-from csvw_safe import constants as C
+from csvw_safe import constants as c
 from csvw_safe.datatypes import DataTypes
 
 
@@ -17,18 +17,18 @@ class Dependency(BaseModel):
     """
 
     depends_on: str
-    dependency_type: C.DependencyType
+    dependency_type: c.DependencyType
     value_map: dict[Any, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the dependency to a CSVW-SAFE compliant dictionary."""
         d: dict[str, Any] = {
-            C.DEPENDS_ON: self.depends_on,
-            C.DEPENDENCY_TYPE: self.dependency_type,
+            c.DEPENDS_ON: self.depends_on,
+            c.DEPENDENCY_TYPE: self.dependency_type,
         }
 
         if self.value_map is not None:
-            d[C.VALUE_MAP] = self.value_map
+            d[c.VALUE_MAP] = self.value_map
 
         return d
 
@@ -36,9 +36,9 @@ class Dependency(BaseModel):
     def from_dict(cls, data: dict[str, Any]) -> "Dependency":
         """Create a Dependency instance from CSVW-SAFE metadata."""
         return cls(
-            depends_on=data[C.DEPENDS_ON],
-            dependency_type=data[C.DEPENDENCY_TYPE],
-            value_map=data.get(C.VALUE_MAP),
+            depends_on=data[c.DEPENDS_ON],
+            dependency_type=data[c.DEPENDENCY_TYPE],
+            value_map=data.get(c.VALUE_MAP),
         )
 
 
@@ -49,12 +49,12 @@ class CategoricalPredicate(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the predicate into CSVW-SAFE JSON format."""
-        return {C.PARTITION_VALUE: self.partition_value}
+        return {c.PARTITION_VALUE: self.partition_value}
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CategoricalPredicate":
         """Create a Predicate from CSVW-SAFE metadata."""
-        return cls(partition_value=data[C.PARTITION_VALUE])
+        return cls(partition_value=data[c.PARTITION_VALUE])
 
 
 class ContinuousPredicate(BaseModel):
@@ -66,16 +66,16 @@ class ContinuousPredicate(BaseModel):
     def to_dict(self) -> dict[str, Any]:
         """Convert the predicate into CSVW-SAFE JSON format."""
         return {
-            C.LOWER_BOUND: self.lower_bound,
-            C.UPPER_BOUND: self.upper_bound,
+            c.LOWER_BOUND: self.lower_bound,
+            c.UPPER_BOUND: self.upper_bound,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ContinuousPredicate":
         """Create a Predicate from CSVW-SAFE metadata."""
         return cls(
-            lower_bound=data[C.LOWER_BOUND],
-            upper_bound=data[C.UPPER_BOUND],
+            lower_bound=data[c.LOWER_BOUND],
+            upper_bound=data[c.UPPER_BOUND],
         )
 
 
@@ -84,7 +84,7 @@ Predicate = Union[CategoricalPredicate, ContinuousPredicate]
 
 def parse_predicate(data: dict[str, Any]) -> Predicate:
     """Parse predicate depending on its type."""
-    if C.PARTITION_VALUE in data:
+    if c.PARTITION_VALUE in data:
         return CategoricalPredicate.from_dict(data)
     return ContinuousPredicate.from_dict(data)
 
@@ -107,11 +107,11 @@ class Partition(BaseModel):
     def to_dict(self) -> dict[str, Any]:
         """Convert the partition to CSVW-SAFE JSON format."""
         return {
-            "@type": C.PARTITION,
-            C.PREDICATE: self._predicate_to_dict(),
-            C.MAX_LENGTH: self.max_length,
-            C.MAX_GROUPS: self.max_groups_per_unit,
-            C.MAX_CONTRIB: self.max_contributions,
+            "@type": c.PARTITION,
+            c.PREDICATE: self._predicate_to_dict(),
+            c.MAX_LENGTH: self.max_length,
+            c.MAX_GROUPS: self.max_groups_per_unit,
+            c.MAX_CONTRIB: self.max_contributions,
         }
 
 
@@ -127,10 +127,10 @@ class SingleColumnPartition(Partition):
     def from_dict(cls, data: dict[str, Any]) -> "SingleColumnPartition":
         """Parse a single-column partition from metadata."""
         return cls(
-            predicate=parse_predicate(data[C.PREDICATE]),
-            max_length=data[C.MAX_LENGTH],
-            max_groups_per_unit=data[C.MAX_GROUPS],
-            max_contributions=data[C.MAX_CONTRIB],
+            predicate=parse_predicate(data[c.PREDICATE]),
+            max_length=data[c.MAX_LENGTH],
+            max_groups_per_unit=data[c.MAX_GROUPS],
+            max_contributions=data[c.MAX_CONTRIB],
         )
 
 
@@ -150,18 +150,20 @@ class MultiColumnPartition(Partition):
         Parameters
         ----------
         data : dict
+            Dictionary containing the serialized multi-column partition metadata.
 
         Returns
         -------
         MultiColumnPartition
+
         """
-        predicates = {k: parse_predicate(v) for k, v in data[C.PREDICATE].items()}
+        predicates = {k: parse_predicate(v) for k, v in data[c.PREDICATE].items()}
 
         return cls(
             predicate=predicates,
-            max_length=data[C.MAX_LENGTH],
-            max_groups_per_unit=data[C.MAX_GROUPS],
-            max_contributions=data[C.MAX_CONTRIB],
+            max_length=data[c.MAX_LENGTH],
+            max_groups_per_unit=data[c.MAX_GROUPS],
+            max_contributions=data[c.MAX_CONTRIB],
         )
 
 
@@ -176,6 +178,7 @@ class SingleColumnKey(BaseModel):
 
         Returns:
             The partition value (e.g., 'blue').
+
         """
         if not isinstance(self.predicate, CategoricalPredicate):
             raise TypeError(f"Expected CategoricalPredicate, got {type(self.predicate).__name__}")
@@ -195,6 +198,7 @@ class SingleColumnKey(BaseModel):
 
         Raises:
             TypeError: If input is not a categorical value.
+
         """
         pred = CategoricalPredicate(partition_value=data)
         return cls(predicate=pred)
@@ -268,54 +272,54 @@ class ColumnMetadata(BaseModel):
     def to_dict(self) -> dict[str, Any]:  # noqa: PLR0912
         """Convert the column metadata to CSVW-SAFE JSON format."""
         d: dict[str, Any] = {
-            "@type": C.COL_TYPE,
-            C.COL_NAME: self.name,
-            C.DATATYPE: self.datatype,
-            C.REQUIRED: self.required,
-            C.PRIVACY_ID: self.privacy_id,
-            C.NULL_PROP: self.nullable_proportion,
+            "@type": c.COL_TYPE,
+            c.COL_NAME: self.name,
+            c.DATATYPE: self.datatype,
+            c.REQUIRED: self.required,
+            c.PRIVACY_ID: self.privacy_id,
+            c.NULL_PROP: self.nullable_proportion,
         }
         if self.required:
-            d[C.REQUIRED] = self.required
+            d[c.REQUIRED] = self.required
 
         if self.privacy_id:
-            d[C.PRIVACY_ID] = self.privacy_id
+            d[c.PRIVACY_ID] = self.privacy_id
 
         if self.nullable_proportion:
-            d[C.NULL_PROP] = self.nullable_proportion
+            d[c.NULL_PROP] = self.nullable_proportion
 
         if self.dependencies:
-            d[C.ROW_DEP] = [dep.to_dict() for dep in self.dependencies]
+            d[c.ROW_DEP] = [dep.to_dict() for dep in self.dependencies]
 
         if self.minimum is not None:
-            d[C.MINIMUM] = self.minimum
+            d[c.MINIMUM] = self.minimum
 
         if self.maximum is not None:
-            d[C.MAXIMUM] = self.maximum
+            d[c.MAXIMUM] = self.maximum
 
         if self.partitions is not None:
-            d[C.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
+            d[c.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
 
         if self.public_keys_values is not None:
-            d[C.KEY_VALUES] = [p.to_dict() for p in self.public_keys_values]
+            d[c.KEY_VALUES] = [p.to_dict() for p in self.public_keys_values]
 
         if self.invariant_public_keys is not None:
-            d[C.INVARIANT_PUBLIC_KEYS] = self.invariant_public_keys
+            d[c.INVARIANT_PUBLIC_KEYS] = self.invariant_public_keys
 
         if self.exhaustive_partitions is not None:
-            d[C.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
+            d[c.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
 
         if self.max_num_partitions is not None:
-            d[C.MAX_NUM_PARTITIONS] = self.max_num_partitions
+            d[c.MAX_NUM_PARTITIONS] = self.max_num_partitions
 
         if self.max_length is not None:
-            d[C.MAX_LENGTH] = self.max_length
+            d[c.MAX_LENGTH] = self.max_length
 
         if self.max_groups_per_unit is not None:
-            d[C.MAX_GROUPS] = self.max_groups_per_unit
+            d[c.MAX_GROUPS] = self.max_groups_per_unit
 
         if self.max_contributions is not None:
-            d[C.MAX_CONTRIB] = self.max_contributions
+            d[c.MAX_CONTRIB] = self.max_contributions
 
         return d
 
@@ -327,32 +331,34 @@ class ColumnMetadata(BaseModel):
         Parameters
         ----------
         data : dict
+            Dictionary containing the serialized column metadata.
 
         Returns
         -------
         ColumnMetadata
+
         """
-        deps = [Dependency.from_dict(d) for d in data.get(C.ROW_DEP, [])]
+        deps = [Dependency.from_dict(d) for d in data.get(c.ROW_DEP, [])]
 
         col_metadata = ColumnMetadata(
-            name=data[C.COL_NAME],
-            datatype=data[C.DATATYPE],
-            required=data.get(C.REQUIRED),
-            privacy_id=data.get(C.PRIVACY_ID),
-            nullable_proportion=data.get(C.NULL_PROP),
+            name=data[c.COL_NAME],
+            datatype=data[c.DATATYPE],
+            required=data.get(c.REQUIRED),
+            privacy_id=data.get(c.PRIVACY_ID),
+            nullable_proportion=data.get(c.NULL_PROP),
             dependencies=deps,
-            minimum=data.get(C.MINIMUM),
-            maximum=data.get(C.MAXIMUM),
-            max_num_partitions=data.get(C.MAX_NUM_PARTITIONS),
-            max_length=data.get(C.MAX_LENGTH),
-            max_groups_per_unit=data.get(C.MAX_GROUPS),
-            max_contributions=data.get(C.MAX_CONTRIB),
-            exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS),
-            invariant_public_keys=data.get(C.INVARIANT_PUBLIC_KEYS),
+            minimum=data.get(c.MINIMUM),
+            maximum=data.get(c.MAXIMUM),
+            max_num_partitions=data.get(c.MAX_NUM_PARTITIONS),
+            max_length=data.get(c.MAX_LENGTH),
+            max_groups_per_unit=data.get(c.MAX_GROUPS),
+            max_contributions=data.get(c.MAX_CONTRIB),
+            exhaustive_partitions=data.get(c.EXHAUSTIVE_PARTITIONS),
+            invariant_public_keys=data.get(c.INVARIANT_PUBLIC_KEYS),
         )
 
-        raw_partitions = data.get(C.PUBLIC_PARTITIONS)
-        raw_public_keys_values = data.get(C.KEY_VALUES)
+        raw_partitions = data.get(c.PUBLIC_PARTITIONS)
+        raw_public_keys_values = data.get(c.KEY_VALUES)
 
         if raw_partitions:
             partitions: list[SingleColumnPartition] = [
@@ -390,33 +396,33 @@ class ColumnGroupMetadata(BaseModel):
     def to_dict(self) -> dict[str, Any]:
         """Serialize the column group metadata."""
         result: dict[str, Any] = {
-            "@type": C.COLUMN_GROUP,
-            C.COLUMNS_IN_GROUP: self.columns,
+            "@type": c.COLUMN_GROUP,
+            c.COLUMNS_IN_GROUP: self.columns,
         }
 
         if self.partitions is not None:
-            result[C.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
+            result[c.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
 
         if self.public_keys_values is not None:
-            result[C.KEY_VALUES] = [k.to_dict() for k in self.public_keys_values]
+            result[c.KEY_VALUES] = [k.to_dict() for k in self.public_keys_values]
 
         if self.invariant_public_keys is not None:
-            result[C.INVARIANT_PUBLIC_KEYS] = self.invariant_public_keys
+            result[c.INVARIANT_PUBLIC_KEYS] = self.invariant_public_keys
 
         if self.exhaustive_partitions is not None:
-            result[C.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
+            result[c.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
 
         if self.max_num_partitions is not None:
-            result[C.MAX_NUM_PARTITIONS] = self.max_num_partitions
+            result[c.MAX_NUM_PARTITIONS] = self.max_num_partitions
 
         if self.max_length is not None:
-            result[C.MAX_LENGTH] = self.max_length
+            result[c.MAX_LENGTH] = self.max_length
 
         if self.max_groups_per_unit is not None:
-            result[C.MAX_GROUPS] = self.max_groups_per_unit
+            result[c.MAX_GROUPS] = self.max_groups_per_unit
 
         if self.max_contributions is not None:
-            result[C.MAX_CONTRIB] = self.max_contributions
+            result[c.MAX_CONTRIB] = self.max_contributions
 
         return result
 
@@ -424,16 +430,16 @@ class ColumnGroupMetadata(BaseModel):
     def from_dict(cls, data: dict[str, Any]) -> "ColumnGroupMetadata":
         """Parse grouped column metadata from JSON."""
         col_group_metadata = ColumnGroupMetadata(
-            columns=data[C.COLUMNS_IN_GROUP],
-            max_num_partitions=data.get(C.MAX_NUM_PARTITIONS),
-            max_length=data.get(C.MAX_LENGTH),
-            max_groups_per_unit=data.get(C.MAX_GROUPS),
-            max_contributions=data.get(C.MAX_CONTRIB),
-            exhaustive_partitions=data.get(C.EXHAUSTIVE_PARTITIONS),
-            invariant_public_keys=data.get(C.INVARIANT_PUBLIC_KEYS),
+            columns=data[c.COLUMNS_IN_GROUP],
+            max_num_partitions=data.get(c.MAX_NUM_PARTITIONS),
+            max_length=data.get(c.MAX_LENGTH),
+            max_groups_per_unit=data.get(c.MAX_GROUPS),
+            max_contributions=data.get(c.MAX_CONTRIB),
+            exhaustive_partitions=data.get(c.EXHAUSTIVE_PARTITIONS),
+            invariant_public_keys=data.get(c.INVARIANT_PUBLIC_KEYS),
         )
-        raw_partitions = data.get(C.PUBLIC_PARTITIONS)
-        raw_public_keys_values = data.get(C.KEY_VALUES)
+        raw_partitions = data.get(c.PUBLIC_PARTITIONS)
+        raw_public_keys_values = data.get(c.KEY_VALUES)
 
         if raw_partitions:
             partitions: list[MultiColumnPartition] = [
@@ -460,24 +466,24 @@ class TableMetadata(BaseModel):
     columns: list[ColumnMetadata] = Field(default_factory=list)
     column_groups: list[ColumnGroupMetadata] | None = None
 
-    context: list[str] = Field(default_factory=lambda: [C.CSVW_CONTEXT, C.CSVW_SAFE_CONTEXT])
+    context: list[str] = Field(default_factory=lambda: [c.CSVW_CONTEXT, c.CSVW_SAFE_CONTEXT])
 
-    table_type: str = C.TABLE_TYPE
+    table_type: str = c.TABLE_TYPE
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the full metadata object to CSVW-SAFE JSON."""
         d: dict[str, Any] = {
             "@context": self.context,
             "@type": self.table_type,
-            C.PRIVACY_UNIT: self.privacy_unit,
-            C.MAX_CONTRIB: self.max_contributions,
-            C.MAX_LENGTH: self.max_length,
-            C.PUBLIC_LENGTH: self.public_length,
-            C.TABLE_SCHEMA: {C.COL_LIST: [col.to_dict() for col in self.columns]},
+            c.PRIVACY_UNIT: self.privacy_unit,
+            c.MAX_CONTRIB: self.max_contributions,
+            c.MAX_LENGTH: self.max_length,
+            c.PUBLIC_LENGTH: self.public_length,
+            c.TABLE_SCHEMA: {c.COL_LIST: [col.to_dict() for col in self.columns]},
         }
 
         if self.column_groups is not None:
-            d[C.ADD_INFO] = [group.to_dict() for group in self.column_groups]
+            d[c.ADD_INFO] = [group.to_dict() for group in self.column_groups]
 
         return d
 
@@ -494,22 +500,23 @@ class TableMetadata(BaseModel):
         Returns
         -------
         TableMetadata
-        """
-        schema = data[C.TABLE_SCHEMA]
 
-        columns = [ColumnMetadata.from_dict(c) for c in schema[C.COL_LIST]]
+        """
+        schema = data[c.TABLE_SCHEMA]
+
+        columns = [ColumnMetadata.from_dict(c) for c in schema[c.COL_LIST]]
 
         column_groups = None
-        if C.ADD_INFO in data:
-            column_groups = [ColumnGroupMetadata.from_dict(g) for g in data[C.ADD_INFO]]
+        if c.ADD_INFO in data:
+            column_groups = [ColumnGroupMetadata.from_dict(g) for g in data[c.ADD_INFO]]
 
         return cls(
-            privacy_unit=data.get(C.PRIVACY_UNIT),
-            max_contributions=data.get(C.MAX_CONTRIB),
-            max_length=data.get(C.MAX_LENGTH),
-            public_length=data.get(C.PUBLIC_LENGTH),
+            privacy_unit=data.get(c.PRIVACY_UNIT),
+            max_contributions=data.get(c.MAX_CONTRIB),
+            max_length=data.get(c.MAX_LENGTH),
+            public_length=data.get(c.PUBLIC_LENGTH),
             columns=columns,
             column_groups=column_groups,
             context=data.get("@context", []),
-            table_type=data.get("@type", C.TABLE_TYPE),
+            table_type=data.get("@type", c.TABLE_TYPE),
         )

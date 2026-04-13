@@ -18,25 +18,12 @@ if [ "$INSTALL_DEPS" == true ]; then
 fi
 
 
-# -------------------------
-# Ruff
-# -------------------------
-# Enforce formatting (if you use ruff formatter instead of black)
+# Enforce formatting
 ruff format src/
 ruff format tests/
 
-# Auto-fix imports + lint issues
+# ALL Checks
 ruff check src/ --fix
 
-
-# -------------------------
 # Type checking
-# -------------------------
 python -m mypy src/
-
-
-# -------------------------
-# Documentation formatting
-# -------------------------
-python -m pydocstringformatter -w src/
-python -m pydocstringformatter -w tests/

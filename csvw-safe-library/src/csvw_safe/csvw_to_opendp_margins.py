@@ -51,6 +51,7 @@ def get_margins(col_meta: dict[str, Any], by: list[str]) -> dict[str, Any]:
     Dict[str, Any]
         Dictionary of keyword arguments suitable for constructing an
         OpenDP Margin object.
+
     """
     margin_kwargs: dict[str, Any] = {"by": by}
 
@@ -92,6 +93,7 @@ def csvw_to_opendp_margins(csvw_meta: dict[str, Any]) -> list["Margin"]:
     ------
     ValueError
         If required metadata (e.g., max_contributions) is missing.
+
     """
     margins: list[Margin] = []
 

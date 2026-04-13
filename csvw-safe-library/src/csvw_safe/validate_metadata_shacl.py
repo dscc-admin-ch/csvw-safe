@@ -36,6 +36,7 @@ def validate_metadata_shacl(metadata_file: Path, shacl_file: Path) -> tuple[bool
         A tuple containing:
         - bool : Whether the metadata conforms to the SHACL schema.
         - str : Textual validation report produced by pySHACL.
+
     """
     data_graph = Graph()
     data_graph.parse(metadata_file, format="json-ld")

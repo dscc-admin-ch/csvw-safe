@@ -40,6 +40,7 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
     -------
     dict
         Dictionary representing the column metadata in SmartNoise SQL format.
+
     """
     if DATATYPE not in col_meta:
         raise ValueError(f"Column '{col_meta.get('name', '<unknown>')}' is missing 'datatype'")
@@ -59,7 +60,7 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
         col_dict["private_id"] = True
 
     if XSD_GROUP_MAP[xsd_datatype] != DataTypesGroups.DATETIME:
-        if PRIVACY_ID in col_meta and col_meta[PRIVACY_ID]:
+        if col_meta.get(PRIVACY_ID):
             pass
         else:
             if MINIMUM in col_meta:
@@ -137,6 +138,7 @@ def csvw_to_smartnoise_sql(  # noqa: PLR0913
     ValueError
         If "max_contributions" is missing from the CSVW metadata, since it is required
         as `max_ids`.
+
     """
     # Validate max_ids
     if MAX_CONTRIB not in csvw_meta:

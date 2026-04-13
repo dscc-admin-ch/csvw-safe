@@ -63,6 +63,7 @@ class ContributionLevel(IntEnum):
         ------
         ValueError
             If the input string does not match any valid level.
+
         """
         value = value.lower()
         if value == "table":
