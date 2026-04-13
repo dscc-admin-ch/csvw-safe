@@ -21,9 +21,7 @@ TABLE_TYPE = "Table"
 # ============================================================
 # CSVW_SAFE Namespaces
 # ============================================================
-CSVW_SAFE_CONTEXT = str(
-    (Path(__file__).resolve().parents[2] / "csvw-safe-context.jsonld").resolve()
-)  # tmp
+CSVW_SAFE_CONTEXT = str((Path(__file__).resolve().parents[2] / "csvw-safe-context.jsonld").resolve())  # tmp
 
 # Column groups / partitions
 COLUMN_GROUP = "ColumnGroup"
@@ -73,6 +71,7 @@ class DependencyType(StrEnum):
 # ============================================================
 # Default Values
 # ============================================================
+DATE_LENGTH = 10  # YYYY-MM-DD only
 DEFAULT_LOWER_INCLUSIVE = True
 DEFAULT_UPPER_INCLUSIVE = True
 

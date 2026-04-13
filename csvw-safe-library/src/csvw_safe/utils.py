@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 
 
-def sanitize(obj: Any) -> Any:
+def sanitize(obj: dict[str, Any]) -> dict[str, Any]:
     """
     Recursively convert objects into JSON/CSVW-SAFE serializable types.
 

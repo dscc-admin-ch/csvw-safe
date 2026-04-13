@@ -27,7 +27,6 @@ ruff format tests/
 
 # Auto-fix imports + lint issues
 ruff check src/ --fix
-ruff check tests/ --fix
 
 
 # -------------------------

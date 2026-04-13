@@ -66,9 +66,7 @@ def main() -> None:
     fails, the validation report is printed and the program exits with
     a non-zero status code.
     """
-    parser = argparse.ArgumentParser(
-        description="SHACL validation for CSVW-SAFE metadata"
-    )
+    parser = argparse.ArgumentParser(description="SHACL validation for CSVW-SAFE metadata")
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("shacl_file", type=str, help="SHACL TTL file")
     args = parser.parse_args()
@@ -77,23 +75,23 @@ def main() -> None:
     shacl_path = Path(args.shacl_file)
 
     if not metadata_path.exists():
-        print(f"Metadata file not found: {metadata_path}")
+        print(f"Metadata file not found: {metadata_path}")  # noqa: T201
         sys.exit(1)
     if not shacl_path.exists():
-        print(f"SHACL file not found: {shacl_path}")
+        print(f"SHACL file not found: {shacl_path}")  # noqa: T201
         sys.exit(1)
 
     try:
         conforms, results_text = validate_metadata_shacl(metadata_path, shacl_path)
     except ImportError:
-        print("pySHACL not installed. Please install it with `pip install pyshacl`")
+        print("pySHACL not installed. Please install it with `pip install pyshacl`")  # noqa: T201
         sys.exit(1)
 
     if conforms:
-        print("SHACL validation SUCCESSFUL")
+        print("SHACL validation SUCCESSFUL")  # noqa: T201
     else:
-        print("SHACL validation FAILED")
-        print(results_text)
+        print("SHACL validation FAILED")  # noqa: T201
+        print(results_text)  # noqa: T201
         sys.exit(1)
 
 

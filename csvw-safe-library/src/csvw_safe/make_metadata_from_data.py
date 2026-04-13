@@ -126,25 +126,16 @@ def identify_dependency(
             o_min, o_max = get_continuous_bounds(o_valid)
 
             # if bounds overlap only
-            if max(s_min, o_min) < min(s_max, o_max):
-                if (s_valid >= o_valid).all():
-                    results.append(
-                        Dependency(
-                            depends_on=col, dependency_type=DependencyType.BIGGER
-                        )
-                    )
-                    continue
+            if max(s_min, o_min) < min(s_max, o_max) and (s_valid >= o_valid).all():
+                results.append(Dependency(depends_on=col, dependency_type=DependencyType.BIGGER))
+                continue
         else:
-            grouped = valid.groupby(col)[column_name].apply(
-                lambda x: list(pd.unique(x))
-            )
+            grouped = valid.groupby(col)[column_name].apply(lambda x: list(pd.unique(x)))
             lengths = grouped.str.len()
 
             # Only if private id (?)
             if (lengths == 1).all():
-                results.append(
-                    Dependency(depends_on=col, dependency_type=DependencyType.FIXED)
-                )
+                results.append(Dependency(depends_on=col, dependency_type=DependencyType.FIXED))
                 continue
 
             # Categorical dependency: finite key and values cardinality
@@ -168,7 +159,7 @@ def identify_dependency(
     return results
 
 
-def make_predicate(spec: dict[str, Any], value: Any) -> Predicate:
+def make_predicate(spec: dict[str, Any], value: Any) -> Predicate:  # noqa: ANN401
     """
     Build a Predicate object from a column specification and a partition value.
 
@@ -189,16 +180,8 @@ def make_predicate(spec: dict[str, Any], value: Any) -> Predicate:
 
     # Numeric or datetime interval
     interval = value
-    lower = (
-        pd.to_datetime(interval.left).isoformat()
-        if spec.get("is_datetime")
-        else float(interval.left)
-    )
-    upper = (
-        pd.to_datetime(interval.right).isoformat()
-        if spec.get("is_datetime")
-        else float(interval.right)
-    )
+    lower = pd.to_datetime(interval.left).isoformat() if spec.get("is_datetime") else float(interval.left)
+    upper = pd.to_datetime(interval.right).isoformat() if spec.get("is_datetime") else float(interval.right)
     return ContinuousPredicate(lower_bound=lower, upper_bound=upper)
 
 
@@ -315,11 +298,7 @@ def build_partitions(
         - "csvw-safe:bounds.maxGroupsPerUnit": maximum rows per privacy unit
         - "csvw-safe:bounds.maxContributions": maximum partitions per unit
     """
-    df_work = (
-        df.copy()
-        if any(spec["kind"] == ColumnKind.CONTINUOUS for spec in column_specs)
-        else df
-    )
+    df_work = df.copy() if any(spec["kind"] == ColumnKind.CONTINUOUS for spec in column_specs) else df
 
     grouping_columns = []
     influenced_counts = {}
@@ -332,32 +311,20 @@ def build_partitions(
             influenced_counts[col] = df.groupby(privacy_unit)[col].nunique(dropna=True)
 
         elif spec["kind"] == ColumnKind.CONTINUOUS:
-            bins = (
-                pd.to_datetime(spec["bins"])
-                if spec.get("is_datetime")
-                else sorted(spec["bins"])
-            )
+            bins = pd.to_datetime(spec["bins"]) if spec.get("is_datetime") else sorted(spec["bins"])
             binned_col = f"{col}__bin"
             df_work[binned_col] = pd.cut(df_work[col], bins=bins, right=False)
             grouping_columns.append(binned_col)
-            influenced_counts[col] = df_work.groupby(privacy_unit)[binned_col].nunique(
-                dropna=True
-            )
+            influenced_counts[col] = df_work.groupby(privacy_unit)[binned_col].nunique(dropna=True)
 
         else:
             raise ValueError(f"Unknown column kind {spec['kind']}")
 
     partitions_meta: list[Partition] = []
-    for group_key, group_df in df_work.groupby(
-        grouping_columns, dropna=True, observed=True
-    ):
+    for group_key, group_df in df_work.groupby(grouping_columns, dropna=True, observed=True):
         per_privacy_unit_contrib = group_df.groupby(privacy_unit).size()
         max_contrib = max(
-            int(
-                influenced_counts[spec["name"]]
-                .loc[per_privacy_unit_contrib.index]
-                .max()
-            )
+            int(influenced_counts[spec["name"]].loc[per_privacy_unit_contrib.index].max())
             for spec in column_specs
         )
 
@@ -397,7 +364,7 @@ def get_column_level_contribution(
     return max_length, max_groups_per_unit, max_contributions
 
 
-def make_column_groups(
+def make_column_groups(  # noqa: PLR0913
     df: pd.DataFrame,
     column_groups: list[list[str]],
     fine_contributions_level: dict[str, ContributionLevel],
@@ -449,10 +416,11 @@ def make_column_groups(
             col_contrib_level = get_effective_contrib_level(
                 col, fine_contributions_level, default_contributions_level
             )
-            assert col_contrib_level in [
+            if col_contrib_level not in [
                 ContributionLevel.COLUMN,
                 ContributionLevel.PARTITION,
-            ]
+            ]:
+                raise ValueError(f"Invalid contribution level: {col_contrib_level} in ColumnGroup. ")
 
         partitions_meta = get_multi_group_partitions(
             df,
@@ -461,8 +429,8 @@ def make_column_groups(
             privacy_unit,
         )
         if default_contributions_level == ContributionLevel.COLUMN:
-            max_length, max_groups_per_unit, max_contributions = (
-                get_column_level_contribution(partitions_meta)
+            max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
+                partitions_meta
             )
             group_meta = ColumnGroupMetadata(
                 columns=col_group,
@@ -546,10 +514,7 @@ def prepare_metadata_inputs(
     if fine_contributions_level is None:
         fine_level = {}
     else:
-        fine_level = {
-            k: ContributionLevel.from_str(v)
-            for k, v in fine_contributions_level.items()
-        }
+        fine_level = {k: ContributionLevel.from_str(v) for k, v in fine_contributions_level.items()}
 
     for col in continuous_partitions:
         fine_level[col] = ContributionLevel.PARTITION
@@ -557,7 +522,7 @@ def prepare_metadata_inputs(
     return default_level, fine_level, continuous_partitions, column_groups
 
 
-def attach_partitions_to_column(
+def attach_partitions_to_column(  # noqa: PLR0913
     df: pd.DataFrame,
     column_meta: ColumnMetadata,
     column_name: str,
@@ -607,15 +572,13 @@ def attach_partitions_to_column(
         column_meta.max_num_partitions = len(partitions_meta)
 
         if col_contrib_level == ContributionLevel.COLUMN:
-            max_length, max_groups_per_unit, max_contributions = (
-                get_column_level_contribution(partitions_meta)
+            max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
+                partitions_meta
             )
             column_meta.max_length = max_length
             column_meta.max_groups_per_unit = max_groups_per_unit
             column_meta.max_contributions = max_contributions
-            column_meta.public_keys_values = full_partition_to_key_single(
-                partitions_meta
-            )
+            column_meta.public_keys_values = full_partition_to_key_single(partitions_meta)
             column_meta.invariant_public_keys = True
         else:
             column_meta.partitions = partitions_meta
@@ -630,7 +593,7 @@ def attach_partitions_to_column(
         column_meta.max_num_partitions = len(partitions_meta)
 
 
-def build_column_metadata(
+def build_column_metadata(  # noqa: PLR0913
     df: pd.DataFrame,
     column_name: str,
     privacy_unit: str,
@@ -713,7 +676,7 @@ def build_column_metadata(
     return column_meta
 
 
-def make_metadata_from_data(
+def make_metadata_from_data(  # noqa: PLR0913
     df: pd.DataFrame,
     privacy_unit: str,
     with_dependencies: bool = True,
@@ -722,7 +685,7 @@ def make_metadata_from_data(
     column_groups: list[list[str]] | None = None,
     default_contributions_level: str = "table",
     fine_contributions_level: dict[str, str] | None = None,
-) -> Any:
+) -> dict[str, Any]:
     """
     Generate CSVW-SAFE metadata from a dataset and return JSON-serializable dictionary.
 
@@ -750,21 +713,17 @@ def make_metadata_from_data(
     TableMetadata
         CSVW-SAFE metadata structure as a dataclass.
     """
-    default_level, fine_level, continuous_partitions, column_groups = (
-        prepare_metadata_inputs(
-            default_contributions_level,
-            fine_contributions_level,
-            continuous_partitions,
-            column_groups,
-        )
+    default_level, fine_level, continuous_partitions, column_groups = prepare_metadata_inputs(
+        default_contributions_level,
+        fine_contributions_level,
+        continuous_partitions,
+        column_groups,
     )
     if privacy_unit is None and (
         default_level != ContributionLevel.TABLE
         or any(level != ContributionLevel.TABLE for level in fine_level.values())
     ):
-        raise ValueError(
-            f"Privacy unit is None, only '{ContributionLevel.TABLE}' possible."
-        )
+        raise ValueError(f"Privacy unit is None, only '{ContributionLevel.TABLE}' possible.")
 
     if privacy_unit not in df.columns:
         raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
@@ -858,15 +817,11 @@ def main() -> None:
     The generated metadata conforms to the CSVW-SAFE specification and
     can be used by downstream privacy-preserving data synthesis systems.
     """
-    parser = argparse.ArgumentParser(
-        description="Generate CSVW-SAFE metadata from a CSV dataset."
-    )
+    parser = argparse.ArgumentParser(description="Generate CSVW-SAFE metadata from a CSV dataset.")
 
     parser.add_argument("csv_file", help="Path to input CSV file")
 
-    parser.add_argument(
-        "--output", default="metadata.json", help="Output metadata JSON file"
-    )
+    parser.add_argument("--output", default="metadata.json", help="Output metadata JSON file")
 
     parser.add_argument(
         "--with_dependencies",
@@ -874,9 +829,7 @@ def main() -> None:
         help="Add dependencies between columns",
     )
 
-    parser.add_argument(
-        "--privacy_unit", help="Column defining the privacy unit (e.g., patient_id)"
-    )
+    parser.add_argument("--privacy_unit", help="Column defining the privacy unit (e.g., patient_id)")
 
     # parser.add_argument(
     #     "--max_contributions", help="Declared bounds.maxContributions (l_infinity)", default=None
@@ -889,9 +842,7 @@ def main() -> None:
         help="JSON string of bounds per continuous column",
     )
 
-    parser.add_argument(
-        "--column_groups", type=str, default=None, help="JSON string of column groups"
-    )
+    parser.add_argument("--column_groups", type=str, default=None, help="JSON string of column groups")
 
     parser.add_argument(
         "--default_contributions_level",
@@ -910,9 +861,7 @@ def main() -> None:
 
     df = pd.read_csv(args.csv_file)
 
-    continuous_partitions = (
-        json.loads(args.continuous_partitions) if args.continuous_partitions else {}
-    )
+    continuous_partitions = json.loads(args.continuous_partitions) if args.continuous_partitions else {}
     column_groups = json.loads(args.column_groups) if args.column_groups else []
 
     metadata = make_metadata_from_data(
@@ -927,7 +876,7 @@ def main() -> None:
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
 
-    print(f"CSVW-SAFE metadata written to {args.output}")
+    print(f"CSVW-SAFE metadata written to {args.output}")  # noqa: T201
 
 
 if __name__ == "__main__":

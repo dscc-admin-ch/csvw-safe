@@ -32,9 +32,7 @@ def big_df():
 
 
 def test_basic_metadata_small(small_df):
-    metadata = make_metadata_from_data(
-        small_df, privacy_unit="user_id", with_dependencies=False
-    )
+    metadata = make_metadata_from_data(small_df, privacy_unit="user_id", with_dependencies=False)
 
     assert metadata["@type"] == C.TABLE_TYPE
     assert metadata[C.PRIVACY_UNIT] == "user_id"
@@ -72,9 +70,7 @@ def test_nullable_proportion_small():
 
 
 def test_categorical_partitions_small(small_df):
-    metadata = make_metadata_from_data(
-        small_df, privacy_unit="user_id", default_contributions_level="column"
-    )
+    metadata = make_metadata_from_data(small_df, privacy_unit="user_id", default_contributions_level="column")
 
     columns = metadata[C.TABLE_SCHEMA][C.COL_LIST]
     color_col = next(c for c in columns if c[C.COL_NAME] == "color")

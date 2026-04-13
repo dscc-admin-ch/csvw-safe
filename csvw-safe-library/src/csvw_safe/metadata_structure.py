@@ -170,7 +170,7 @@ class SingleColumnKey(BaseModel):
 
     predicate: Predicate
 
-    def to_dict(self) -> Any:
+    def to_dict(self) -> Any:  # noqa: ANN401
         """
         Convert a categorical partition to CSVW-SAFE JSON format.
 
@@ -178,14 +178,12 @@ class SingleColumnKey(BaseModel):
             The partition value (e.g., 'blue').
         """
         if not isinstance(self.predicate, CategoricalPredicate):
-            raise TypeError(
-                f"Expected CategoricalPredicate, got {type(self.predicate).__name__}"
-            )
+            raise TypeError(f"Expected CategoricalPredicate, got {type(self.predicate).__name__}")
 
         return self.predicate.partition_value
 
     @classmethod
-    def from_dict(cls, data: Any) -> "SingleColumnKey":
+    def from_dict(cls, data: dict[str, Any]) -> "SingleColumnKey":
         """
         Create a SingleColumnKey from a categorical JSON value.
 
@@ -267,7 +265,7 @@ class ColumnMetadata(BaseModel):
 
     max_num_partitions: int | None = None
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:  # noqa: PLR0912
         """Convert the column metadata to CSVW-SAFE JSON format."""
         d: dict[str, Any] = {
             "@type": C.COL_TYPE,
@@ -462,9 +460,7 @@ class TableMetadata(BaseModel):
     columns: list[ColumnMetadata] = Field(default_factory=list)
     column_groups: list[ColumnGroupMetadata] | None = None
 
-    context: list[str] = Field(
-        default_factory=lambda: [C.CSVW_CONTEXT, C.CSVW_SAFE_CONTEXT]
-    )
+    context: list[str] = Field(default_factory=lambda: [C.CSVW_CONTEXT, C.CSVW_SAFE_CONTEXT])
 
     table_type: str = C.TABLE_TYPE
 
@@ -508,10 +504,10 @@ class TableMetadata(BaseModel):
             column_groups = [ColumnGroupMetadata.from_dict(g) for g in data[C.ADD_INFO]]
 
         return cls(
-            privacy_unit=data.get(C.PRIVACY_UNIT, None),
-            max_contributions=data.get(C.MAX_CONTRIB, None),
-            max_length=data.get(C.MAX_LENGTH, None),
-            public_length=data.get(C.PUBLIC_LENGTH, None),
+            privacy_unit=data.get(C.PRIVACY_UNIT),
+            max_contributions=data.get(C.MAX_CONTRIB),
+            max_length=data.get(C.MAX_LENGTH),
+            public_length=data.get(C.PUBLIC_LENGTH),
             columns=columns,
             column_groups=column_groups,
             context=data.get("@context", []),

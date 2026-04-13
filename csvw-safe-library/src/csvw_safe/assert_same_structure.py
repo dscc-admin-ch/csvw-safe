@@ -71,9 +71,7 @@ def assert_same_structure(
             continue
 
         if dtype1 != dtype2:
-            raise AssertionError(
-                f"Column '{col}' dtype mismatch: original={dtype1}, dummy={dtype2}"
-            )
+            raise AssertionError(f"Column '{col}' dtype mismatch: original={dtype1}, dummy={dtype2}")
 
     # Nullability
     for col in df1.columns:
@@ -82,8 +80,8 @@ def assert_same_structure(
 
         if required1 != required2:
             raise AssertionError(
-                f"Column '{col}' nullability mismatch: "
-                f"original required={required1}, dummy required={required2}"
+                f"Column '{col}' nullability mismatch: original required={required1}, "
+                f"dummy required={required2}"
             )
 
     # Categorical subset check
@@ -97,11 +95,6 @@ def assert_same_structure(
                 raise AssertionError(
                     f"Column '{col}' dummy values {vals2} are not subset of original {vals1}"
                 )
-
-    print(
-        f"Structure check passed: {len(df1.columns)} columns match, "
-        "datatypes compatible, nullability compatible."
-    )
 
 
 def main() -> None:
@@ -128,10 +121,10 @@ def main() -> None:
             check_categories=not args.no_categories,
         )
     except AssertionError as e:
-        print(f"Structure mismatch: {e}")
+        print(f"Structure mismatch: {e}")  # noqa: T201
         sys.exit(1)
     except Exception as e:
-        print(f"ERROR: {e}")
+        print(f"ERROR: {e}")  # noqa: T201
         sys.exit(2)
 
 

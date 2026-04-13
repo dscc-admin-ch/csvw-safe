@@ -196,9 +196,7 @@ def test_validate_metadata_with_multi_column_partitions():
     table = validate_metadata(metadata)
     col1 = table.columns[0]
     partition = col1.partitions[0]
-    assert isinstance(partition, MultiColumnPartition) or isinstance(
-        partition, SingleColumnPartition
-    )
+    assert isinstance(partition, MultiColumnPartition) or isinstance(partition, SingleColumnPartition)
     # All predicates exist
     if isinstance(partition, MultiColumnPartition):
         assert set(partition.predicate.keys()) == {"col1", "col2"}

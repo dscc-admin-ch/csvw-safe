@@ -6,6 +6,8 @@ from typing import TypeVar
 
 import pandas as pd
 
+from csvw_safe.constants import DATE_LENGTH
+
 
 class ColumnKind(StrEnum):
     """Partition Kind."""
@@ -102,7 +104,7 @@ def is_date(value: str) -> bool:
         return False
     try:
         _ = datetime.fromisoformat(value)
-        return len(value) <= 10  # YYYY-MM-DD only
+        return len(value) <= DATE_LENGTH  # YYYY-MM-DD only
     except (ValueError, TypeError):
         return False
 
@@ -168,7 +170,7 @@ def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
     return not is_categorical(series, max_unique)
 
 
-def infer_xmlschema_datatype(
+def infer_xmlschema_datatype(  # noqa: PLR0911, PLR0912
     series: pd.Series,
 ) -> DataTypes:
     """Infer xml schema datatype."""

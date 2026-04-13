@@ -23,9 +23,7 @@ def test_assert_same_structure_only():
     )
 
     # Dummy DataFrame with compatible structure
-    df2 = pd.DataFrame(
-        {"name": ["X", "Y", "Z"], "age": [20, 21, 22], "is_adult": [True, False, True]}
-    )
+    df2 = pd.DataFrame({"name": ["X", "Y", "Z"], "age": [20, 21, 22], "is_adult": [True, False, True]})
 
     # Should not raise if not checking categories
     assert_same_structure(df1, df2, check_categories=False)

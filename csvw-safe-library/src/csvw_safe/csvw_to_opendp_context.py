@@ -10,11 +10,13 @@ This module:
 The resulting context can be used for differentially private queries.
 """
 
-from typing import Any
+from collections.abc import Sequence
+from typing import Any, Union
 
 import opendp.prelude as dp
 import polars as pl
-from opendp.mod import enable_features
+from opendp.extras.polars import Bound
+from opendp.mod import Measure, Metric, enable_features
 
 from csvw_safe.constants import MAX_CONTRIB  # , PRIVACY_UNIT
 from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
@@ -26,7 +28,7 @@ def get_privacy_loss(
     epsilon: float | None = None,
     rho: float | None = None,
     delta: float | None = None,
-) -> Any:
+) -> tuple[Measure, Any]:
     """
     Create an opendp privacy loss object.
 
@@ -61,7 +63,9 @@ def get_privacy_loss(
     return dp.loss_of(rho=rho, delta=delta)
 
 
-def get_privacy_unit(csvw_meta: dict[str, Any], distance: str) -> Any:
+def get_privacy_unit(
+    csvw_meta: dict[str, Any], distance: str
+) -> tuple[Metric, Union[float, Sequence[Bound]]]:
     """
     Construct an OpenDP privacy unit from CSVW-SAFE metadata.
 
@@ -103,7 +107,7 @@ def get_privacy_unit(csvw_meta: dict[str, Any], distance: str) -> Any:
     return dp.unit_of(**kwargs)
 
 
-def csvw_to_opendp_context(
+def csvw_to_opendp_context(  # noqa: PLR0913
     csvw_meta: dict[str, Any],
     data: pl.LazyFrame,
     epsilon: float | None = None,

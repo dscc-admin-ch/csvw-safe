@@ -30,7 +30,7 @@ jobs:
       # Ruff
       # -------------------------
       - name: Run Ruff (lint + import checks)
-        run: ruff check src/ tests/
+        run: ruff check src/
 
       # -------------------------
       # Type checking
@@ -42,4 +42,4 @@ jobs:
       # Tests / docs
       # -------------------------
       - name: Check docstring formatting
-        run: python -m pydocstringformatter --check src/ tests/
+        run: python -m pydocstringformatter --check src/

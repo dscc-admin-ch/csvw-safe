@@ -46,9 +46,7 @@ def test_categorical_partition(simple_df):
         ),
     ]
 
-    assert [p.to_dict() for p in partitions] == [
-        p.to_dict() for p in expected_partitions
-    ]
+    assert [p.to_dict() for p in partitions] == [p.to_dict() for p in expected_partitions]
 
 
 def test_numeric_partition(simple_df):
@@ -83,9 +81,7 @@ def test_numeric_partition(simple_df):
         ),
     ]
 
-    assert [p.to_dict() for p in partitions] == [
-        p.to_dict() for p in expected_partitions
-    ]
+    assert [p.to_dict() for p in partitions] == [p.to_dict() for p in expected_partitions]
 
 
 def test_mixed_partitions(simple_df):
@@ -149,9 +145,7 @@ def test_mixed_partitions(simple_df):
         ),
     ]
 
-    assert [p.to_dict() for p in partitions] == [
-        p.to_dict() for p in expected_partitions
-    ]
+    assert [p.to_dict() for p in partitions] == [p.to_dict() for p in expected_partitions]
 
 
 def test_column_level_partitions(simple_df):
@@ -161,9 +155,7 @@ def test_column_level_partitions(simple_df):
         privacy_unit="user_id",
         fine_contributions_level={"color": "column"},
     )
-    color_column = next(
-        c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color"
-    )
+    color_column = next(c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color")
 
     assert color_column[C.KEY_VALUES] == ["blue", "red"]
     assert color_column[C.MAX_NUM_PARTITIONS] == 2
@@ -180,9 +172,7 @@ def test_partition_level_partitions(simple_df):
         fine_contributions_level={"color": "partition"},
     )
 
-    color_column = next(
-        c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color"
-    )
+    color_column = next(c for c in metadata[C.TABLE_SCHEMA][C.COL_LIST] if c[C.COL_NAME] == "color")
 
     assert isinstance(color_column[C.PUBLIC_PARTITIONS], list)
     assert isinstance(color_column[C.PUBLIC_PARTITIONS][0], dict)
@@ -193,9 +183,7 @@ def test_partition_level_partitions(simple_df):
 def test_datetime_partition(simple_df):
     # Create partitions for the datetime column
     bounds = ["2025-01-01", "2025-01-03", "2025-01-05"]
-    partitions = make_numeric_partitions(
-        simple_df, "user_id", "timestamp", bounds=bounds
-    )
+    partitions = make_numeric_partitions(simple_df, "user_id", "timestamp", bounds=bounds)
 
     # Expected predicates use ISO strings
     expected_partitions = [
@@ -220,6 +208,4 @@ def test_datetime_partition(simple_df):
     ]
 
     # Compare the generated partitions to the expected partitions
-    assert [p.to_dict() for p in partitions] == [
-        p.to_dict() for p in expected_partitions
-    ]
+    assert [p.to_dict() for p in partitions] == [p.to_dict() for p in expected_partitions]

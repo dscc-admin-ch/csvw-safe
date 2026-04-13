@@ -49,23 +49,24 @@ from csvw_safe.datatypes import (
 
 def get_bounds(col_meta: dict[str, Any]) -> tuple[T, T]:
     """Get min and max."""
-    assert MINIMUM in col_meta, f"Missing {MINIMUM} in column {col_meta[COL_NAME]}"
-    assert MAXIMUM in col_meta, f"Missing {MAXIMUM} in column {col_meta[COL_NAME]}"
+
+    if MINIMUM not in col_meta:
+        raise KeyError(f"Missing {MINIMUM} in column {col_meta[COL_NAME]}")
+
+    if MAXIMUM not in col_meta:
+        raise KeyError(f"Missing {MAXIMUM} in column {col_meta[COL_NAME]}")
+
     return col_meta[MINIMUM], col_meta[MAXIMUM]
 
 
-def generate_datetime_column(
-    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
-) -> pd.Series:
+def generate_datetime_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
     """Generate datetime column between min and max values."""
     lower, upper = get_bounds(col_meta)
     dates = pd.date_range(start=lower, end=upper)
     return pd.Series(rng.choice(dates, size=nb_rows))
 
 
-def generate_duration_column(
-    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
-) -> pd.Series:
+def generate_duration_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
     """Generate duration column between min and max values."""
     lower, upper = get_bounds(col_meta)
 
@@ -75,9 +76,7 @@ def generate_duration_column(
     return pd.to_timedelta(values, unit="s")
 
 
-def generate_integer_column(
-    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
-) -> pd.Series:
+def generate_integer_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
     """Generate numeric column integer between min and max values respecting XSD subtype."""
     lower, upper = get_bounds(col_meta)
     datatype: DataTypes = col_meta[DATATYPE]
@@ -100,9 +99,7 @@ def generate_integer_column(
     return pd.Series(values, dtype="Int64")
 
 
-def generate_double_column(
-    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
-) -> pd.Series:
+def generate_double_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
     """Generate numeric column double between min and max values."""
     lower, upper = get_bounds(col_meta)
     return pd.Series(rng.uniform(float(lower), float(upper), size=nb_rows))
@@ -113,9 +110,7 @@ def generate_boolean_column(nb_rows: int, rng: np.random.Generator) -> pd.Series
     return pd.Series(rng.choice([True, False], size=nb_rows), dtype="boolean")
 
 
-def generate_string_column(
-    col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator
-) -> pd.Series:
+def generate_string_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
     """Generate string column depending on available information."""
     public_keys_values = []
     if KEY_VALUES in col_meta:
@@ -243,9 +238,7 @@ def _bigger_series(
 
     # ---- INTEGER ----
     if group == DataTypesGroups.INTEGER:
-        offsets = rng.integers(
-            int(0.01 * (upper - lower)), int(0.2 * (upper - lower)), size=nb_rows
-        )
+        offsets = rng.integers(int(0.01 * (upper - lower)), int(0.2 * (upper - lower)), size=nb_rows)
 
         # Ensure depend_serie is integer array
         base = depend_serie.astype("Int64").to_numpy()
@@ -333,9 +326,7 @@ def _fixed_series(
     for ent in depend_serie.unique():
         value_for_entity[ent] = generate_column_series(entity_meta, 1, rng).iloc[0]
 
-    return pd.Series(
-        depend_serie.map(value_for_entity), dtype=to_pandas_dtype(col_meta[DATATYPE])
-    )
+    return pd.Series(depend_serie.map(value_for_entity), dtype=to_pandas_dtype(col_meta[DATATYPE]))
 
 
 def generate_dependant_column_series(
@@ -377,14 +368,12 @@ def generate_dependant_column_series(
     elif depend_type == DependencyType.FIXED:
         series = _fixed_series(depend_serie, col_meta, rng)
     else:
-        raise ValueError(
-            f"Unknown dependency type {depend_type} in {col_meta[COL_NAME]}"
-        )
+        raise ValueError(f"Unknown dependency type {depend_type} in {col_meta[COL_NAME]}")
 
     return series
 
 
-def generate_series(
+def generate_series(  # noqa: PLR0913
     name: str,
     columns_meta: list[dict[str, Any]],
     depends_map: dict[str, str],
@@ -432,9 +421,7 @@ def generate_series(
         )
         # Generate dependent column
         col_meta = next(cm for cm in columns_meta if cm[COL_NAME] == name)
-        data_dict[name] = generate_dependant_column_series(
-            data_dict[dep], col_meta, nb_rows, rng
-        )
+        data_dict[name] = generate_dependant_column_series(data_dict[dep], col_meta, nb_rows, rng)
     else:
         # No dependency: generate normally
         col_meta = next(cm for cm in columns_meta if cm[COL_NAME] == name)

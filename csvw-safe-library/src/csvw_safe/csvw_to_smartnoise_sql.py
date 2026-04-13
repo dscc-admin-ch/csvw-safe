@@ -42,17 +42,10 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
         Dictionary representing the column metadata in SmartNoise SQL format.
     """
     if DATATYPE not in col_meta:
-        raise ValueError(
-            f"Column '{col_meta.get('name', '<unknown>')}' is missing 'datatype'"
-        )
+        raise ValueError(f"Column '{col_meta.get('name', '<unknown>')}' is missing 'datatype'")
 
-    # Determine nullable
-    if REQUIRED in col_meta:
-        nullable = not col_meta[REQUIRED]
-    else:
-        # Default fallback to nullable_proportion
-        nullable = col_meta.get(NULL_PROP, 1.0) > 0.0
-
+    # Basic column information
+    nullable = not col_meta[REQUIRED] if REQUIRED in col_meta else col_meta.get(NULL_PROP, 1.0) > 0.0
     xsd_datatype = col_meta[DATATYPE]
     col_dict: dict[str, Any] = {
         "name": col_meta[COL_NAME],
@@ -77,7 +70,7 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
     return col_dict
 
 
-def csvw_to_smartnoise_sql(
+def csvw_to_smartnoise_sql(  # noqa: PLR0913
     csvw_meta: dict[str, Any],
     schema_name: str = "",
     table_name: str = "df",
@@ -147,9 +140,7 @@ def csvw_to_smartnoise_sql(
     """
     # Validate max_ids
     if MAX_CONTRIB not in csvw_meta:
-        raise ValueError(
-            f"CSVW metadata must include '{MAX_CONTRIB}' (max_ids for SNSQL)"
-        )
+        raise ValueError(f"CSVW metadata must include '{MAX_CONTRIB}' (max_ids for SNSQL)")
     max_ids = csvw_meta[MAX_CONTRIB]
 
     # Required fields only
@@ -219,15 +210,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Convert CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata."
     )
-    parser.add_argument(
-        "--input", required=True, help="Input CSVW-SAFE JSON metadata file"
-    )
-    parser.add_argument(
-        "--output", required=True, help="Output SmartNoise YAML metadata file"
-    )
-    parser.add_argument(
-        "--schema", default="MySchema", help="SmartNoise SQL schema name"
-    )
+    parser.add_argument("--input", required=True, help="Input CSVW-SAFE JSON metadata file")
+    parser.add_argument("--output", required=True, help="Output SmartNoise YAML metadata file")
+    parser.add_argument("--schema", default="MySchema", help="SmartNoise SQL schema name")
     parser.add_argument("--table", default="MyTable", help="SmartNoise SQL table name")
     parser.add_argument(
         "--sample_max_ids",
@@ -241,15 +226,9 @@ def main() -> None:
         default=None,
         help="Drop GROUP BY rows revealing individuals",
     )
-    parser.add_argument(
-        "--clamp_counts", type=bool, default=None, help="Clamp negative counts to zero"
-    )
-    parser.add_argument(
-        "--clamp_columns", type=bool, default=None, help="Clamp columns to bounds"
-    )
-    parser.add_argument(
-        "--use_dpsu", type=bool, default=None, help="Use Differential Private Set Union"
-    )
+    parser.add_argument("--clamp_counts", type=bool, default=None, help="Clamp negative counts to zero")
+    parser.add_argument("--clamp_columns", type=bool, default=None, help="Clamp columns to bounds")
+    parser.add_argument("--use_dpsu", type=bool, default=None, help="Use Differential Private Set Union")
 
     args = parser.parse_args()
 
@@ -273,7 +252,7 @@ def main() -> None:
     with open(args.output, "w", encoding="utf-8") as f:
         yaml.safe_dump(snsql_meta, f)
 
-    print(f"SmartNoise SQL metadata written to {args.output}")
+    print(f"SmartNoise SQL metadata written to {args.output}")  # noqa: T201
 
 
 if __name__ == "__main__":

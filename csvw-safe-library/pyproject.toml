@@ -56,6 +56,24 @@ disable_error_code = []
 max-line-length = 100
 write = true
 
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = [
+    "ANN",
+    "B",   # bugbear
+    "C4",  # better comprehensions
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # import sorting
+    "PL",  # pylint like
+    "S",   # security
+    "SIM", # simplification rules
+    "T20", # no print debugging
+    "UP",  # pyupgrade
+]
+
 [tool.coverage.run]
 branch = true
 relative_files = true

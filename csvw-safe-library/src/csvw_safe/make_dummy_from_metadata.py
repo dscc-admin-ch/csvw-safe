@@ -86,7 +86,7 @@ def apply_nulls_serie(
     return series
 
 
-def _apply_value_mask(series: pd.Series, value: Any) -> pd.Series:
+def _apply_value_mask(series: pd.Series, value: Any) -> pd.Series:  # noqa: ANN401
     """Return mask for a categorical or continuous predicate."""
     if isinstance(value, dict):
         if PARTITION_VALUE in value:
@@ -172,9 +172,7 @@ def make_dummy_from_metadata(
 
     columns_meta = metadata[TABLE_SCHEMA][COL_LIST]
 
-    depends_map = {
-        col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta
-    }
+    depends_map = {col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta}
     columns_group_meta = metadata.get(ADD_INFO, [])
 
     generated: list[pd.DataFrame] = []
@@ -225,9 +223,7 @@ def main() -> None:
     --seed : int
         Random seed (default: 0)
     """
-    parser = argparse.ArgumentParser(
-        description="Generate a dummy dataset from CSVW-SAFE metadata."
-    )
+    parser = argparse.ArgumentParser(description="Generate a dummy dataset from CSVW-SAFE metadata.")
 
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("--rows", type=int, default=100)
@@ -252,9 +248,8 @@ def main() -> None:
 
     df_dummy.to_csv(args.output, index=False)
 
-    print(
-        f"Dummy dataset written to {args.output} ({len(df_dummy)} rows,"
-        f"{len(df_dummy.columns)} columns)."
+    print(  # noqa: T201
+        f"Dummy dataset written to {args.output} ({len(df_dummy)} rows,{len(df_dummy.columns)} columns)."
     )
 
 

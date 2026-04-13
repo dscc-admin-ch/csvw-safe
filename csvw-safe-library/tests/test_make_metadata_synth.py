@@ -30,10 +30,7 @@ def test_identify_dependency_bigger_overlap():
         }
     )
     result = identify_dependency(df, "a")
-    assert any(
-        d.depends_on == "b" and d.dependency_type == DependencyType.BIGGER
-        for d in result
-    )
+    assert any(d.depends_on == "b" and d.dependency_type == DependencyType.BIGGER for d in result)
 
     result = identify_dependency(df, "b")
     assert result == []
@@ -65,10 +62,7 @@ def test_identify_dependency_bigger_equal_bounds():
 
     result = identify_dependency(df, "a")
 
-    assert any(
-        d.depends_on == "b" and d.dependency_type == DependencyType.BIGGER
-        for d in result
-    )
+    assert any(d.depends_on == "b" and d.dependency_type == DependencyType.BIGGER for d in result)
 
 
 def test_identify_dependency_fixed():
@@ -82,11 +76,7 @@ def test_identify_dependency_fixed():
     result = identify_dependency(df, "target")
 
     # There should be one dependency: id -> target, type FIXED
-    fixed_deps = [
-        d
-        for d in result
-        if d.depends_on == "id" and d.dependency_type == DependencyType.FIXED
-    ]
+    fixed_deps = [d for d in result if d.depends_on == "id" and d.dependency_type == DependencyType.FIXED]
 
     assert len(fixed_deps) == 1
     dep = fixed_deps[0]
@@ -115,9 +105,7 @@ def test_identify_dependency_mapping():
 
     # Find MAPPING dependency
     mapping_deps = [
-        d
-        for d in result
-        if d.depends_on == "key" and d.dependency_type == DependencyType.MAPPING
+        d for d in result if d.depends_on == "key" and d.dependency_type == DependencyType.MAPPING
     ]
 
     assert len(mapping_deps) == 1
