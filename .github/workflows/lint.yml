@@ -27,7 +27,7 @@ jobs:
           pip install -e .[dev]
 
       # -------------------------
-      # Ruff (replaces isort + flake8 + pylint)
+      # Ruff
       # -------------------------
       - name: Run Ruff (lint + import checks)
         run: ruff check src/ tests/

@@ -168,7 +168,7 @@ def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
     return not is_categorical(series, max_unique)
 
 
-def infer_xmlschema_datatype(  # pylint: disable=too-many-return-statements, too-many-branches,
+def infer_xmlschema_datatype(
     series: pd.Series,
 ) -> DataTypes:
     """Infer xml schema datatype."""

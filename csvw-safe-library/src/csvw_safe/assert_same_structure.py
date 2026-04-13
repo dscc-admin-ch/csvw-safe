@@ -130,7 +130,7 @@ def main() -> None:
     except AssertionError as e:
         print(f"Structure mismatch: {e}")
         sys.exit(1)
-    except Exception as e:  # pylint: disable=broad-exception-caught
+    except Exception as e:
         print(f"ERROR: {e}")
         sys.exit(2)
 

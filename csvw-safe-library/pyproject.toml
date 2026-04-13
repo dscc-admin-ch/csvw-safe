@@ -45,21 +45,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.black]
-line-length = 100
-skip-string-normalization = true # Comply with flake8
-preview = true # enables preview features, specifically line wrapping in our case.
-exclude = '''/(\.ipynb_checkpoints)/'''
-
-[tool.isort]
-profile = "black"
-skip = [".ipynb_checkpoints"]
-
-[tool.flake8]
-max-line-length = 100
-extend-ignore = ["E203", "W503"]  # Compatible with black
-exclude = ["venv", "__pycache__", ".ipynb_checkpoints"]
-
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
@@ -67,20 +52,9 @@ strict = true
 exclude = "\\.ipynb_checkpoints"
 disable_error_code = []
 
-
-[tool.pylint.'MASTER']
-ignore = ["venv", "__pycache__"]
-jobs = 1
-disable = ["too-many-arguments", "too-many-positional-arguments", "R0801", "fixme"]
-max-line-length = 100
-
 [tool.pydocstringformatter]
 max-line-length = 100
 write = true
-
-[tool.pylint."messages control"]
-disable = []
-ignore = ".ipynb_checkpoints"
 
 [tool.coverage.run]
 branch = true

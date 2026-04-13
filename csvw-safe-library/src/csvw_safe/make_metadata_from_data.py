@@ -81,7 +81,7 @@ def get_continuous_bounds(series: pd.Series) -> tuple[T, T]:
     return value_min, value_max
 
 
-def identify_dependency(  # pylint: disable=too-many-locals
+def identify_dependency(
     df: pd.DataFrame,
     column_name: str,
     max_mapping_keys: int = 25,

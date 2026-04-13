@@ -77,7 +77,7 @@ def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:
     return col_dict
 
 
-def csvw_to_smartnoise_sql(  # pylint: disable=too-many-locals
+def csvw_to_smartnoise_sql(
     csvw_meta: dict[str, Any],
     schema_name: str = "",
     table_name: str = "df",

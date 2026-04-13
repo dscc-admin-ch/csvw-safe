@@ -267,7 +267,7 @@ class ColumnMetadata(BaseModel):
 
     max_num_partitions: int | None = None
 
-    def to_dict(self) -> dict[str, Any]:  # pylint: disable=too-many-branches
+    def to_dict(self) -> dict[str, Any]:
         """Convert the column metadata to CSVW-SAFE JSON format."""
         d: dict[str, Any] = {
             "@type": C.COL_TYPE,

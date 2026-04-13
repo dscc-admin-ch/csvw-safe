@@ -182,7 +182,7 @@ def generate_column_series(
     return series.astype(to_pandas_dtype(datatype))
 
 
-def _bigger_series(  # pylint: disable=too-many-locals
+def _bigger_series(
     depend_serie: pd.Series,
     col_meta: dict[str, Any],
     nb_rows: int,

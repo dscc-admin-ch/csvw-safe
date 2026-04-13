@@ -19,7 +19,7 @@ fi
 
 
 # -------------------------
-# Ruff (replaces isort + flake8 + most pylint checks)
+# Ruff
 # -------------------------
 # Enforce formatting (if you use ruff formatter instead of black)
 ruff format src/
