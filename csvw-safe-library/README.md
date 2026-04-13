@@ -10,11 +10,13 @@ It includes five main scripts:
 4. `validate_metadata_shacl.py` (requires `pyshacl`)
 5. `assert_same_structure.py`
 
-![Overview](../images/utils_scripts.png)
+![Overview](../images/csvwsafe_workflow_1.png)
 
 In addition, two other scripts are available for conversion of csvw-safe metadata to smartnoise sql and opendp libraries:
-5. `csvw_to_smartnoise_sql.py` converts the metadata to the format expected in smartnoise-sql
-6. `assert_same_structure.py` prepares a context object for opendp with margin and information extracted from csvw-metadata format.
+6. `csvw_to_smartnoise_sql.py` converts the metadata to the format expected in smartnoise-sql
+7. `assert_same_structure.py` prepares a context object for opendp with margin and information extracted from csvw-metadata format.
+
+![Overview](../images/csvwsafe_workflow_2.png)
 
 ---
 
@@ -132,12 +134,10 @@ The generator creates structured data that follows the declared metadata constra
 - Nullable proportions
 - Column-group constraints (when provided)
 
-> ⚠️ **Important**: This tool produces *synthetic structural data only*.  
+> **Important**: This tool produces *synthetic structural data only*.  
 > It does not preserve semantic meaning or real-world correlations beyond what is encoded in metadata.
 
----
-
-### Output Guarantees
+#### Output Guarantees
 
 The generated dataset:
 - Respects declared column schema (datatypes)
@@ -147,18 +147,14 @@ The generated dataset:
 - Optionally respects column-group partition constraints
 - Produces reproducible results via random seed
 
----
-
-### Typical Use Cases
+#### Typical Use Cases
 
 - Unit testing of CSVW-SAFE and DP pipelines
 - Schema validation without real data access
 - Debugging metadata-driven transformations
 - Synthetic data generation for integration tests
 
----
-
-### CLI Usage Examples
+#### CLI Usage Examples
 Basic example with 100 rows:
 ```bash
 # Basic
@@ -186,9 +182,6 @@ It is primarily used as a **preflight validation step** before using metadata fo
 - DP pipeline configuration
 - downstream schema-driven processing
 
----
-
-### Validation Behavior
 
 This validator performs **schema-level validation only**, including:
 - Required fields presence
@@ -198,12 +191,11 @@ This validator performs **schema-level validation only**, including:
 
 Validation is implemented via a Pydantic model (`TableMetadata.from_dict`).
 
-### Output Behavior
-
+Output behaviour:
 - If metadata is valid → script exits silently (no output)
 - If metadata is invalid → raises a validation exception and exits with error
 
-### CLI Usage
+#### CLI Usage
 ```bash
 python validate_metadata.py metadata.json
 ```
@@ -254,72 +246,52 @@ Notes
 
 ### 5. **`assert_same_structure.py`**
 
-### 5. **`validate_dummy_structure.py`**
-
 #### Purpose
 
 Verify that a generated dummy CSV preserves the **structural properties** of an original dataset under the CSVW-SAFE assumptions.
 
 This tool ensures that synthetic data produced by `make_dummy_from_metadata.py` remains **schema-compatible** with the original dataset used to derive metadata.
 
-> ⚠️ This validator checks **structure only**.  
-> It does **not** assess statistical similarity or data realism.
+This validator checks **structure only**.  It does **not** assess statistical similarity or data realism.
 
----
-
-#### What is validated
 
 The tool checks:
-
 - Column names and ordering
 - Inferred CSVW-SAFE datatypes
 - Nullability constraints (required vs optional columns)
 - Optional categorical domain compatibility (subset check)
 
-#### What is NOT validated
-
+It does not check:
 - Statistical similarity between datasets
 - Distributional properties
 - Correlation structure
 - Semantic correctness of values
 
 
-### Core Validation Logic
-
-#### Column structure
+#### Core Validation Logic
 
 Ensures that both datasets share identical schema:
 
 - Same column names
 - Same column ordering
 
-
-#### Datatype compatibility
-
 Each column is type-checked using CSVW-SAFE inference:
 
 - Datatypes are inferred via `infer_xmlschema_datatype`
 - Integer subtype differences are tolerated (e.g., small vs large integer variants)
-
-
-#### Nullability check
 
 Validates whether required/optional status is preserved:
 
 - A column is considered **required** if it has no missing values
 - Both datasets must agree on required vs optional status per column
 
-
-#### Categorical validation (optional)
-
 If enabled, ensures:
 
 - All values in dummy dataset are a **subset** of original dataset values
 - Uses `is_categorical()` to detect categorical columns
 
-### CLI Usage
+#### CLI Usage
 
-#### Basic validation
 ```bash
 python assert_same_structure.py original.csv dummy.csv
 ```
@@ -338,6 +310,128 @@ Notes
 - This tool is intentionally strict on schema alignment but lenient on integer type variations
 - Designed to validate synthetic structural fidelity, not realism
 - Works best in combination with: make_metadata_from_data.py and make_dummy_from_metadata.py
+
+### 6. **`csvw_to_smartnoise_sql.py`**
+
+#### Purpose
+
+Convert CSVW-SAFE metadata into the format expected by SmartNoise SQL.
+
+This script transforms a CSVW-SAFE JSON metadata file into a SmartNoise-compatible YAML configuration, enabling direct use in differential privacy queries with SmartNoise SQL.
+
+The script maps CSVW-SAFE metadata into SmartNoise SQL structure:
+
+- Table-level privacy constraints:
+  - `max_contributions` → `max_ids`
+- Column definitions:
+  - Datatypes (converted to SmartNoise types)
+  - Nullability
+  - Value bounds (`minimum` / `maximum` → `lower` / `upper`)
+  - Privacy identifier (`privacy_id` → `private_id`)
+- Optional DP configuration parameters:
+  - sampling, clamping, censoring, DPSU
+
+#### Output Structure
+
+The generated YAML follows SmartNoise SQL format:
+
+```yaml
+"": 
+  schema_name:
+    table_name:
+      max_ids: ...
+      rows: ...
+      sample_max_ids: ...
+      censor_dims: ...
+      clamp_counts: ...
+      clamp_columns: ...
+      use_dpsu: ...
+      column_name:
+        name: ...
+        type: ...
+        nullable: ...
+        lower: ...
+        upper: ...
+        private_id: ...
+```
+
+#### CLI Usage
+
+Basic conversion
+```bash
+python csvw_to_smartnoise_sql.py \
+  --input metadata.json \
+  --output snsql_metadata.yaml
+```
+
+With custom schema and table
+```bash
+python csvw_to_smartnoise_sql.py \
+  --input metadata.json \
+  --output snsql_metadata.yaml \
+  --schema MySchema \
+  --table MyTable
+```
+
+With DP configuration options
+```bash
+python csvw_to_smartnoise_sql.py \
+  --input metadata.json \
+  --output snsql_metadata.yaml \
+  --sample_max_ids True \
+  --censor_dims True \
+  --clamp_columns True
+```
+
+### 7. **`csvw_to_opendp_context.py`**
+
+#### Purpose
+
+Create an OpenDP `Context` from CSVW-SAFE metadata and a dataset.
+
+This script bridges CSVW-SAFE metadata with the OpenDP library by:
+- Converting metadata into OpenDP margins
+- Defining privacy units and privacy loss
+- Building a ready-to-use OpenDP `Context` for DP queries
+
+The resulting OpenDP `Context` includes:
+
+- **Privacy unit** (based on `max_contributions`)
+- **Privacy loss**:
+  - ε-DP (Laplace)
+  - ρ-DP / zCDP (Gaussian)
+- **Margins** derived from CSVW metadata
+- **Dataset** (as a Polars LazyFrame)
+
+
+#### Supported Privacy Models
+
+| Model | Parameter |
+|------|----------|
+| Laplace DP | `epsilon` |
+| Gaussian / zCDP | `rho` |
+| Approximate DP | `delta` |
+
+> You must provide **either `epsilon` OR `rho`**, not both.
+
+
+#### CLI Usage
+
+Basic conversion
+```bash
+import polars as pl
+from csvw_safe.csvw_to_opendp_context import csvw_to_opendp_context
+
+data = pl.scan_csv("data.csv")
+
+context = csvw_to_opendp_context(
+    csvw_meta=metadata,
+    data=data,
+    epsilon=1.0,
+)
+```
+
+---
 
 ## Typical Workflow
 
@@ -401,7 +495,7 @@ assert_same_structure(df, dummy_df)
 ## Tests
 ```
 cd csvw-safe-library
-pip install -e .[dev,dp_lib,rdf]
+pip install -e .[dev]
 pytest --cov=csvw_safe --cov-report=term-missing tests/
 ```
 
