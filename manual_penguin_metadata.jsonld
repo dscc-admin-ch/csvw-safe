@@ -1,176 +1,95 @@
 {
   "@context": [
     "http://www.w3.org/ns/csvw",
-    "https://w3id.org/csvw-safe-context.jsonld"
+    "csvw-safe-context.jsonld"
   ],
-  "@type": "csvw:Table",
-  "name": "penguins",
-
-  "csvw-safe:public.privacyUnit": "penguin_id",
-
-  "csvw-safe:bounds.maxContributions": 2,
-  "csvw-safe:bounds.maxLength": 344,
-  "csvw-safe:public.length": 344,
-
-  "csvw:tableSchema": {
+  "@type": "Table",
+  "maxContributions": 1,
+  "maxLength": 344,
+  "publicLength": 344,
+  "tableSchema": {
     "columns": [
-
       {
-        "@type": "csvw:Column",
-        "name": "penguin_id",
-        "datatype": "integer",
-        "required": true,
-        "csvw-safe:public.privacyId": true
-      },
-
-      {
-        "@type": "csvw:Column",
+        "@type": "Column",
         "name": "species",
         "datatype": "string",
-        "required": true,
-
-        "csvw-safe:bounds.maxGroupsPerUnit": 1,
-        "csvw-safe:public.maxNumPartitions": 3,
-        "csvw-safe:public.exhaustivePartitions": true,
-
-        "csvw-safe:public.partitions": [
-          {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": { "partitionValue": "Adelie" },
-            "csvw-safe:bounds.maxContributions": 2,
-            "csvw-safe:bounds.maxLength": 200
-          },
-          {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": { "partitionValue": "Chinstrap" },
-            "csvw-safe:bounds.maxContributions": 2,
-            "csvw-safe:bounds.maxLength": 200
-          },
-          {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": { "partitionValue": "Gentoo" },
-            "csvw-safe:bounds.maxContributions": 1,
-            "csvw-safe:bounds.maxLength": 200
-          }
-        ]
+        "nullableProportion": 0.0,
+        "maxNumPartitions": 3,
+        "invariantPublicKeys": true,
+        "key_values": ["Adelie", "Chinstrap", "Gentoo"]
       },
-
       {
-        "@type": "csvw:Column",
+        "@type": "Column",
         "name": "island",
         "datatype": "string",
-        "required": true,
-
-        "csvw-safe:bounds.maxGroupsPerUnit": 1,
-        "csvw-safe:public.maxNumPartitions": 3,
-        "csvw-safe:public.exhaustivePartitions": true,
-
-        "csvw-safe:public.partitions": [
-          "Torgersen",
-          "Biscoe",
-          "Dream"
-        ]
+        "nullableProportion": 0.0,
+        "maxNumPartitions": 3,
+        "invariantPublicKeys": true,
+        "key_values": ["Torgersen", "Biscoe", "Dream"]
       },
-
       {
-        "@type": "csvw:Column",
+        "@type": "Column",
         "name": "bill_length_mm",
-        "datatype": "double",
-        "required": true,
-        "minimum": 30,
-        "maximum": 65
+        "datatype": "float",
+        "nullableProportion": 0.0,
+        "minimum": 30.0,
+        "maximum": 65.0
       },
-
       {
-        "@type": "csvw:Column",
+        "@type": "Column",
         "name": "bill_depth_mm",
-        "datatype": "double",
-        "required": false,
-        "minimum": 13,
-        "maximum": 23,
-        "csvw-safe:synth.nullableProportion": 0.05
+        "datatype": "float",
+        "nullableProportion": 0.0,
+        "minimum": 13.0,
+        "maximum": 23.0
       },
-
       {
-        "@type": "csvw:Column",
+        "@type": "Column",
         "name": "flipper_length_mm",
-        "datatype": "double",
-        "required": false,
-        "minimum": 150,
-        "maximum": 250,
-        "csvw-safe:synth.nullableProportion": 0.05,
-
-        "csvw-safe:bounds.maxGroupsPerUnit": 2,
-        "csvw-safe:public.maxNumPartitions": 2,
-
-        "csvw-safe:public.partitions": [
-          {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": { "lowerBound": 150, "upperBound": 200 }
-          },
-          {
-            "@type": "csvw-safe:Partition",
-            "csvw-safe:predicate": { "lowerBound": 200, "upperBound": 250 }
-          }
-        ]
+        "datatype": "float",
+        "nullableProportion": 0.0,
+        "minimum": 150.0,
+        "maximum": 250.0
       },
-
       {
-        "@type": "csvw:Column",
+        "@type": "Column",
         "name": "body_mass_g",
-        "datatype": "double",
-        "required": false,
-        "minimum": 2000,
-        "maximum": 7000,
-        "csvw-safe:synth.nullableProportion": 0.05
+        "datatype": "float",
+        "nullableProportion": 0.0,
+        "minimum": 2000.0,
+        "maximum": 7000.0
       },
-
       {
-        "@type": "csvw:Column",
+        "@type": "Column",
         "name": "sex",
         "datatype": "string",
-        "required": false,
-        "csvw-safe:synth.nullableProportion": 0.2,
-
-        "csvw-safe:bounds.maxGroupsPerUnit": 1,
-        "csvw-safe:public.maxNumPartitions": 2,
-
-        "csvw-safe:public.partitions": [
-          "MALE",
-          "FEMALE"
-        ]
+        "nullableProportion": 0.0,
+        "maxNumPartitions": 2,
+        "invariantPublicKeys": true,
+        "key_values": ["MALE", "FEMALE"]
       }
     ]
   },
-
-  "csvw-safe:additionalInformation": [
+  "additionalInformation": [
     {
-      "@type": "csvw-safe:ColumnGroup",
-      "csvw-safe:columns": ["sex", "island"],
-
-      "csvw-safe:bounds.maxGroupsPerUnit": 1,
-      "csvw-safe:public.maxNumPartitions": 6,
-
-      "csvw-safe:public.partitions": [
-        {
-          "@type": "csvw-safe:Partition",
-          "csvw-safe:predicate": {
-            "components": {
-              "sex": { "partitionValue": "MALE" },
-              "island": { "partitionValue": "Torgersen" }
-            }
-          }
-        },
-        {
-          "@type": "csvw-safe:Partition",
-          "csvw-safe:predicate": {
-            "components": {
-              "sex": { "partitionValue": "FEMALE" },
-              "island": { "partitionValue": "Torgersen" }
-            }
-          }
-        }
-      ]
+      "@type": "ColumnGroup",
+      "columnsInGroup": ["species", "island"],
+      "invariantPublicKeys": true
+    },
+    {
+      "@type": "ColumnGroup",
+      "columnsInGroup": ["species", "sex"],
+      "invariantPublicKeys": true
+    },
+    {
+      "@type": "ColumnGroup",
+      "columnsInGroup": ["sex", "island"],
+      "invariantPublicKeys": true
+    },
+    {
+      "@type": "ColumnGroup",
+      "columnsInGroup": ["species", "island", "sex"],
+      "invariantPublicKeys": true
     }
   ]
 }

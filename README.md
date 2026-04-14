@@ -1,7 +1,5 @@
 # CSVW Safe Vocabulary
 
-THIS IS WORK IN PROGRESS!!!!!!!
-
 ## Overview
 
 Many datasets cannot be directly shared due to privacy, legal, or governance constraints.
@@ -14,7 +12,7 @@ These assumptions may include:
 * Logical constraints between columns
 * Bounds on how individuals may contribute to the dataset
 
-WARNING: Some of these assumptions may be safe to share (number of days in a month) but some might not be (how many people have a certain rare desease on a small island). Also if enough statistics are shared about a dataset, the privacy of its contributor is at risk even if the disclosed statistics seem inoffensive (see [Sweeney]). It is the role of the data administrator to make informed decisions on what is public information or not.
+WARNING: Some of these assumptions may be safe to share (number of days in a month) but some might not be (how many people have a certain rare desease on a small island). Also if enough statistics are shared about a dataset, the privacy of its contributor is at risk even if the disclosed statistics seem inoffensive (see [Sweeney](https://dataprivacylab.org/projects/identifiability/paper1.pdf)). It is the role of the data administrator to make informed decisions on what is public information or not.
 
 Such metadata enables:
 
@@ -24,7 +22,7 @@ Such metadata enables:
 
 [**CSV on the Web (CSVW)**](https://www.w3.org/TR/tabular-data-model/) vocabulary already describes tabular structure (tables, columns, datatypes) but doesn't express these additional modeling assumptions (DP contributions, dependency between rows, etc).
 
-**CSVW-SAFE** extends CSVW for describing public, non-sensitive constraints and assumptions about tabular datasets- The information is a CSVW-SAFE metadata is not supposed to be not measured properties. It should not describe the dataset itself but the set of datasets considered possible under the privacy model. All bounds must hold for every dataset in this set. (Note: the script `make_metadata_from_data.py` of `csvw-safe-library` is dangerous and should be used with parcimony. It is made to gain time but the resulting metadata should always be thoroughly checked and minimized.) If too much information is shared, then the privacy of contributor of the dataset is at risk.
+**CSVW-SAFE** extends CSVW for describing public, non-sensitive constraints and assumptions about tabular datasets. The information is a CSVW-SAFE metadata is not supposed to be not measured properties. It should not describe the dataset itself but the set of datasets considered possible under the privacy model. All bounds must hold for every dataset in this set. (Note: the script `make_metadata_from_data.py` of `csvw-safe-library` is dangerous and should be used with parcimony. It is made to gain time but the resulting metadata should always be thoroughly checked and minimized). If too much information is shared, then the privacy of contributor of the dataset is at risk.
 
 For DP contributions, an overview of words used by DP library and their correspondance with **CSVW-SAFE** is available in [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/dp_libraries.md).
 
