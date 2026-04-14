@@ -22,6 +22,8 @@ In addition, two other scripts are available for conversion of csvw-safe metadat
 - These scripts assist safe data modeling workflows; they DO NOT replace governance decisions on what is public information or not.
 - IMPORTANT: Automatically generated metadata may contain sensitive information — MANUAL REVIEW IS ALWAYS REQUIRED before further steps.
 
+For a description of [CSVW-SAFE metadata, see here](https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/README.md).
+
 ---
 
 ## Installation
@@ -46,6 +48,9 @@ pip install -e .[dev]
 pytest --cov=csvw_safe --cov-report=term-missing tests/
 ```
 
+## Learn via example
+
+To get to know the library with examples, see the [notebook on the extended penguin dataset](notebook https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/csvw-safe-library/examples/Use-Library.ipynb).
 
 
 ## Scripts Overview
@@ -64,9 +69,115 @@ This script infers:
 - Optional column dependencies
 - Optional column grouping metadata
 
-**Important**: This tool is for automated metadata *drafting only*. All outputs must be manually reviewed before production or publication.
+**Important**: This tool is for automated metadata *drafting only*. All outputs must be manually reviewed (and properties can be removed) before publication.
 
-The script first builds a pydantic `TableMetadata` model and then serialise it to a json-ld via a `to_dict()` method. See [TableMetadata.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/TableMetadata.md) for more detailed explanation.
+The script first builds a pydantic `TableMetadata` model and then serialises it to a json-ld via a `to_dict()` method. See [TableMetadata.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/TableMetadata.md) for more detailed explanation on the inner workings.
+
+#### Differential Privacy (DP) Contribution Levels
+
+The script provides flexibility in defining the level of detail for DP metadata.  
+
+**Warning**: Increasing the level of detail (i.e., more granular contribution definitions) can increase the risk of privacy leakage.  
+It is strongly recommended to:
+- Choose the **lowest level of detail sufficient** for your use case
+- Carefully **review and validate the generated metadata**
+
+Three contribution levels are supported: `table`, `column` and `partition`. By default the contribution level is `default_contributions_level=table`. If a different level is required for a column, it can by given via the argument `fine_contributions_level` (see CLI usage examples below).
+
+
+##### 1. `table` level
+
+Defines DP constraints only at the **table level**.
+
+**Characteristics:**
+- Only table-level DP properties are specified
+- Column metadata is minimal and includes:
+  - `name`
+  - `datatype`
+  - `required`
+  - `privacy_id`
+  - `nullable_proportion`
+  - `minimum` / `maximum` (if applicable)
+- No:
+  - `public_keys_values` properties on column (TODO: give option ?)
+  - `ColumnGroupMetadata` class
+  - `Partition` class
+
+**Use case:**
+- When only global dataset-level privacy guarantees are required
+- Safest option in terms of minimizing privacy leakage risk
+
+
+##### 2. `column` level
+
+Defines DP constraints at both the **table and column levels**.
+
+**Requirements:**
+- `privacy_unit` **must be specified** to compute contribution bounds
+
+**Characteristics:**
+- Includes all `table`-level information
+- Adds per-column DP properties (maximum contribution when grouping by the column):
+  - `max_length`
+  - `max_groups_per_unit`
+  - `max_contributions`
+- For **categorical columns**:
+  - Extracts `public_keys_values` (set of possible values)
+- Introduces **column groups** (`ColumnGroupMetadata`):
+  - Represent combinations of columns
+  - Include:
+    - `public_keys_values` (combinations of values)
+    - DP parameters for grouped contributions  (maximum contribution when grouping by the group of columns)
+
+**Not included:**
+- No `Partition` objects
+
+**Use case:**
+- When per-column and multi-column contribution constraints are needed
+- Balanced trade-off between utility and privacy
+
+
+##### 3. `partition` level
+
+Defines DP constraints at the **table, column, and partition levels**.
+
+**Characteristics:**
+- Includes all `column`-level information
+- Introduces explicit **`Partition` objects**
+- DP parameters are defined at:
+  - Table level (global bounds)
+  - Partition level (fine-grained bounds)
+
+**Partition behavior:**
+- Each `Partition` specifies:
+  - A predicate (categorical value or continuous range)
+  - DP parameters  (maximum contribution in the partition):
+    - `max_length`
+    - `max_groups_per_unit`
+    - `max_contributions`
+- These parameters represent the **maximum contribution of a privacy unit within that specific partition**
+
+**Continuous columns:**
+- If bounds (`minimum`, `maximum`) are provided:
+  - The column is divided into partitions (e.g., ranges)
+  - Each partition is assigned its own DP constraints
+
+**Use case:**
+- When fine-grained control over contributions is required
+- Highest expressiveness, but also highest privacy risk
+
+
+##### Summary
+
+| Level       | Scope                | Risk Level  |
+|------------|-----------------------|-------------|
+| `table`     | Table only           |  ✅ Lowest  |
+| `column`    | Table + Column       |  ⚖️ Medium  |
+| `partition` | Table + Column + Partition | ⚠️ Highest |
+
+Start with the **`table` level** and only increase granularity if required.  
+**Always validate that all information are already public information.**
+
 
 #### CLI Usage Examples
 
@@ -83,7 +194,7 @@ python make_metadata_from_data.py data.csv \
   --with_dependencies True
 ```
 
-It is possible to describe partitions level of continuous data if public bounds are provided
+It is also possible to describe partitions level of continuous data if public bounds are provided
 ```bash
 # Add continuous partitions
 python make_metadata_from_data.py data.csv \
@@ -91,19 +202,13 @@ python make_metadata_from_data.py data.csv \
   --continuous_partitions '{"age": [0, 18, 30, 50, 100]}'
 ```
 
-It is possible to describe group of columns information (like after grouping by a list of columns) to have their metadata
+It is also possible to describe group of columns information (like after grouping by a list of columns) to have their metadata
 ```bash
 # Define column groups
 python make_metadata_from_data.py data.csv \
   --privacy_unit user_id \
   --column_groups '[["age", "income"], ["city", "country"]]'
 ```
-
-Some flexibility is given to decide the level of description
-Valid default contribution levels are:
-- "table": TODO DESCRIBE BEHAVIOUR
-- "column": TODO DESCRIBE BEHAVIOUR
-- "partition": TODO DESCRIBE BEHAVIOUR
 
 ```bash
 # Set default contribution level
@@ -445,7 +550,6 @@ context = csvw_to_opendp_context(
 )
 ```
 
----
 
 ## Typical Workflow
 
