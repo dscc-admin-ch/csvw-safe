@@ -26,19 +26,31 @@
 | PyQrlew | pyqrlew.readthedocs.io | Sarus | — | 48 | 2 years ago | Python / SQL | DP SQL engine with separate metadata, joins, and many SQL backends. |
 
 
-## Mapping
+## Cross-Library DP Vocabulary Mapping
 
-![Libraries](images/dp_libraries.png)
+| Type      | CSVW-SAFE Vocabulary | OpenDP                                         | Smartnoise-SQL  | Privacy on Beam | PipelineDP          |    Qrlew         | Tumult       |
+|-----------|----------------------|------------------------------------------------|-----------------|-----------------|---------------------|------------------|--------------|
+| Table     | maxContributions     | dp.unit_of(contributions=1)                    | max_ids         |                 | max_contribution    | max_multiplicity | MaxRowsPerID |
+| Table     | publicLength         | margins=[dp.polars.Margin(invariant="length")] | n_row           |                 |                     | size             |              |
+| Table     | maxLength            | margins=[dp.polars.Margin(max_length=100_000)] |                 |                 |                     |                  |              |
+|           |                      |                                                |                 |                 |                     |                  |              |
+| Column    | privacy_id           | dp.unit_of(identifier="XX")                    | private_id      |                       | privacy_id    | PrimaryKey       | id_column    |
+| Column    | minimum              | bounds in polars query                         | lower           | MinValue              | min_value     | with_range, min  | low          |
+| Column    | maximum              | bounds in polars query                         | upper           | MaxValue              | max_value     | with_range, max  | high         |
+|           |                      |                                                |                 |                       |               |                  |              |
+| Column & ColumnGroup | invariantPublicKeys | margins=[by=list_of_cols, invariant="keys"] |          |                       |               |                  |              |
+| Column & ColumnGroup | key_values          | with_keys() operation                       |          |PublicPartitions       | partition_key | with_possible_values | keyset   |
+| Column & ColumnGroup | maxLength           | margins=[by=list_of_cols, max_length=150_000]|         |                       |               |                  |              |
+| Column & ColumnGroup | publicLength        | margins=[by=list_of_cols, invariant="length"]|         |                       |               |                  |              |
+| Column & ColumnGroup | maxContributions    | dp.unit_of(contributions=[Bound(...)]) (?) |    | MaxContributionsPerPartition | max_contributions_per_partition| | MaxRowsPerGroupPerID |
+| Column & ColumnGroup | maxGroupsPerUnit    | margins=[by=list_of_cols, max_groups=3]  |          | MaxPartitionsContributed | max_partitions_contributed     | | MaxGroupsPerID |
+|           |                     |                                                 |                 |                       |               |                  |              |
+| Partition | maxLength           | unsure (?)                                      |                 |                       |               |                  |              |
+| Partition | publicLength        | unsure (?)                                      |                 |                       |               |                  |              |
+| Partition | maxContributions    | dp.unit_of(contributions=[Bound(...)])          |                 |                       |               |                  |              |
 
-
-
-| Term                            | OpenDP                                                           | 
-| ------------------------------- | ---------------------------------------------------------------- | 
-| `csvw-safe.dp.maxContributions` | `privacy_unit=dp.unit_of(contributions=36)`                      |
-| `csvw-safe.dp.maxGroupsPerUnit` | `margins=[dp.polars.Margin(max_groups=3)]`                       | 
-| `csvw-safe.dp.maxLength`        | `margins=[dp.polars.Margin(max_length=150_000)]`                 | 
-| `csvw-safe.maxNumPartitions`    | upper bound of `bounds.maxGroupsPerUnit` if unknown              |
-| `csvw-safe.length`              | `margins=[dp.polars.Margin(invariant="length")]`                 |
-| `csvw-safe.PUBLIC_PARTITIONS`   | `margins=[dp.polars.Margin(invariant="keys")]` if csvw-safe.exhaustivePartitions True |
-| `csvw-safe.KEY_VALUES`         | `margins=[dp.polars.Margin(invariant="keys")]` if csvw-safe.exhaustivePartitions True |
-
+Other library mappings:
+- DiffPrivLib only have minimum and maximum equivalent with lower and upper respectivelly (or data_bounds).
+- Smartnoise-Synth only have minimum, maximum and privacy id equivalent with bounds and pii_data respectivelly.
+- PyDP only have minimum, maximum and maxContributions equivalent with bounds (or sensitivity) and max_contributions respectivelly.
+- ZetaSQL only have privacy_unit_column, max_groups_contributed and contribution_bounds_per_group equivalent with privacy_id, maxGroupsPerUnit and maxContributions respectivelly.
