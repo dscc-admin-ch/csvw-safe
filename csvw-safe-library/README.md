@@ -50,7 +50,7 @@ pytest --cov=csvw_safe --cov-report=term-missing tests/
 
 ## Learn via example
 
-To get to know the library with examples, see the [notebook on the extended penguin dataset](notebook https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/csvw-safe-library/examples/Use-Library.ipynb).
+To get to know the library with examples, see the [notebook on the extended penguin dataset](notebook https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/csvw-safe-library/examples/Use-Library.ipynb) and the associated outputs in [metadata example folder](https://github.com/dscc-admin-ch/csvw-safe/tree/update_readme/csvw-safe-library/examples/metadata).
 
 
 ## Scripts Overview
@@ -177,7 +177,6 @@ Defines DP constraints at the **table, column, and partition levels**.
 
 Start with the **`table` level** and only increase granularity if required.  
 **Always validate that all information are already public information.**
-
 
 #### CLI Usage Examples
 
