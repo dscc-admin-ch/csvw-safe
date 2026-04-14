@@ -18,6 +18,10 @@ In addition, two other scripts are available for conversion of csvw-safe metadat
 
 ![Overview](../images/csvwsafe_workflow_2.png)
 
+**NOTES**:
+- These scripts assist safe data modeling workflows; they DO NOT replace governance decisions on what is public information or not.
+- IMPORTANT: Automatically generated metadata may contain sensitive information — MANUAL REVIEW IS ALWAYS REQUIRED before further steps.
+
 ---
 
 ## Installation
@@ -34,6 +38,14 @@ git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
 cd csvw-safe-library
 pip install -e .[dev]
 ```
+
+For testing:
+```
+cd csvw-safe-library
+pip install -e .[dev]
+pytest --cov=csvw_safe --cov-report=term-missing tests/
+```
+
 
 
 ## Scripts Overview
@@ -53,6 +65,8 @@ This script infers:
 - Optional column grouping metadata
 
 **Important**: This tool is for automated metadata *drafting only*. All outputs must be manually reviewed before production or publication.
+
+The script first builds a pydantic `TableMetadata` model and then serialise it to a json-ld via a `to_dict()` method. See [TableMetadata.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/TableMetadata.md) for more detailed explanation.
 
 #### CLI Usage Examples
 
@@ -134,8 +148,8 @@ The generator creates structured data that follows the declared metadata constra
 - Nullable proportions
 - Column-group constraints (when provided)
 
-> **Important**: This tool produces *synthetic structural data only*.  
-> It does not preserve semantic meaning or real-world correlations beyond what is encoded in metadata.
+**Important**: This tool produces synthetic structural data only.  
+It does not preserve semantic meaning or real-world correlations beyond what is encoded in metadata.
 
 #### Output Guarantees
 
@@ -189,7 +203,7 @@ This validator performs **schema-level validation only**, including:
 - Structural consistency of metadata objects
 - Compatibility with the `TableMetadata` model
 
-Validation is implemented via a Pydantic model (`TableMetadata.from_dict`).
+Validation is implemented via a Pydantic model (`TableMetadata.from_dict`). See [TableMetadata.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/TableMetadata.md) for more detailed explanation of the underlying pydantic model used to validate the metadata.
 
 Output behaviour:
 - If metadata is valid → script exits silently (no output)
@@ -492,20 +506,7 @@ dummy_df = make_dummy_from_metadata(metadata, nb_rows=500)
 assert_same_structure(df, dummy_df)
 ```
 
-## Tests
-```
-cd csvw-safe-library
-pip install -e .[dev]
-pytest --cov=csvw_safe --cov-report=term-missing tests/
-```
 
-## Notes
-
-These scripts assist safe data modeling workflows; they DO NOT replace governance decisions on what is public information or not.
-
-IMPORTANT: Automatically generated metadata may contain sensitive information — MANUAL REVIEW IS ALWAYS REQUIRED before further steps.
-
-The dummy dataset is intended for development, testing, and pipeline verification, not analysis of real individuals.
 
 # Directory Structure
 
