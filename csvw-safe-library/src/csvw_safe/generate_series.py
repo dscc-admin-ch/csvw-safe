@@ -25,7 +25,7 @@ from csvw_safe.constants import (
     DATATYPE,
     DEFAULT_NUMBER_PARTITIONS,
     DEPENDENCY_TYPE,
-    EXHAUSTIVE_PARTITIONS,
+    EXHAUSTIVE_KEYS,
     KEY_VALUES,
     MAX_NUM_PARTITIONS,
     MAXIMUM,
@@ -127,7 +127,7 @@ def generate_string_column(col_meta: dict[str, Any], nb_rows: int, rng: np.rando
             else:
                 public_keys_values.append(partition[PREDICATE][PARTITION_VALUE])
 
-        if EXHAUSTIVE_PARTITIONS in col_meta and not col_meta[EXHAUSTIVE_PARTITIONS]:
+        if EXHAUSTIVE_KEYS in col_meta and not col_meta[EXHAUSTIVE_KEYS]:
             diff = col_meta[MAX_NUM_PARTITIONS] - len(col_meta[PUBLIC_PARTITIONS])
             public_keys_values.extend(RANDOM_STRINGS[0:diff])
 

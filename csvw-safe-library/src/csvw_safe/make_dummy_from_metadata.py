@@ -30,7 +30,7 @@ from csvw_safe.constants import (
     COL_NAME,
     DATATYPE,
     DEPENDS_ON,
-    EXHAUSTIVE_PARTITIONS,
+    EXHAUSTIVE_KEYS,
     KEY_VALUES,
     LOWER_BOUND,
     NULL_PROP,
@@ -119,7 +119,7 @@ def column_group_partitions(
     """Keep only rows belonging to allowed column-group partitions."""
     global_mask = pd.Series(True, index=df.index)
     for col_group in columns_group_meta:
-        if not col_group.get(EXHAUSTIVE_PARTITIONS, False):
+        if not col_group.get(EXHAUSTIVE_KEYS, False):
             continue
 
         partitions = col_group.get(PUBLIC_PARTITIONS) or col_group.get(KEY_VALUES, [])

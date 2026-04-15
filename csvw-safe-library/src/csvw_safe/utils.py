@@ -41,8 +41,9 @@ class ContributionLevel(IntEnum):
     """
 
     TABLE = 0
-    COLUMN = 1
-    PARTITION = 2
+    TABLE_WITH_KEYS = 1
+    COLUMN = 2
+    PARTITION = 3
 
     @classmethod
     def from_str(cls, value: str) -> "ContributionLevel":
@@ -68,8 +69,46 @@ class ContributionLevel(IntEnum):
         value = value.lower()
         if value == "table":
             return cls.TABLE
+        if value == "table_with_keys":
+            return cls.TABLE_WITH_KEYS
         if value == "column":
             return cls.COLUMN
         if value == "partition":
             return cls.PARTITION
         raise ValueError(f"Invalid contribution level: {value}")
+
+
+def get_effective_contrib_level(
+    column_name: str,
+    fine_contributions_level: dict[str, ContributionLevel],
+    default_contributions_level: ContributionLevel,
+) -> ContributionLevel:
+    """
+    Determine effective contribution level for a column.
+
+    Logic:
+      - Take column-specific fine level if it exists, else default.
+      - Return the maximum of column and default (table < column < partition).
+    """
+    fine_level = fine_contributions_level.get(column_name, ContributionLevel.TABLE)
+    return max(fine_level, default_contributions_level)
+
+
+def get_group_contribution_level(
+    col_group: list[str],
+    fine_contributions_level: dict[str, ContributionLevel],
+    default_contributions_level: ContributionLevel,
+) -> ContributionLevel:
+    """Determine the effective contribution level for a column group."""
+    levels = [
+        get_effective_contrib_level(col, fine_contributions_level, default_contributions_level)
+        for col in col_group
+    ]
+
+    if any(level == ContributionLevel.TABLE for level in levels):
+        raise ValueError(
+            f"Invalid contribution level in ColumnGroup {col_group}: contains TABLE-level column."
+        )
+
+    # TABLE < TABLE_WITH_KEYS < COLUMN < PARTITION
+    return min(levels)

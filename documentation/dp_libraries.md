@@ -39,7 +39,7 @@
 | Column    | maximum              | bounds in polars query                         | upper           | MaxValue              | max_value     | with_range, max  | high         |
 |           |                      |                                                |                 |                       |               |                  |              |
 | Column & ColumnGroup | invariantPublicKeys | margins=[by=list_of_cols, invariant="keys"] |          |                       |               |                  |              |
-| Column & ColumnGroup | key_values          | with_keys() operation                       |          |PublicPartitions       | partition_key | with_possible_values | keyset   |
+| Column & ColumnGroup | keyValues          | with_keys() operation                       |          |PublicPartitions       | partition_key | with_possible_values | keyset   |
 | Column & ColumnGroup | maxLength           | margins=[by=list_of_cols, max_length=150_000]|         |                       |               |                  |              |
 | Column & ColumnGroup | publicLength        | margins=[by=list_of_cols, invariant="length"]|         |                       |               |                  |              |
 | Column & ColumnGroup | maxContributions    | dp.unit_of(contributions=[Bound(...)]) (?) |    | MaxContributionsPerPartition | max_contributions_per_partition| | MaxRowsPerGroupPerID |

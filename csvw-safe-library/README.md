@@ -82,7 +82,7 @@ It is strongly recommended to:
 - Choose the **lowest level of detail sufficient** for your use case
 - Carefully **review and validate the generated metadata**
 
-Three contribution levels are supported: `table`, `column` and `partition`. By default the contribution level is `default_contributions_level=table`. If a different level is required for a column, it can by given via the argument `fine_contributions_level` (see CLI usage examples below).
+Four contribution levels are supported: `table`, `table_with_keys`, `column` and `partition`. By default the contribution level is `default_contributions_level=table`. If a different level is required for a column, it can by given via the argument `fine_contributions_level` (see CLI usage examples below).
 
 
 ##### 1. `table` level
@@ -99,16 +99,22 @@ Defines DP constraints only at the **table level**.
   - `nullable_proportion`
   - `minimum` / `maximum` (if applicable)
 - No:
-  - `public_keys_values` properties on column (TODO: give option ?)
-  - `ColumnGroupMetadata` class
+  - `public_keys_values` properties on column
+  - `ColumnGroup` class
   - `Partition` class
 
 **Use case:**
 - When only global dataset-level privacy guarantees are required
 - Safest option in terms of minimizing privacy leakage risk
 
+##### 2. `table_with_keys` level
 
-##### 2. `column` level
+As `table` level but with keys on categorical columns and ColumnGroup.
+
+**Use case:**
+- As `table` with keys being public information (like months in year, hours in day).
+
+##### 3. `column` level
 
 Defines DP constraints at both the **table and column levels**.
 
@@ -137,7 +143,7 @@ Defines DP constraints at both the **table and column levels**.
 - Balanced trade-off between utility and privacy
 
 
-##### 3. `partition` level
+##### 4. `partition` level
 
 Defines DP constraints at the **table, column, and partition levels**.
 
