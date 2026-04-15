@@ -7,7 +7,7 @@ from csvw_safe.constants import (
     COL_LIST,
     COL_NAME,
     DATATYPE,
-    EXHAUSTIVE_PARTITIONS,
+    EXHAUSTIVE_KEYS,
     KEY_VALUES,
     LOWER_BOUND,
     MAXIMUM,
@@ -118,7 +118,7 @@ def test_column_group_partitions_public_partitions():
     df = pd.DataFrame({"col1": ["a", "b", "a", "b"], "col2": [1, 2, 3, 4]})
     columns_group_meta = [
         {
-            EXHAUSTIVE_PARTITIONS: True,
+            EXHAUSTIVE_KEYS: True,
             PUBLIC_PARTITIONS: [
                 {
                     PREDICATE: {
@@ -138,7 +138,7 @@ def test_column_group_partitions_public_keys_values_fallback():
     df = pd.DataFrame({"col1": ["a", "b", "a", "b"], "col2": [1, 2, 3, 4]})
     columns_group_meta = [
         {
-            EXHAUSTIVE_PARTITIONS: True,
+            EXHAUSTIVE_KEYS: True,
             KEY_VALUES: [
                 {
                     "col1": {PARTITION_VALUE: "a"},
@@ -160,7 +160,7 @@ def test_column_group_partitions_not_exhaustive():
     df = pd.DataFrame({"col1": ["a", "b", "a", "b"], "col2": [1, 2, 3, 4]})
     columns_group_meta = [
         {
-            EXHAUSTIVE_PARTITIONS: False,
+            EXHAUSTIVE_KEYS: False,
             KEY_VALUES: [
                 {
                     "col1": {PARTITION_VALUE: "a"},
@@ -189,7 +189,7 @@ def test_make_dummy_applies_column_group_partitions():
         },
         ADD_INFO: [
             {
-                EXHAUSTIVE_PARTITIONS: True,
+                EXHAUSTIVE_KEYS: True,
                 PUBLIC_PARTITIONS: [
                     {
                         PREDICATE: {

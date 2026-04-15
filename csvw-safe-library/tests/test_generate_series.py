@@ -8,7 +8,7 @@ from csvw_safe.constants import (
     DEFAULT_NUMBER_PARTITIONS,
     DEPENDENCY_TYPE,
     DEPENDS_ON,
-    EXHAUSTIVE_PARTITIONS,
+    EXHAUSTIVE_KEYS,
     KEY_VALUES,
     MAX_NUM_PARTITIONS,
     MAXIMUM,
@@ -133,12 +133,12 @@ def test_generate_column_series_boolean(rng):
             6,
             {"pp3", "pp4"},
         ),
-        # EXHAUSTIVE_PARTITIONS=False triggers extra randoms
+        # EXHAUSTIVE_KEYS=False triggers extra randoms
         (
             {
                 DATATYPE: DataTypes.STRING,
                 PUBLIC_PARTITIONS: ["p1"],
-                EXHAUSTIVE_PARTITIONS: False,
+                EXHAUSTIVE_KEYS: False,
                 MAX_NUM_PARTITIONS: 3,
             },
             6,

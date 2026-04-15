@@ -132,7 +132,7 @@ def test_validate_metadata_with_single_column_partitions():
                         },
                     ],
                     c.KEY_VALUES: ["a", "b"],
-                    c.EXHAUSTIVE_PARTITIONS: True,
+                    c.EXHAUSTIVE_KEYS: True,
                 }
             ]
         },
@@ -176,7 +176,7 @@ def test_validate_metadata_with_multi_column_partitions():
                     c.REQUIRED: True,
                     c.PRIVACY_ID: False,
                     c.NULL_PROP: 0.0,
-                    c.EXHAUSTIVE_PARTITIONS: True,
+                    c.EXHAUSTIVE_KEYS: True,
                     c.PUBLIC_PARTITIONS: [
                         {
                             "@type": c.PARTITION,
@@ -250,7 +250,7 @@ def test_validate_metadata_column_groups():
                     }
                 ],
                 c.MAX_NUM_PARTITIONS: 2,
-                c.EXHAUSTIVE_PARTITIONS: True,
+                c.EXHAUSTIVE_KEYS: True,
                 c.MAX_LENGTH: 100,
             },
         ],
@@ -276,7 +276,7 @@ def test_validate_metadata_column_groups():
     assert partitions_dict[c.COLUMNS_IN_GROUP] == ["col3", "col4"]
     assert c.PUBLIC_PARTITIONS in partitions_dict
     assert partitions_dict[c.MAX_NUM_PARTITIONS] == 2
-    assert partitions_dict[c.EXHAUSTIVE_PARTITIONS]
+    assert partitions_dict[c.EXHAUSTIVE_KEYS]
     assert partitions_dict[c.MAX_LENGTH] == 100
 
 
@@ -323,7 +323,7 @@ def test_validate_metadata_with_continuous_partition():
                     c.REQUIRED: True,
                     c.PRIVACY_ID: False,
                     c.NULL_PROP: 0.0,
-                    c.EXHAUSTIVE_PARTITIONS: True,
+                    c.EXHAUSTIVE_KEYS: True,
                     c.PUBLIC_PARTITIONS: [
                         {
                             "@type": c.PARTITION,

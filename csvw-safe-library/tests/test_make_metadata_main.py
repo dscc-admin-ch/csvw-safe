@@ -46,6 +46,32 @@ def test_basic_metadata_small(small_df):
     privacy_col = next(col for col in columns if col[c.COL_NAME] == "user_id")
     assert privacy_col[c.PRIVACY_ID] is True
 
+    color_col = next(col for col in columns if col[c.COL_NAME] == "color")
+    assert c.KEY_VALUES not in color_col
+
+
+def test_basic_metadata_table_with_keys(small_df):
+    metadata = make_metadata_from_data(
+        small_df,
+        privacy_unit="user_id",
+        with_dependencies=False,
+        default_contributions_level="table_with_keys",
+    )
+
+    assert metadata["@type"] == c.TABLE_TYPE
+    assert metadata[c.PRIVACY_UNIT] == "user_id"
+    assert metadata[c.MAX_LENGTH] == len(small_df)
+    assert metadata[c.PUBLIC_LENGTH] == len(small_df)
+
+    columns = metadata[c.TABLE_SCHEMA][c.COL_LIST]
+    assert len(columns) == len(small_df.columns)
+
+    privacy_col = next(col for col in columns if col[c.COL_NAME] == "user_id")
+    assert privacy_col[c.PRIVACY_ID] is True
+
+    color_col = next(col for col in columns if col[c.COL_NAME] == "color")
+    assert color_col[c.KEY_VALUES] == ["blue", "red"]
+
 
 def test_basic_metadata_big(big_df):
     metadata = make_metadata_from_data(big_df, privacy_unit="user_id")

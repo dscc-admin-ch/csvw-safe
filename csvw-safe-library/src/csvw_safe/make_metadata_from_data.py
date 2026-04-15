@@ -41,23 +41,13 @@ from csvw_safe.metadata_structure import (
     full_partition_to_key_multi,
     full_partition_to_key_single,
 )
-from csvw_safe.utils import ContributionLevel, sanitize
-
-
-def get_effective_contrib_level(
-    column_name: str,
-    fine_contributions_level: dict[str, ContributionLevel],
-    default_contributions_level: ContributionLevel,
-) -> ContributionLevel:
-    """
-    Determine effective contribution level for a column.
-
-    Logic:
-      - Take column-specific fine level if it exists, else default.
-      - Return the maximum of column and default (table < column < partition).
-    """
-    fine_level = fine_contributions_level.get(column_name, ContributionLevel.TABLE)
-    return max(fine_level, default_contributions_level)
+from csvw_safe.utils import (
+    ContributionLevel,
+    get_effective_contrib_level,
+    get_group_contribution_level,
+    prepare_metadata_inputs,
+    sanitize,
+)
 
 
 def get_continuous_bounds(series: pd.Series) -> tuple[T, T]:
@@ -370,6 +360,19 @@ def get_column_level_contribution(
     return max_length, max_groups_per_unit, max_contributions
 
 
+def build_base_column_group_kwargs(
+    col_group: list[str], partitions_meta: list[MultiColumnPartition]
+) -> dict[str, Any]:
+    """Return default arguments included in all column groups."""
+    return {
+        "columns": col_group,
+        "public_keys_values": full_partition_to_key_multi(partitions_meta),
+        "max_num_partitions": len(partitions_meta),
+        "invariant_public_keys": True,
+        "exhaustive_keys": True,
+    }
+
+
 def make_column_groups(  # noqa: PLR0913
     df: pd.DataFrame,
     column_groups: list[list[str]],
@@ -419,15 +422,11 @@ def make_column_groups(  # noqa: PLR0913
     column_groups_metadata = []
 
     for col_group in column_groups:
-        for col in col_group:
-            col_contrib_level = get_effective_contrib_level(
-                col, fine_contributions_level, default_contributions_level
-            )
-            if col_contrib_level not in [
-                ContributionLevel.COLUMN,
-                ContributionLevel.PARTITION,
-            ]:
-                raise ValueError(f"Invalid contribution level: {col_contrib_level} in ColumnGroup. ")
+        group_contrib_level = get_group_contribution_level(
+            col_group,
+            fine_contributions_level,
+            default_contributions_level,
+        )
 
         partitions_meta = get_multi_group_partitions(
             df,
@@ -435,96 +434,29 @@ def make_column_groups(  # noqa: PLR0913
             continuous_partitions,
             privacy_unit,
         )
-        if default_contributions_level == ContributionLevel.COLUMN:
+        base_kwargs = build_base_column_group_kwargs(col_group, partitions_meta)
+
+        if group_contrib_level == ContributionLevel.TABLE_WITH_KEYS:
+            group_meta = ColumnGroupMetadata(**base_kwargs)
+        elif group_contrib_level == ContributionLevel.COLUMN:
             max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
                 partitions_meta
             )
             group_meta = ColumnGroupMetadata(
-                columns=col_group,
-                public_keys_values=full_partition_to_key_multi(partitions_meta),
-                max_num_partitions=len(partitions_meta),
+                **base_kwargs,
                 max_length=max_length,
                 max_groups_per_unit=max_groups_per_unit,
                 max_contributions=max_contributions,
-                invariant_public_keys=True,
             )
-        else:  # ContributionLevel.PARTITION
+        else:  # ContributionLevel.PARTITION:
             group_meta = ColumnGroupMetadata(
-                columns=col_group,
+                **base_kwargs,
                 partitions=partitions_meta,
-                max_num_partitions=len(partitions_meta),
-                exhaustive_partitions=True,
-                invariant_public_keys=True,
             )
 
         column_groups_metadata.append(group_meta)
 
     return column_groups_metadata
-
-
-def prepare_metadata_inputs(
-    default_contributions_level: str,
-    fine_contributions_level: dict[str, str] | None,
-    continuous_partitions: dict[str, list[Any]] | None,
-    column_groups: list[list[str]] | None,
-) -> tuple[
-    ContributionLevel,
-    dict[str, ContributionLevel],
-    dict[str, list[Any]],
-    list[list[str]],
-]:
-    """
-    Normalize optional metadata configuration inputs.
-
-    This helper ensures that optional parameters are initialized with
-    appropriate defaults and applies implicit rules required by the
-    metadata generation process.
-
-    In particular:
-    - Missing dictionaries/lists are replaced with empty structures.
-    - Columns with numeric partitions are automatically treated at
-      partition-level contribution granularity.
-
-    Parameters
-    ----------
-    default_contributions_level : str
-        Default contribution level applied when no column-specific override exists.
-    fine_contributions_level : dict[str, str] or None
-        Optional mapping specifying per-column contribution levels.
-        Values must be one of {"table", "column", "partition"}.
-    continuous_partitions : dict[str, list[Any]] or None
-        Mapping of numeric column names to bin boundaries used
-        to generate partitions.
-    column_groups : list[list[str]] or None
-        List of column groups used to create joint partitions.
-
-    Returns
-    -------
-    tuple
-        A tuple containing normalized versions of:
-        - default_level : ContributionLevel
-        - fine_level : dict[str, ContributionLevel]
-        - continuous_partitions : dict[str, list[Any]]
-        - column_groups : list[list[str]]
-
-    """
-    default_level = ContributionLevel.from_str(default_contributions_level)
-
-    if continuous_partitions is None:
-        continuous_partitions = {}
-
-    if column_groups is None:
-        column_groups = []
-
-    if fine_contributions_level is None:
-        fine_level = {}
-    else:
-        fine_level = {k: ContributionLevel.from_str(v) for k, v in fine_contributions_level.items()}
-
-    for col in continuous_partitions:
-        fine_level[col] = ContributionLevel.PARTITION
-
-    return default_level, fine_level, continuous_partitions, column_groups
 
 
 def attach_partitions_to_column(  # noqa: PLR0913
@@ -574,8 +506,12 @@ def attach_partitions_to_column(  # noqa: PLR0913
     series = df[column_name]
 
     if is_categorical(series):
+        # ContributionLevel: TABLE_WITH_KEYS, COLUMN and PARTITION
         partitions_meta = make_categorical_partitions(df, privacy_unit, column_name)
         column_meta.max_num_partitions = len(partitions_meta)
+        column_meta.public_keys_values = full_partition_to_key_single(partitions_meta)
+        column_meta.invariant_public_keys = True
+        column_meta.exhaustive_keys = True
 
         if col_contrib_level == ContributionLevel.COLUMN:
             max_length, max_groups_per_unit, max_contributions = get_column_level_contribution(
@@ -584,14 +520,12 @@ def attach_partitions_to_column(  # noqa: PLR0913
             column_meta.max_length = max_length
             column_meta.max_groups_per_unit = max_groups_per_unit
             column_meta.max_contributions = max_contributions
-            column_meta.public_keys_values = full_partition_to_key_single(partitions_meta)
-            column_meta.invariant_public_keys = True
-        else:
+
+        elif col_contrib_level == ContributionLevel.PARTITION:
             column_meta.partitions = partitions_meta
-            column_meta.exhaustive_partitions = True
-            column_meta.invariant_public_keys = True
 
     elif column_name in continuous_partitions:
+        # ContributionLevel: PARTITION only
         bounds = sorted(continuous_partitions[column_name])
         partitions_meta = make_numeric_partitions(df, privacy_unit, column_name, bounds)
 
@@ -733,10 +667,16 @@ def make_metadata_from_data(  # noqa: PLR0913
         column_groups,
     )
     if privacy_unit is None and (
-        default_level != ContributionLevel.TABLE
-        or any(level != ContributionLevel.TABLE for level in fine_level.values())
+        default_level not in (ContributionLevel.TABLE, ContributionLevel.TABLE_WITH_KEYS)
+        or any(
+            level not in (ContributionLevel.TABLE, ContributionLevel.TABLE_WITH_KEYS)
+            for level in fine_level.values()
+        )
     ):
-        raise ValueError(f"Privacy unit is None, only '{ContributionLevel.TABLE}' possible.")
+        raise ValueError(
+            f"Privacy unit is None, only '{ContributionLevel.TABLE}' or "
+            f"'{ContributionLevel.TABLE_WITH_KEYS}' possible."
+        )
 
     if privacy_unit not in df.columns:
         raise ValueError(f"Privacy unit column '{privacy_unit}' not found.")
@@ -816,7 +756,7 @@ def main() -> None:
     --column_groups : str, optional
         JSON string specifying groups of columns for joint partitioning.
 
-    --default_contributions_level : {"table", "column", "partition"}, optional
+    --default_contributions_level : {"table", "table_with_keys", "column", "partition"}, optional
         Default contribution bound level applied to columns.
 
     --fine_contributions_level : str, optional
@@ -862,8 +802,8 @@ def main() -> None:
         "--default_contributions_level",
         type=str,
         default="table",
-        choices=["table", "column", "partition"],
-        help="One of 'table', 'column', 'partition'",
+        choices=["table", "table_with_keys", "column", "partition"],
+        help="One of 'table', 'table_with_key_values','column', 'partition'",
     )
     parser.add_argument(
         "--fine_contributions_level",
