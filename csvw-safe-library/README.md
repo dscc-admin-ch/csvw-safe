@@ -79,17 +79,17 @@ The script provides flexibility in defining the level of detail for DP metadata.
 
 **Warning**: Increasing the level of detail (i.e., more granular contribution definitions) can increase the risk of privacy leakage.  
 It is strongly recommended to:
-- Choose the **lowest level of detail sufficient** for your use case
-- Carefully **review and validate the generated metadata**
+- Choose the lowest level of detail sufficient for your use case
+- Carefully review and validate the generated metadata
 
 Four contribution levels are supported: `table`, `table_with_keys`, `column` and `partition`. By default the contribution level is `default_contributions_level=table`. If a different level is required for a column, it can by given via the argument `fine_contributions_level` (see CLI usage examples below).
 
 
 ##### 1. `table` level
 
-Defines DP constraints only at the **table level**.
+Defines DP constraints only at the table level.
 
-**Characteristics:**
+Characteristics:
 - Only table-level DP properties are specified
 - Column metadata is minimal and includes:
   - `name`
@@ -103,7 +103,7 @@ Defines DP constraints only at the **table level**.
   - `ColumnGroup` class
   - `Partition` class
 
-**Use case:**
+Use case:
 - When only global dataset-level privacy guarantees are required
 - Safest option in terms of minimizing privacy leakage risk
 
@@ -111,64 +111,64 @@ Defines DP constraints only at the **table level**.
 
 As `table` level but with keys on categorical columns and ColumnGroup.
 
-**Use case:**
+Use case:
 - As `table` with keys being public information (like months in year, hours in day).
 
 ##### 3. `column` level
 
-Defines DP constraints at both the **table and column levels**.
+Defines DP constraints at both the table_with_keys and column levels.
 
-**Requirements:**
-- `privacy_unit` **must be specified** to compute contribution bounds
+Requirements:
+- `privacy_unit` must be specified to compute contribution bounds
 
-**Characteristics:**
+Characteristics:
 - Includes all `table`-level information
 - Adds per-column DP properties (maximum contribution when grouping by the column):
   - `max_length`
   - `max_groups_per_unit`
   - `max_contributions`
-- For **categorical columns**:
+- For categorical columns:
   - Extracts `public_keys_values` (set of possible values)
-- Introduces **column groups** (`ColumnGroupMetadata`):
+- Introduces column groups (`ColumnGroupMetadata`):
   - Represent combinations of columns
   - Include:
     - `public_keys_values` (combinations of values)
     - DP parameters for grouped contributions  (maximum contribution when grouping by the group of columns)
 
-**Not included:**
+Not included:
 - No `Partition` objects
 
-**Use case:**
+Use case:
 - When per-column and multi-column contribution constraints are needed
 - Balanced trade-off between utility and privacy
 
 
 ##### 4. `partition` level
 
-Defines DP constraints at the **table, column, and partition levels**.
+Defines DP constraints at the table_with_keys, column, and partition levels.
 
-**Characteristics:**
+Characteristics:
 - Includes all `column`-level information
-- Introduces explicit **`Partition` objects**
+- Introduces explicit `Partition` objects
 - DP parameters are defined at:
   - Table level (global bounds)
   - Partition level (fine-grained bounds)
 
-**Partition behavior:**
+Partition behavior:
 - Each `Partition` specifies:
   - A predicate (categorical value or continuous range)
   - DP parameters  (maximum contribution in the partition):
     - `max_length`
     - `max_groups_per_unit`
     - `max_contributions`
-- These parameters represent the **maximum contribution of a privacy unit within that specific partition**
+- These parameters represent the maximum contribution of a privacy unit within that specific partition
 
-**Continuous columns:**
+Continuous columns:
 - If bounds (`minimum`, `maximum`) are provided:
   - The column is divided into partitions (e.g., ranges)
   - Each partition is assigned its own DP constraints
 
-**Use case:**
+Use case:
 - When fine-grained control over contributions is required
 - Highest expressiveness, but also highest privacy risk
 
@@ -177,12 +177,13 @@ Defines DP constraints at the **table, column, and partition levels**.
 
 | Level       | Scope                | Risk Level  |
 |------------|-----------------------|-------------|
-| `table`     | Table only           |  ✅ Lowest  |
-| `column`    | Table + Column       |  ⚖️ Medium  |
-| `partition` | Table + Column + Partition | ⚠️ Highest |
+| `table`     | Table only           |  Lowest  |
+| `table_with_keys` | Table with keys in categorical columns |  Medium  |
+| `column`    | Table + Column       |  Medium  |
+| `partition` | Table + Column + Partition | Highest |
 
-Start with the **`table` level** and only increase granularity if required.  
-**Always validate that all information are already public information.**
+Start with the `table` level and only increase granularity if required.  
+Always validate that all information are already public information.
 
 #### CLI Usage Examples
 
@@ -301,13 +302,13 @@ Validate a CSVW-SAFE metadata file against the internal metadata schema.
 
 This tool ensures that a metadata file is structurally correct and conforms to the expected CSVW-SAFE specification as defined by the internal `TableMetadata` model.
 
-It is primarily used as a **preflight validation step** before using metadata for:
+It is primarily used as a validation step before using metadata for:
 - dummy dataset generation
 - DP pipeline configuration
 - downstream schema-driven processing
 
 
-This validator performs **schema-level validation only**, including:
+This validator performs schema-level validation only, including:
 - Required fields presence
 - Type correctness
 - Structural consistency of metadata objects
@@ -329,9 +330,9 @@ python validate_metadata.py metadata.json
 
 #### Purpose
 
-Validate CSVW-SAFE metadata using a **SHACL constraint schema**.
+Validate CSVW-SAFE metadata using a SHACL constraint schema.
 
-This tool performs structural validation of metadata expressed in **JSON-LD format** against a SHACL shapes graph defined in **Turtle format**.
+This tool performs structural validation of metadata expressed in JSON-LD format against a SHACL shapes graph defined in Turtle format.
 
 It is the most strict validation layer in the CSVW-SAFE toolchain, intended to ensure full compliance with RDF-based constraints.
 
@@ -343,7 +344,7 @@ This validator checks:
 - Class/property-level restrictions defined in the schema
 - Cross-field structural rules defined in the SHACL graph
 
-> Unlike `validate_metadata.py`, this tool performs **formal SHACL validation**, not just schema validation.
+> Unlike `validate_metadata.py`, this tool performs formal SHACL validation, not just schema validation.
 
 
 Python usage
@@ -372,11 +373,11 @@ Notes
 
 #### Purpose
 
-Verify that a generated dummy CSV preserves the **structural properties** of an original dataset under the CSVW-SAFE assumptions.
+Verify that a generated dummy CSV preserves the structural properties of an original dataset under the CSVW-SAFE assumptions.
 
-This tool ensures that synthetic data produced by `make_dummy_from_metadata.py` remains **schema-compatible** with the original dataset used to derive metadata.
+This tool ensures that synthetic data produced by `make_dummy_from_metadata.py` remains schema-compatible with the original dataset used to derive metadata.
 
-This validator checks **structure only**.  It does **not** assess statistical similarity or data realism.
+This validator checks structure only.  It does not assess statistical similarity or data realism.
 
 
 The tool checks:
@@ -406,12 +407,12 @@ Each column is type-checked using CSVW-SAFE inference:
 
 Validates whether required/optional status is preserved:
 
-- A column is considered **required** if it has no missing values
+- A column is considered required if it has no missing values
 - Both datasets must agree on required vs optional status per column
 
 If enabled, ensures:
 
-- All values in dummy dataset are a **subset** of original dataset values
+- All values in dummy dataset are a subset of original dataset values
 - Uses `is_categorical()` to detect categorical columns
 
 #### CLI Usage
@@ -520,12 +521,12 @@ This script bridges CSVW-SAFE metadata with the OpenDP library by:
 
 The resulting OpenDP `Context` includes:
 
-- **Privacy unit** (based on `max_contributions`)
-- **Privacy loss**:
+- Privacy unit (based on `max_contributions`)
+- Privacy loss:
   - ε-DP (Laplace)
   - ρ-DP / zCDP (Gaussian)
-- **Margins** derived from CSVW metadata
-- **Dataset** (as a Polars LazyFrame)
+- Margins derived from CSVW metadata
+- Dataset (as a Polars LazyFrame)
 
 
 #### Supported Privacy Models
@@ -536,7 +537,7 @@ The resulting OpenDP `Context` includes:
 | Gaussian / zCDP | `rho` |
 | Approximate DP | `delta` |
 
-> You must provide **either `epsilon` OR `rho`**, not both.
+> You must provide either `epsilon` OR `rho`, not both.
 
 
 #### CLI Usage
