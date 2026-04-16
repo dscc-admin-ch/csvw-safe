@@ -17,23 +17,23 @@ WARNING: Some of these assumptions may be safe to share (number of days in a mon
 Such metadata enables:
 
 * Safe data discovery without direct access to the underlying data (user can see what is available like survey from which year to which year without accessing the data)
-* Generation of structurally valid dummy datasets (replicate the structure of my real dataset but has fake data)
-* Automatic computation of worst-case sensitivity of a query for Differential Privacy (DP)
+* Generation of structurally valid dummy datasets (replicate the structure of the real dataset but has fake data)
+* Automatic computation of (worst-case) sensitivity of a query for Differential Privacy (DP)
 
-[**CSV on the Web (CSVW)**](https://www.w3.org/TR/tabular-data-model/) vocabulary already describes tabular structure (tables, columns, datatypes) but doesn't express these additional modeling assumptions (DP contributions, dependency between rows, etc).
+[**CSV on the Web (CSVW)**](https://www.w3.org/TR/tabular-data-model/) vocabulary already describes tabular structure (tables, columns, datatypes) but doesn't express these additional modeling assumptions (DP contributions, dependencies between rows, etc).
 
-**CSVW-SAFE** extends CSVW for describing public, non-sensitive constraints and assumptions about tabular datasets. The information is a CSVW-SAFE metadata is not supposed to be not measured properties. It should not describe the dataset itself but the set of datasets considered possible under the privacy model. All bounds must hold for every dataset in this set. (Note: the script `make_metadata_from_data.py` of `csvw-safe-library` is dangerous and should be used with parcimony. It is made to gain time but the resulting metadata should always be thoroughly checked and minimized). If too much information is shared, then the privacy of contributor of the dataset is at risk.
+**CSVW-SAFE** extends CSVW for describing public, non-sensitive constraints and assumptions about tabular datasets. The information is a CSVW-SAFE metadata is not supposed to be measured properties. It should not describe the dataset itself but the set of datasets considered possible under the privacy model. All bounds must hold for every dataset in this set. (Note: the script `make_metadata_from_data.py` of `csvw-safe-library` is dangerous and should be used with parcimony. It is made to gain time but the resulting metadata should always be thoroughly checked and minimized). If too much information is shared, then the privacy of contributors of the dataset is at risk.
 
-For DP contributions, an overview of words used by DP library and their correspondance with **CSVW-SAFE** is available in [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/dp_libraries.md).
+For DP contributions, an overview of words(metadata) used by DP library and their correspondance with **CSVW-SAFE** is available in [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/dp_libraries.md).
 
-For an example on metadata on the penguin dataset from sklearn, see [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json).
+For an example, see [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json) on the penguin dataset from sklearn.
 
 ---
 
 
 ## 1. Overview
 
-* **Default namespace:** `https://w3id.org/csvw-safe#`
+* **Default namespace:** `https://w3id.org/csvw-safe#` (TODO: publish)
 * **Vocabulary definitions:** `csvw-safe-vocab.ttl`
 * **JSON-LD context:** `csvw-safe-context.jsonld`
 * **SHACL Constraints:** `csvw-safe-constraints.ttl`
@@ -45,29 +45,27 @@ CSVW-SAFE uses four core objects on which structural and privacy properties appl
 
 | Class                   | Purpose                                                 |
 | ----------------------- | ------------------------------------------------------- |
-| `csvw:Table`            | Dataset-level guarantees and global contribution bounds |
+| `csvw:Table`            | Table schema, global guarantees and informations        |
 | `csvw:Column`           | Column schema and single-column grouping space          |
 | `csvw:ColumnGroup`      | Multi-Column grouping space                             |
-| `csvw-safe:GroupingKey` | `csvw:Column` and `csvw:ColumnGroup` grouping space     |
-| `csvw-safe:Partition`   | A region of the value domain (not the rows themselves)  |
+| `csvw-safe:Partition`   | A region of the value domain (after a groupby)          |
 
 - `csvw:Table` are tables as described in `csvw`. A `csvw:Table` contains a `csvw:TableSchema` (with a list of `csvw:Columns`) and optionally a `csvw-safe:AdditionalInformation` (with a list of `csvw-safe:ColumnGroup` and their partitions).
 
 - `csvw:Column` are columns as described in `csvw`. It also defines a single column grouping space.
 
-- `csvw-safe:GroupingKey` defines a multi-column grouping space (not part of schema).It represents the structure of a potential GROUP BY operation. There are two possible types:
-- Single-column grouping → defined directly on a csvw:Column
-- Multi-column grouping → defined using csvw-safe:GroupingKey.
-If no GroupingKey is declared, systems must assume independence across columns and bounds are derived using worst-case composition (sensitivity may be overestimated).
-As a result `csvw:Column` and `csvw-safe:GroupingKey` may declare public partitions. Each declared partition is a `csvw-safe:Partition`.
+- `csvw-safe:ColumnGroup` are groups of columns. It can define the resulting keys, partitions and contributions if a GROUP BY operation was made on this group of columns.
 
-- A `csvw-safe:Partition` is a publicly defined region of the value domain. It is a structural element defined from public attributes and independent of whether rows exist in that region. For details on `csvw-safe:Partition`, see point 2.4 below.
-    - A partition is a region of the value domain defined only from public information. A partition may exist even if no rows belong to it.
-    - A group is the set of rows from a specific dataset instance that fall inside that region. A group only exists when rows actually fall into that partition.
+- A `csvw-safe:Partition` is a publicly defined region of the value domain. For instance, if a column is `month_of_year`, then each set of rows associated to a specific month is a partition (12 partitions) and can have either special contribution bounds. For instance, if a data unit can only participate to the dataset once in a day (maximum) then in the `csvw-safe:ColumnGroup` on columns `['year', 'month']`, the partition on `February 2026` has a `csvw-safe:maxContributions` of 28 and the one of `July 2026` of 31.
+
+This image presents the base `csvw` json-ld structure on the left and the extended ``
+![Overview](images/csvw-safe_structure.png)
+
+We will go over the addi
 
 #### Example
 
-Example with a penguin dataset example.
+Example with a penguin dataset example where each penguin can appear 4 times in the dataset but always stays on the same island (and keeps the same species).
 We have a `csvw:Table` with 4 rows and 3 `csvw:Columns`:
 | penguin_id | species   | island    | flipper_length_mm |
 | ---------- | --------- | --------- | ----------------- |
@@ -169,7 +167,7 @@ Adding to the JSON
 ```
 
 ### 1.2 Type of Properties
-![Overview](images/csvw-safe_structure.png)
+
 
 CSVW-SAFE properties belong to three categories:
 | Aspect                                 | Describes                                                | Namespace prefix     |
