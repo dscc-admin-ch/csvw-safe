@@ -1,6 +1,6 @@
 # CSVW Safe Vocabulary
 
-## Overview
+## 1. Introduction
 
 Many datasets cannot be directly shared due to privacy, legal, or governance constraints.
 However, it is often possible, and highly valuable, to share safe, public assumptions about their structure.
@@ -28,10 +28,8 @@ For DP contributions, an overview of words(metadata) used by DP library and thei
 
 For an example, see [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json) on the penguin dataset from sklearn.
 
----
 
-
-## 1. Overview
+## 2. CSVW-SAFE Classes and properties
 
 * **Default namespace:** `https://w3id.org/csvw-safe#` (TODO: publish)
 * **Vocabulary definitions:** `csvw-safe-vocab.ttl`
@@ -39,7 +37,7 @@ For an example, see [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw
 * **SHACL Constraints:** `csvw-safe-constraints.ttl`
 
 
-### 1.1 Main classes
+### 2.1 CSVW-SAFE Classes
 
 CSVW-SAFE uses four core objects on which structural and privacy properties apply:
 
@@ -58,29 +56,14 @@ CSVW-SAFE uses four core objects on which structural and privacy properties appl
 
 - A `csvw-safe:Partition` is a publicly defined region of the value domain. For instance, if a column is `month_of_year`, then each set of rows associated to a specific month is a partition (12 partitions) and can have either special contribution bounds. For instance, if a data unit can only participate to the dataset once in a day (maximum) then in the `csvw-safe:ColumnGroup` on columns `['year', 'month']`, the partition on `February 2026` has a `csvw-safe:maxContributions` of 28 and the one of `July 2026` of 31.
 
-This image presents the base `csvw` json-ld structure on the left and the extended ``
+This image presents the base `csvw` json-ld structure on the left and the extended `csvw-safe`.
 ![Overview](images/csvw-safe_structure.png)
 
-We will go over the addi
+All properties of `csvw-safe` apply on these four classes.
 
-#### Example
-
-Example with a penguin dataset example where each penguin can appear 4 times in the dataset but always stays on the same island (and keeps the same species).
-We have a `csvw:Table` with 4 rows and 3 `csvw:Columns`:
-| penguin_id | species   | island    | flipper_length_mm |
-| ---------- | --------- | --------- | ----------------- |
-| 1          | Adelie    | Torgersen | 180               |
-| 2          | Adelie    | Biscoe    | 195               |
-| 3          | Chinstrap | Dream     | 200               |
-| 4          | Gentoo    | Biscoe    | 210               |
-
-Some columns have public partitions: `csvw-safe:Partitions`
-- `csvw:Column` species → categorical `csvw-safe:Partition` by species value: Adelie, Chinstrap, Gentoo.
-- `csvw:Column` island → categorical `csvw-safe:Partition` by island value: Torgersen, Biscoe, Dream.
-- `csvw:Column` flipper_length_mm → numeric `csvw-safe:Partition`: [150–200], [200–250] (for instance).
-
-with the JSON
-```
+#### JSON-LD Structure
+Thus from `csvw` json-ld
+```bash
 {
   "@type": "csvw:Table",
   "name": "penguins",
@@ -95,109 +78,89 @@ with the JSON
         "@type": "csvw:Column",
         "name": "species",
         "datatype": "string",
-        "csvw-safe:public.partitions": [
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Adelie" }},
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Chinstrap" }},
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Gentoo" }}
-        ]
       },
-      {
-        "@type": "csvw:Column",
-        "name": "island",
-        "datatype": "string",
-        "csvw-safe:public.partitions": [
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Torgersen" }},
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Biscoe" }},
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Dream" }}
-        ]
-      },
-      {
-        "@type": "csvw:Column",
-        "name": "flipper_length_mm",
-        "datatype": "double",
-        "minimum": 150,
-        "maximum": 250,
-        "csvw-safe:public.partitions": [
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "lowerBound": 150, "upperBound": 200 }},
-          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "lowerBound": 200, "upperBound": 250 }}
-        ]
-      }
+      ...
     ]
   }
 }
 ```
 
-A `csvw-safe:ColumnGroup` would by for instance based on columns ["species", "island"]. And the resulting partitions would be
-- `csvw-safe:Partition` ["species", "island"] →  by species and island values: (Adelie, Torgerson), (Adelie, Biscoe), (Chinstrap, Dream), (Gentoo, Biscoe).
-- `csvw-safe:Partition` ["species", "flipper_length_mm"] → by species and flipper length values: (Adelie, [150–200]), (Chinstrap, [150–200]), (Gentoo, [200–250]).
-
-Adding to the JSON
-```
+a `csvw` json-ld would organise classes followign this structure:
+```bash
 {
   "@type": "csvw:Table",
   "name": "penguins",
-  "csvw:tableSchema": {...},
+  "csvw-safe:x": "csvw-safe_table_level_properties",
+  "csvw:tableSchema": {
+    "columns": [
+      {
+        "@type": "csvw:Column",
+        "name": "penguin_id",
+        "datatype": "integer",
+        "csvw-safe:x": "csvw-safe_column_level_properties",
+      },
+      {
+        "@type": "csvw:Column",
+        "name": "species",
+        "datatype": "string",
+        "csvw-safe:public.partitions": [
+          { 
+            "@type": "csvw-safe:Partition", 
+            "csvw-safe:predicate": { "partitionValue": "Adelie" },
+            "csvw-safe:x": "csvw-safe_partition_level_properties",
+          },
+          ...
+        ]
+      },
+    ]
+  },
   "csvw-safe:additionalInformation": [
     {
       "@type": "csvw-safe:ColumnGroup",
       "csvw-safe:columns": ["species", "island"],
+      "csvw-safe:x": "csvw-safe_columnGroup_level_properties",
       "csvw-safe:public.partitions": [
         {
           "@type": "csvw-safe:Partition",
           "csvw-safe:predicate": {
-            "components": {
-              "species": { "partitionValue": "Adelie" },
-              "island": { "partitionValue": "Torgersen" }
-            }
+            "species": {"partitionValue": "Adelie"}, 
+            "island": {"partitionValue": "Torgersen"},
           }
+          "csvw-safe:x": "csvw-safe_partition_level_properties",
         },
-        {
-          "@type": "csvw-safe:Partition",
-          "csvw-safe:predicate": {
-            "components": {
-              "species": { "partitionValue": "Adelie" },
-              "island": { "partitionValue": "Biscoe" }
-            }
-          }
-        }
+        ....
       ]
     }
   ]
 }
 ```
+The next section describes the `csvw-safe` properties.
 
-### 1.2 Type of Properties
 
+### 2.2 CSVW-SAFE Properties
 
-CSVW-SAFE properties belong to three categories:
-| Aspect                                 | Describes                                                | Namespace prefix     |
-| -------------------------------------- | -------------------------------------------------------- | -------------------- |
-| **Public invariant facts**             | True structural facts about the data universe            | `csvw-safe:public.`  |
-| **Data assumptions (privacy bounds)**  | Worst-case assumptions on data to compute DP sensitivity | `csvw-safe:bounds.`  |
-| **Preprocessing recommandation**       | Preprocessing recommandation to limit/compute DP sensitivity | `csvw-safe:rec.` |
-| **Synthetic modeling hints**           | Information for generating realistic dummy data          | `csvw-safe:synth.`   |
+CSVW-SAFE properties belong to two main categories:
+| Aspect                                 | Describes                                                |
+| -------------------------------------- | -------------------------------------------------------- |
+| **Dummy modeling**               | Information for generating realistic dummy data          |
+| **Contribution assumptions (for DP)**  | Worst-case assumptions on privacy unit contribution      |
 
 These properties should only be in the metadata if their release does not consume privacy budget.
 The should not depend on the observed dataset instance (not specific empirical observations) and should hold for all neighbouring datasets.
 
-**Public invariant facts**: `csvw-safe:public.`
-These describe facts that are true for every dataset in the adjacency relation.
-If a statement is declared as `csvw-safe:public.`, it is assumed to be universally valid and safe to disclose.
-
-**Data assumptions**: `csvw-safe:bounds.`
-A privacy unit identifies the entity whose participation defines dataset adjacency. Two datasets are neighbours if and only if all rows associated with one privacy unit are added or removed.
-`csvw-safe:bounds.` define worst-case contribution bounds required for DP calibration (maximum influence one privacy unit may have on a query result).
-They must hold for all datasets consistent with the declared public constraints and are guarantees about the possible universe of neighbouring datasets.
-
-**Preprocessing recommandation**: `csvw-safe:rec.`
-Preprocessing recommendations provide guidance on transformations that can be applied during a DP pipeline to better control the privacy budget. For example, they may suggest truncating contributions per privacy unit to ensure limits are respected. These recommendations can be used in place of, or alongside, `csvw-safe:bounds.`, provided the dataset includes a column identifying privacy units. Importantly, they are not derived from observed data but are general guidance about worst-case scenarios, helping maintain privacy guarantees while avoiding unnecessary consumption of the privacy budget. Typically, they would be used in the `truncate` steps of opendp-polars.
-
-**Synthetic modeling hints**: `csvw-safe:synth.`
-These properties are optional and serve dummy data generation.
+#### 2.2.1 Dummy modeling
+These properties give structural information about the dataset. They mainly serve dummy data generation.
 
 They improve the realism of synthetic datasets and dummy dataset but should not affect DP guarantees. They may be approximate proportions.
 
----
+#### 2.2.2 Contribution assumptions (for DP)
+A privacy unit identifies the entity whose participation defines dataset adjacency. Two datasets are neighbours if and only if all rows associated with one privacy unit are added or removed.
+`csvw-safe.` define worst-case contribution bounds required for DP calibration (maximum influence one privacy unit may have on a query result).
+They must hold for all datasets consistent with the declared public constraints and are guarantees about the possible universe of neighbouring datasets.
+
+
+
+--- OLD VERSION BELOW TO UPDATE
 
 ## 2. CSVW-SAFE Main Extensions (better title?)
 
@@ -1012,26 +975,117 @@ Similarly for a `csvw:GroupingKey` with categorical and continuous data, the par
 | `csvw-safe-vocab.ttl`         | Vocabulary definition (OWL + RDFS)  |
 | `csvw-safe-context.jsonld`    | JSON-LD context                     |
 | `csvw-safe-constraints.ttl`   | SHACL validation rules              |
-| `penguin_metadata.json`       | Example metadata                    |
-| `dp_libraries.md`             | Mapping to DP libraries             |
-| `validate_metadata.py`        | Metadata validator                  |
-| `make_metadata_from_data.py`  | Infer baseline CSVW metadata        |
-| `make_dummy_from_metadata.py` | Dummy data generator                |
-| `assert_same_structure.py`    | Verify functional programming valid on dummy will be valid on real data |
+| `csvw-safe` on pypi           | Python programming library to create and use csvw-safe metadata|
 
 [`csvw-safe-constraints.md`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constraints.md) describes constraints on metadata, ensure that they are valid and not worst than worst case bounds. [`csvw-safe-constraints.ttl`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constraints.ttl) describes part of the constraints in a turtle file.
 
-This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
-
-It includes four main scripts:
-
-1. make_metadata_from_data.py
-2. make_dummy_from_metadata.py
-3. validate_metadata.py
-4. assert_same_structure.py
-
-This is available in a pip library `csvw-safe-lib` described in [the README.md of `csvw-safe-lib`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/README.md).
+This python library `csvw-safe` is availible [here on pypi](https://pypi.org/project/csvw-safe/0.0.1/) and described in [the README.md of `csvw-safe`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/README.md).
 
 ![Overview](images/utils_scripts.png)
 
 
+
+
+old example to edit
+#### Example
+
+Example with a penguin dataset example where each penguin can appear 4 times in the dataset but always stays on the same island (and keeps the same species).
+We have a `csvw:Table` with 4 rows and 3 `csvw:Columns`:
+| penguin_id | species   | island    | flipper_length_mm |
+| ---------- | --------- | --------- | ----------------- |
+| 1          | Adelie    | Torgersen | 180               |
+| 2          | Adelie    | Biscoe    | 195               |
+| 3          | Chinstrap | Dream     | 200               |
+| 4          | Gentoo    | Biscoe    | 210               |
+
+Some columns have public partitions: `csvw-safe:Partitions`
+- `csvw:Column` species → categorical `csvw-safe:Partition` by species value: Adelie, Chinstrap, Gentoo.
+- `csvw:Column` island → categorical `csvw-safe:Partition` by island value: Torgersen, Biscoe, Dream.
+- `csvw:Column` flipper_length_mm → numeric `csvw-safe:Partition`: [150–200], [200–250] (for instance).
+
+with the JSON
+```
+{
+  "@type": "csvw:Table",
+  "name": "penguins",
+  "csvw:tableSchema": {
+    "columns": [
+      {
+        "@type": "csvw:Column",
+        "name": "penguin_id",
+        "datatype": "integer"
+      },
+      {
+        "@type": "csvw:Column",
+        "name": "species",
+        "datatype": "string",
+        "csvw-safe:public.partitions": [
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Adelie" }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Chinstrap" }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Gentoo" }}
+        ]
+      },
+      {
+        "@type": "csvw:Column",
+        "name": "island",
+        "datatype": "string",
+        "csvw-safe:public.partitions": [
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Torgersen" }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Biscoe" }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "partitionValue": "Dream" }}
+        ]
+      },
+      {
+        "@type": "csvw:Column",
+        "name": "flipper_length_mm",
+        "datatype": "double",
+        "minimum": 150,
+        "maximum": 250,
+        "csvw-safe:public.partitions": [
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "lowerBound": 150, "upperBound": 200 }},
+          { "@type": "csvw-safe:Partition", "csvw-safe:predicate": { "lowerBound": 200, "upperBound": 250 }}
+        ]
+      }
+    ]
+  }
+}
+```
+
+A `csvw-safe:ColumnGroup` would by for instance based on columns ["species", "island"]. And the resulting partitions would be
+- `csvw-safe:Partition` ["species", "island"] →  by species and island values: (Adelie, Torgerson), (Adelie, Biscoe), (Chinstrap, Dream), (Gentoo, Biscoe).
+- `csvw-safe:Partition` ["species", "flipper_length_mm"] → by species and flipper length values: (Adelie, [150–200]), (Chinstrap, [150–200]), (Gentoo, [200–250]).
+
+Adding to the JSON
+```
+{
+  "@type": "csvw:Table",
+  "name": "penguins",
+  "csvw:tableSchema": {...},
+  "csvw-safe:additionalInformation": [
+    {
+      "@type": "csvw-safe:ColumnGroup",
+      "csvw-safe:columns": ["species", "island"],
+      "csvw-safe:public.partitions": [
+        {
+          "@type": "csvw-safe:Partition",
+          "csvw-safe:predicate": {
+            "components": {
+              "species": { "partitionValue": "Adelie" },
+              "island": { "partitionValue": "Torgersen" }
+            }
+          }
+        },
+        {
+          "@type": "csvw-safe:Partition",
+          "csvw-safe:predicate": {
+            "components": {
+              "species": { "partitionValue": "Adelie" },
+              "island": { "partitionValue": "Biscoe" }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
