@@ -1,6 +1,6 @@
 [project]
 name = "csvw-safe"
-version = "0.1.0"
+version = "0.0.1"
 description = "Safe processing utilities for CSVW data"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -49,10 +49,6 @@ ignore_missing_imports = true
 strict = true
 exclude = "\\.ipynb_checkpoints"
 disable_error_code = []
-
-[tool.pydocstringformatter]
-max-line-length = 100
-write = true
 
 [tool.ruff]
 line-length = 110
