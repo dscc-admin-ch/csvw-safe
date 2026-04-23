@@ -25,6 +25,7 @@ from csvw_safe.constants import (
     DATATYPE,
     DEFAULT_NUMBER_PARTITIONS,
     DEPENDENCY_TYPE,
+    DEPENDS_ON,
     EXHAUSTIVE_KEYS,
     KEY_VALUES,
     MAX_NUM_PARTITIONS,
@@ -176,7 +177,7 @@ def generate_column_series(
     return series.astype(to_pandas_dtype(datatype))
 
 
-def _bigger_series(
+def bigger_series(
     depend_serie: pd.Series,
     col_meta: dict[str, Any],
     nb_rows: int,
@@ -259,8 +260,9 @@ def _bigger_series(
     raise ValueError(f"BIGGER not supported for datatype {datatype}")
 
 
-def _mapping_series(
+def mapping_series(
     depend_serie: pd.Series,
+    value_map: dict[Any, Any],
     col_meta: dict[str, Any],
     rng: np.random.Generator,
 ) -> pd.Series:
@@ -274,6 +276,8 @@ def _mapping_series(
     ----------
     depend_serie : pd.Series
         Series to map from.
+    value_map: dict
+        Mapping from origin column
     col_meta : dict
         Column metadata, must include VALUE_MAP and DATATYPE.
     rng : np.random.Generator
@@ -285,18 +289,21 @@ def _mapping_series(
         Generated series satisfying MAPPING dependency.
 
     """
-    mapped = [
-        (
-            rng.choice(col_meta[VALUE_MAP][val])
-            if isinstance(col_meta[VALUE_MAP].get(val), list)
-            else col_meta[VALUE_MAP].get(val, pd.NA)
-        )
-        for val in depend_serie
-    ]
+    mapped = []
+    for val in depend_serie:
+        choices = value_map.get(val)
+
+        if isinstance(choices, list):
+            mapped.append(rng.choice(choices))
+        elif choices is not None:
+            mapped.append(choices)
+        else:
+            mapped.append(pd.NA)
+
     return pd.Series(mapped, dtype=to_pandas_dtype(col_meta[DATATYPE]))
 
 
-def _fixed_series(
+def fixed_series(
     depend_serie: pd.Series,
     col_meta: dict[str, Any],
     rng: np.random.Generator,
@@ -331,104 +338,44 @@ def _fixed_series(
     return pd.Series(depend_serie.map(value_for_entity), dtype=to_pandas_dtype(col_meta[DATATYPE]))
 
 
-def generate_dependant_column_series(
-    depend_serie: pd.Series,
-    col_meta: dict[str, Any],
+def generate_dataframe(
+    depends_map: dict[str, list[dict[str, Any]]],
+    order: list[str],
+    meta_map: dict[str, dict[str, Any]],
     nb_rows: int,
     rng: np.random.Generator,
-) -> pd.Series:
-    """
-    Generate a dependent column while keeping datatype, bounds, and some randomness.
+) -> pd.DataFrame:
+    """Generate dataframe."""
+    data = {}
 
-    Supports:
-    - BIGGER: each value > depend_serie, still within original min/max bounds
-    - MAPPING: values follow valueMap (random choice if multiple)
-    - FIXED: value repeats per entity (multi-row)
+    for col in order:
+        col_meta = meta_map[col]
+        deps = depends_map.get(col, [])
 
-    Parameters
-    ----------
-    depend_serie : pd.Series
-        Series this column depends on.
-    col_meta : dict
-        Column metadata, must include DATATYPE, DEPENDENCY_TYPE, and optionally VALUE_MAP.
-    nb_rows : int
-        Number of rows to generate.
-    rng : np.random.Generator
-        Random number generator.
+        if not deps:
+            data[col] = generate_column_series(col_meta, nb_rows, rng)
+        else:
+            dep = next(
+                (d for d in deps if d.get(DEPENDS_ON) in data),
+                None,
+            )
+            if dep is None:
+                data[col] = generate_column_series(col_meta, nb_rows, rng)
+                continue
+            mode = dep.get(DEPENDENCY_TYPE, DependencyType.NO_DEP)
+            dep_col = dep.get(DEPENDS_ON, None)
 
-    Returns
-    -------
-    pd.Series
-        Generated dependent column series.
+            if mode == DependencyType.MAPPING:
+                value_map = dep.get(VALUE_MAP, None)
+                data[col] = mapping_series(data[dep_col], value_map, col_meta, rng)
 
-    """
-    depend_type = col_meta[DEPENDENCY_TYPE]
+            elif mode == DependencyType.BIGGER:
+                data[col] = bigger_series(data[dep_col], col_meta, nb_rows, rng)
 
-    if depend_type == DependencyType.BIGGER:
-        series = _bigger_series(depend_serie, col_meta, nb_rows, rng)
-    elif depend_type == DependencyType.MAPPING:
-        series = _mapping_series(depend_serie, col_meta, rng)
-    elif depend_type == DependencyType.FIXED:
-        series = _fixed_series(depend_serie, col_meta, rng)
-    else:
-        raise ValueError(f"Unknown dependency type {depend_type} in {col_meta[COL_NAME]}")
+            elif mode == DependencyType.FIXED:
+                data[col] = fixed_series(data[dep_col], col_meta, rng)
 
-    return series
+            else:
+                data[col] = generate_column_series(col_meta, nb_rows, rng)
 
-
-def generate_series(  # noqa: PLR0913
-    name: str,
-    columns_meta: list[dict[str, Any]],
-    depends_map: dict[str, str],
-    data_dict: dict[str, pd.Series],
-    nb_rows: int,
-    rng: np.random.Generator,
-    visited: set[str] | None = None,
-    max_recursion: int = 10,
-    depth: int = 0,
-) -> dict[str, pd.Series]:
-    """Recursively generate a column and its dependencies with cycle protection."""
-    if visited is None:
-        visited = set()
-
-    if name in data_dict:  # Already generated
-        return data_dict
-
-    if depth > max_recursion:
-        # Too deep: skip dependency, generate column normally
-        col_meta = next(cm for cm in columns_meta if cm[COL_NAME] == name)
-        data_dict[name] = generate_column_series(col_meta, nb_rows, rng)
-        return data_dict
-
-    if name in visited:
-        # Detected a circular dependency: ignore dependency
-        col_meta = next(cm for cm in columns_meta if cm[COL_NAME] == name)
-        data_dict[name] = generate_column_series(col_meta, nb_rows, rng)
-        return data_dict
-
-    visited.add(name)
-    dep = depends_map.get(name)
-
-    if dep and dep in depends_map:
-        # Generate dependency first
-        data_dict = generate_series(
-            dep,
-            columns_meta,
-            depends_map,
-            data_dict,
-            nb_rows,
-            rng,
-            visited,
-            max_recursion,
-            depth + 1,
-        )
-        # Generate dependent column
-        col_meta = next(cm for cm in columns_meta if cm[COL_NAME] == name)
-        data_dict[name] = generate_dependant_column_series(data_dict[dep], col_meta, nb_rows, rng)
-    else:
-        # No dependency: generate normally
-        col_meta = next(cm for cm in columns_meta if cm[COL_NAME] == name)
-        data_dict[name] = generate_column_series(col_meta, nb_rows, rng)
-
-    visited.remove(name)
-    return data_dict
+    return pd.DataFrame(data)
