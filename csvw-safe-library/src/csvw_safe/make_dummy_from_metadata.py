@@ -272,12 +272,15 @@ def make_dummy_from_metadata(
 
         generated.append(df)
 
-    # 6. Format in one dataframe with nb_rows
+    # Format in one dataframe with nb_rows
     output_df = pd.concat(generated, ignore_index=True)
     output_df = output_df.sample(n=nb_rows, random_state=seed)
 
-    # 7. Add nulls where required
+    # Add nulls where required
     output_df = apply_nulls_dataframe(output_df, columns_meta, rng)
+
+    # Metadata column order
+    output_df = output_df.reindex(columns=[c[COL_NAME] for c in columns_meta])
 
     return output_df.reset_index(drop=True)
 

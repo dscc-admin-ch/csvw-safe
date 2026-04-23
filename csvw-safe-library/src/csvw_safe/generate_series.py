@@ -262,6 +262,7 @@ def bigger_series(
 
 def mapping_series(
     depend_serie: pd.Series,
+    value_map: dict[Any, Any],
     col_meta: dict[str, Any],
     rng: np.random.Generator,
 ) -> pd.Series:
@@ -275,6 +276,8 @@ def mapping_series(
     ----------
     depend_serie : pd.Series
         Series to map from.
+    value_map: dict
+        Mapping from origin column
     col_meta : dict
         Column metadata, must include VALUE_MAP and DATATYPE.
     rng : np.random.Generator
@@ -286,8 +289,6 @@ def mapping_series(
         Generated series satisfying MAPPING dependency.
 
     """
-    value_map = col_meta[VALUE_MAP]
-
     mapped = []
     for val in depend_serie:
         choices = value_map.get(val)
@@ -337,51 +338,6 @@ def fixed_series(
     return pd.Series(depend_serie.map(value_for_entity), dtype=to_pandas_dtype(col_meta[DATATYPE]))
 
 
-def generate_dependant_column_series(
-    depend_serie: pd.Series,
-    col_meta: dict[str, Any],
-    nb_rows: int,
-    rng: np.random.Generator,
-) -> pd.Series:
-    """
-    Generate a dependent column while keeping datatype, bounds, and some randomness.
-
-    Supports:
-    - BIGGER: each value > depend_serie, still within original min/max bounds
-    - MAPPING: values follow valueMap (random choice if multiple)
-    - FIXED: value repeats per entity (multi-row)
-
-    Parameters
-    ----------
-    depend_serie : pd.Series
-        Series this column depends on.
-    col_meta : dict
-        Column metadata, must include DATATYPE, DEPENDENCY_TYPE, and optionally VALUE_MAP.
-    nb_rows : int
-        Number of rows to generate.
-    rng : np.random.Generator
-        Random number generator.
-
-    Returns
-    -------
-    pd.Series
-        Generated dependent column series.
-
-    """
-    depend_type = col_meta[DEPENDENCY_TYPE]
-
-    if depend_type == DependencyType.BIGGER:
-        series = bigger_series(depend_serie, col_meta, nb_rows, rng)
-    elif depend_type == DependencyType.MAPPING:
-        series = mapping_series(depend_serie, col_meta, rng)
-    elif depend_type == DependencyType.FIXED:
-        series = fixed_series(depend_serie, col_meta, rng)
-    else:
-        raise ValueError(f"Unknown dependency type {depend_type} in {col_meta[COL_NAME]}")
-
-    return series
-
-
 def generate_dataframe(
     depends_map: dict[str, list[dict[str, Any]]],
     order: list[str],
@@ -410,7 +366,8 @@ def generate_dataframe(
             dep_col = dep.get(DEPENDS_ON, None)
 
             if mode == DependencyType.MAPPING:
-                data[col] = mapping_series(data[dep_col], col_meta, rng)
+                value_map = dep.get(VALUE_MAP, None)
+                data[col] = mapping_series(data[dep_col], value_map, col_meta, rng)
 
             elif mode == DependencyType.BIGGER:
                 data[col] = bigger_series(data[dep_col], col_meta, nb_rows, rng)

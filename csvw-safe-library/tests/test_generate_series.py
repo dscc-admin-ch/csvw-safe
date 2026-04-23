@@ -28,7 +28,6 @@ from csvw_safe.generate_series import (
     fixed_series,
     mapping_series,
     generate_column_series,
-    generate_dependant_column_series,
     generate_dataframe,
     get_bounds,
 )
@@ -244,7 +243,7 @@ def test_bigger_series_duration(rng):
 def test_mapping_series(rng):
     base = pd.Series([1, 2, 1])
     col_meta = {DATATYPE: DataTypes.STRING, VALUE_MAP: {1: ["a", "b"], 2: ["c"]}}
-    s = mapping_series(base, col_meta, rng)
+    s = mapping_series(base, {1: ["a", "b"], 2: ["c"]}, col_meta, rng)
     assert all(val in ["a", "b", "c"] for val in s.dropna())
 
 
@@ -264,20 +263,19 @@ def test_generate_dependant_column_series_bigger(rng):
         MAXIMUM: 10,
         DEPENDENCY_TYPE: DependencyType.BIGGER,
     }
-    s = generate_dependant_column_series(base, col_meta, 5, rng)
+    s = bigger_series(base, col_meta, 5, rng)
     assert (s > base).all()
 
 
 def test_generate_dependant_column_series_mapping(rng):
     base = pd.Series([1, 2, 1])
+    value_dict = {1: ["x", "y"], 2: ["z"]}
     col_meta = {
         DATATYPE: DataTypes.STRING,
         DEPENDENCY_TYPE: DependencyType.MAPPING,
-        VALUE_MAP: {1: ["x", "y"], 2: ["z"]},
+        VALUE_MAP: value_dict,
     }
-    s = generate_dependant_column_series(base, col_meta, 3, rng)
-    print("*****")
-    print(s)
+    s = mapping_series(base, value_dict, col_meta, rng)
     assert all(val in ["x", "y", "z"] for val in s)
 
 
@@ -289,7 +287,7 @@ def test_generate_dependant_column_series_fixed(rng):
         MAXIMUM: 5,
         DEPENDENCY_TYPE: DependencyType.FIXED,
     }
-    s = generate_dependant_column_series(base, col_meta, 4, rng)
+    s = fixed_series(base, col_meta, rng)
     assert s.iloc[0] == s.iloc[1]
     assert s.iloc[2] == s.iloc[3]
 
