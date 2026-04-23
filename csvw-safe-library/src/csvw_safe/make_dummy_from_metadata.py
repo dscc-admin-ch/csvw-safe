@@ -18,6 +18,7 @@ CSVW-SAFE metadata but does not guarantee semantic correctness.
 import argparse
 import json
 import string
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -37,11 +38,12 @@ from csvw_safe.constants import (
     PARTITION_VALUE,
     PREDICATE,
     PUBLIC_PARTITIONS,
+    ROW_DEP,
     TABLE_SCHEMA,
     UPPER_BOUND,
 )
 from csvw_safe.datatypes import XSD_GROUP_MAP, DataTypes, DataTypesGroups
-from csvw_safe.generate_series import generate_series
+from csvw_safe.generate_series import generate_dataframe
 
 RANDOM_STRINGS = list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
 
@@ -147,6 +149,78 @@ def apply_nulls_dataframe(
     return df
 
 
+def build_generation_order(depends_map: dict[str, list[dict[str, Any]]]) -> list[str]:
+    """
+    Compute a deterministic generation order from dependency map.
+
+    Parameters
+    ----------
+    depends_map : dict[str, list[dict[str, Any]]]
+        Mapping column -> list of dependency dicts.
+
+    Returns
+    -------
+    list[str]
+        Ordered columns such that dependencies appear first where possible.
+
+    """
+    # Build graph: col -> set(of columns it depends on)
+    graph: dict[str, set[str]] = {
+        col: {dep[DEPENDS_ON] for dep in deps if DEPENDS_ON in dep} for col, deps in depends_map.items()
+    }
+
+    # remove self-dependencies
+    for col, _ in graph.items():
+        graph[col].discard(col)
+
+    remaining = set(graph)
+    resolved: set[str] = set()
+    order: list[str] = []
+
+    while remaining:
+        ready = sorted(c for c in remaining if graph[c].issubset(resolved))
+
+        node = ready[0] if ready else min(remaining, key=lambda c: (len(graph[c]), c))
+
+        order.append(node)
+        resolved.add(node)
+        remaining.remove(node)
+
+    return order
+
+
+def resolve_mutual_mappings(
+    depends_map: dict[str, list[dict[str, Any]]],
+) -> dict[str, list[dict[str, Any]]]:
+    """
+    Remove bidirectional dependency edges (any type).
+
+    If A depends on B AND B depends on A,
+    keep only a deterministic direction: min(A, B).
+    """
+    resolved: dict[str, list[dict[str, Any]]] = defaultdict(list)
+
+    for col, deps in depends_map.items():
+        for dep in deps:
+            other = dep.get(DEPENDS_ON)
+
+            if not isinstance(other, str):
+                resolved[col].append(dep)
+                continue
+
+            # check if reverse edge exists (any dependency type)
+            reverse_exists = any(d.get(DEPENDS_ON) == col for d in depends_map.get(other, []))
+
+            if reverse_exists:
+                # deterministic tie-break
+                if col < other:
+                    resolved[col].append(dep)
+            else:
+                resolved[col].append(dep)
+
+    return dict(resolved)
+
+
 def make_dummy_from_metadata(
     metadata: dict[str, Any],
     nb_rows: int = 100,
@@ -173,33 +247,36 @@ def make_dummy_from_metadata(
     rng = np.random.default_rng(seed)
 
     columns_meta = metadata[TABLE_SCHEMA][COL_LIST]
-
-    depends_map = {col_meta[COL_NAME]: col_meta.get(DEPENDS_ON) for col_meta in columns_meta}
     columns_group_meta = metadata.get(ADD_INFO, [])
 
+    # Based on dependency, create ordered plan for dummy generation
+    depends_map: dict[str, list[dict[str, Any]]] = {
+        c[COL_NAME]: list(c.get(ROW_DEP, [])) for c in columns_meta
+    }
+    order = build_generation_order(depends_map)
+
+    # Generate dataframes until enough rows of existing partitions
     generated: list[pd.DataFrame] = []
     while sum(len(df) for df in generated) < nb_rows:
-        data_dict: dict[str, pd.Series] = {}
-        for col_meta in columns_meta:
-            data_dict = generate_series(
-                col_meta[COL_NAME],
-                columns_meta,
-                depends_map,
-                data_dict,
-                nb_rows,
-                rng,
-            )
+        df = generate_dataframe(
+            depends_map,
+            order,
+            {c[COL_NAME]: c for c in columns_meta},
+            nb_rows,
+            rng,
+        )
 
-        df = pd.DataFrame(data_dict)
-
+        # Remove partition that do ont exist
         if columns_group_meta:
             df = column_group_partitions(df, columns_group_meta)
 
         generated.append(df)
 
+    # 6. Format in one dataframe with nb_rows
     output_df = pd.concat(generated, ignore_index=True)
-    output_df = output_df.sample(n=nb_rows, random_state=seed)  # final row selection
+    output_df = output_df.sample(n=nb_rows, random_state=seed)
 
+    # 7. Add nulls where required
     output_df = apply_nulls_dataframe(output_df, columns_meta, rng)
 
     return output_df.reset_index(drop=True)

@@ -138,17 +138,25 @@ def identify_dependency(
                 continue
 
             mapping = grouped[lengths <= max_mapping_values].to_dict()
+
             if mapping:
-                # Prevent redundant reverse mapping:
-                n_values = valid[column_name].nunique()
-                if n_keys <= n_values:
-                    results.append(
-                        Dependency(
-                            depends_on=col,
-                            dependency_type=DependencyType.MAPPING,
-                            value_map=mapping,
-                        )
+                # Reject useless mappings
+                all_values = set(valid[column_name].unique())
+                if all(set(v) == all_values for v in mapping.values()):
+                    continue
+
+                # Reject identical mappings across keys
+                unique_value_sets = {tuple(sorted(v)) for v in mapping.values()}
+                if len(unique_value_sets) == 1:
+                    continue
+
+                results.append(
+                    Dependency(
+                        depends_on=col,
+                        dependency_type=DependencyType.MAPPING,
+                        value_map=mapping,
                     )
+                )
 
     return results
 

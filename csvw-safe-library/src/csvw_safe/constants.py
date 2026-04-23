@@ -62,6 +62,7 @@ VALUE_MAP = "valueMap"
 class DependencyType(StrEnum):
     """Types of column dependency relationships."""
 
+    NO_DEP = "no_dependency"
     MAPPING = "mapping"
     BIGGER = "bigger"
     # SMALLER = "smaller"  # redundant with bigger

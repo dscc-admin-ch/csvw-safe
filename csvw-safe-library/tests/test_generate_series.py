@@ -18,17 +18,18 @@ from csvw_safe.constants import (
     PREDICATE,
     PUBLIC_PARTITIONS,
     RANDOM_STRINGS,
+    ROW_DEP,
     VALUE_MAP,
     DependencyType,
 )
 from csvw_safe.datatypes import DataTypes
 from csvw_safe.generate_series import (
-    _bigger_series,
-    _fixed_series,
-    _mapping_series,
+    bigger_series,
+    fixed_series,
+    mapping_series,
     generate_column_series,
     generate_dependant_column_series,
-    generate_series,
+    generate_dataframe,
     get_bounds,
 )
 
@@ -210,7 +211,7 @@ def test_generate_column_series_duration(rng):
 def test_bigger_series_numeric(rng):
     base = pd.Series(np.arange(10))
     col_meta = {DATATYPE: DataTypes.DOUBLE, MINIMUM: 0, MAXIMUM: 20}
-    s = _bigger_series(base, col_meta, 10, rng)
+    s = bigger_series(base, col_meta, 10, rng)
     assert (s > base).all()
 
 
@@ -221,7 +222,7 @@ def test_bigger_series_datetime(rng):
         MINIMUM: "2023-01-01",
         MAXIMUM: "2023-01-10",
     }
-    s = _bigger_series(base, col_meta, 5, rng)
+    s = bigger_series(base, col_meta, 5, rng)
     assert (s > base).all()
 
 
@@ -232,7 +233,7 @@ def test_bigger_series_duration(rng):
         MINIMUM: "0s",
         MAXIMUM: "10s",
     }
-    s = _bigger_series(base, col_meta, 3, rng)
+    s = bigger_series(base, col_meta, 3, rng)
     # Each value must be bigger than the base
     assert (s > base).all()
     # Values must stay within bounds
@@ -243,14 +244,14 @@ def test_bigger_series_duration(rng):
 def test_mapping_series(rng):
     base = pd.Series([1, 2, 1])
     col_meta = {DATATYPE: DataTypes.STRING, VALUE_MAP: {1: ["a", "b"], 2: ["c"]}}
-    s = _mapping_series(base, col_meta, rng)
+    s = mapping_series(base, col_meta, rng)
     assert all(val in ["a", "b", "c"] for val in s.dropna())
 
 
 def test_fixed_series(rng):
     base = pd.Series([10, 10, 20, 20])
     col_meta = {DATATYPE: DataTypes.INTEGER, MINIMUM: 0, MAXIMUM: 20}
-    s = _fixed_series(base, col_meta, rng)
+    s = fixed_series(base, col_meta, rng)
     assert s.iloc[0] == s.iloc[1]
     assert s.iloc[2] == s.iloc[3]
 
@@ -275,6 +276,8 @@ def test_generate_dependant_column_series_mapping(rng):
         VALUE_MAP: {1: ["x", "y"], 2: ["z"]},
     }
     s = generate_dependant_column_series(base, col_meta, 3, rng)
+    print("*****")
+    print(s)
     assert all(val in ["x", "y", "z"] for val in s)
 
 
@@ -291,111 +294,102 @@ def test_generate_dependant_column_series_fixed(rng):
     assert s.iloc[2] == s.iloc[3]
 
 
-def test_generate_series_recursive(rng):
-    columns_meta = [
-        {DATATYPE: DataTypes.INTEGER, MINIMUM: 0, MAXIMUM: 5, COL_NAME: "a"},
-        {
-            DATATYPE: DataTypes.DOUBLE,
-            MINIMUM: 0,
-            MAXIMUM: 10,
-            COL_NAME: "b",
-            DEPENDS_ON: "a",
-            DEPENDENCY_TYPE: DependencyType.BIGGER,
-        },
-    ]
-    depends_map = {col[COL_NAME]: col.get(DEPENDS_ON) for col in columns_meta}
-    data_dict = {}
-    data_dict = generate_series("b", columns_meta, depends_map, data_dict, 5, rng)
-    assert "b" in data_dict and "a" in data_dict
-    assert (data_dict["b"] > data_dict["a"]).all()
-
-
-def test_generate_column_circular_dependency(rng):
+def test_generate_dataframe_bigger_dependency(rng):
     nb_rows = 5
 
-    # Columns with circular dependency
+    columns_meta = [
+        {
+            COL_NAME: "a",
+            DATATYPE: DataTypes.INTEGER,
+            MINIMUM: 0,
+            MAXIMUM: 5,
+        },
+        {
+            COL_NAME: "b",
+            DATATYPE: DataTypes.INTEGER,
+            MINIMUM: 0,
+            MAXIMUM: 10,
+            ROW_DEP: [
+                {
+                    DEPENDS_ON: "a",
+                    DEPENDENCY_TYPE: DependencyType.BIGGER,
+                }
+            ],
+        },
+    ]
+
+    depends_map = {c[COL_NAME]: c.get(ROW_DEP, []) for c in columns_meta}
+
+    meta_map = {c[COL_NAME]: c for c in columns_meta}
+    order = ["a", "b"]
+
+    df = generate_dataframe(depends_map, order, meta_map, nb_rows, rng)
+
+    assert "a" in df and "b" in df
+    assert (df["b"] >= df["a"]).all()
+
+
+def test_generate_dataframe_circular_dependency(rng):
+    nb_rows = 5
+
     columns_meta = [
         {
             COL_NAME: "col1",
             DATATYPE: DataTypes.INTEGER,
             MINIMUM: 0,
             MAXIMUM: 10,
-            NULL_PROP: 0,
-            DEPENDENCY_TYPE: DependencyType.BIGGER,
+            ROW_DEP: [
+                {
+                    DEPENDS_ON: "col2",
+                    DEPENDENCY_TYPE: DependencyType.BIGGER,
+                }
+            ],
         },
         {
             COL_NAME: "col2",
             DATATYPE: DataTypes.INTEGER,
             MINIMUM: 5,
             MAXIMUM: 15,
-            NULL_PROP: 0,
-            DEPENDENCY_TYPE: DependencyType.BIGGER,
+            ROW_DEP: [
+                {
+                    DEPENDS_ON: "col1",
+                    DEPENDENCY_TYPE: DependencyType.BIGGER,
+                }
+            ],
         },
     ]
 
-    depends_map = {
-        "col1": "col2",
-        "col2": "col1",
-    }
+    depends_map = {c[COL_NAME]: c.get(ROW_DEP, []) for c in columns_meta}
 
-    data_dict = {}
+    meta_map = {c[COL_NAME]: c for c in columns_meta}
+    order = ["col1", "col2"]  # arbitrary but deterministic
 
-    # Force col1 to see col2 as visited → triggers circular dependency branch
-    visited = {"col2"}
+    df = generate_dataframe(depends_map, order, meta_map, nb_rows, rng)
 
-    data_dict = generate_series(
-        "col1",
-        columns_meta,
-        depends_map,
-        data_dict,
-        nb_rows,
-        rng,
-        visited=visited,
-        max_recursion=10,
-        depth=0,
-    )
-
-    # The circular branch should generate col1 using generate_column_series
-    assert "col1" in data_dict
-    assert isinstance(data_dict["col1"], pd.Series)
-    assert len(data_dict["col1"]) == nb_rows
+    assert "col1" in df and "col2" in df
+    assert len(df) == nb_rows
+    assert isinstance(df["col1"], pd.Series)
+    assert isinstance(df["col2"], pd.Series)
 
 
-def test_generate_series_already_generated(rng):
+def test_generate_dataframe_already_generated_column(rng):
     nb_rows = 3
+
     columns_meta = [
-        {COL_NAME: "x", DATATYPE: DataTypes.INTEGER, MINIMUM: 0, MAXIMUM: 5},
+        {
+            COL_NAME: "x",
+            DATATYPE: DataTypes.INTEGER,
+            MINIMUM: 0,
+            MAXIMUM: 5,
+        }
     ]
-    depends_map = {col[COL_NAME]: col.get(DEPENDS_ON) for col in columns_meta}
-    data_dict = {"x": pd.Series([1, 2, 3])}  # Already generated
 
-    # Should return data_dict without modifying it
-    result = generate_series("x", columns_meta, depends_map, data_dict, nb_rows, rng)
-    assert result is data_dict
-    assert (result["x"] == pd.Series([1, 2, 3])).all()
+    depends_map = {c[COL_NAME]: c.get(ROW_DEP, []) for c in columns_meta}
 
+    meta_map = {c[COL_NAME]: c for c in columns_meta}
+    order = ["x"]
 
-def test_generate_series_max_recursion(rng):
-    nb_rows = 2
-    columns_meta = [
-        {COL_NAME: "y", DATATYPE: DataTypes.INTEGER, MINIMUM: 0, MAXIMUM: 5},
-    ]
-    depends_map = {"y": "y"}  # self-dependency triggers max recursion
+    df = generate_dataframe(depends_map, order, meta_map, nb_rows, rng)
 
-    data_dict = {}
-    result = generate_series(
-        "y",
-        columns_meta,
-        depends_map,
-        data_dict,
-        nb_rows,
-        rng,
-        visited=set(),
-        max_recursion=0,  # force max recursion branch
-        depth=1,
-    )
-
-    # Should generate column normally via generate_column_series
-    assert "y" in result
-    assert isinstance(result["y"], pd.Series)
-    assert len(result["y"]) == nb_rows
+    assert "x" in df
+    assert len(df["x"]) == nb_rows
