@@ -254,10 +254,13 @@ The DP contribution properties are
 | `invariantPublicKeys`     | Whether the keys are public information independently of the privacy unit|     No       |      No     |     Yes            |
 
 Required values are mandatory for DP calibration (on table and partition levels). 
-- `Yes (1)` concerns all query at table level.  -->  Nb contribution in data.
-- `Yes (2)` concerns all query at table level (except counts). -->  Nb records in data.
-- `Yes (3)` concerns all query after a groupby. It may be set as the maximum of all individual partitions. -->  Nb contribution in group.
-- `Yes (4)` concerns all query after a groupby (except counts). It may be set as the maximum of all individual partitions. -->  Nb records in group
+
+| Requirement | When It’s Needed                   | What It Represents            |
+| ----------- | ---------------------------------- | ----------------------------- |
+| Yes (1)     | All queries                        | Max contributions in dataset  |
+| Yes (2)     | All queries *(except counts)*      | Max number of rows in dataset |
+| Yes (3)     | After `GROUP BY`                   | Max contributions per group   |
+| Yes (4)     | After `GROUP BY` *(except counts)* | Max number of rows per group  |
 
 Others improve tightness and avoid unnecessary noise but are all optinal.
 
