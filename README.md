@@ -255,12 +255,12 @@ The DP contribution properties are
 
 Required values are mandatory for DP calibration (on table and partition levels). 
 
-| Requirement | Applies To      | When It’s Needed                   | What It Represents            |
-| ----------- | --------------- | ---------------------------------- | ----------------------------- |
-| Yes (1)     | Table level     | All queries                        | Max contributions in dataset  |
-| Yes (2)     | Table level     | All queries *(except counts)*      | Max number of rows in dataset |
-| Yes (3)     | Partition level | After `GROUP BY`                   | Max contributions per group   |
-| Yes (4)     | Partition level | After `GROUP BY` *(except counts)* | Max number of rows per group  |
+| Requirement | When It’s Needed                   | What It Represents            |
+| ----------- | ---------------------------------- | ----------------------------- |
+| Yes (1)     | All queries                        | Max contributions in dataset  |
+| Yes (2)     | All queries *(except counts)*      | Max number of rows in dataset |
+| Yes (3)     | After `GROUP BY`                   | Max contributions per group   |
+| Yes (4)     | After `GROUP BY` *(except counts)* | Max number of rows per group  |
 
 Others improve tightness and avoid unnecessary noise but are all optinal.
 
