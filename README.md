@@ -255,7 +255,7 @@ The DP contribution properties are
 
 Required values are mandatory for DP calibration (on table and partition levels). 
 
-| Requirement | When It’s Needed                      | What It Represents            |
+| Requirement | When It’s Compulsory                  | What It Represents            |
 | ----------- | ------------------------------------- | ----------------------------- |
 | Yes (1)     | Table-level queries                   | Max contributions in dataset  |
 | Yes (2)     | Table-level queries *(except counts)* | Max number of rows in dataset |
