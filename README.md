@@ -26,7 +26,7 @@ Such metadata enables:
 
 For DP contributions, an overview of words(metadata) used by DP library and their correspondance with **CSVW-SAFE** is available in [DP libraries overview](https://github.com/dscc-admin-ch/csvw-safe/blob/main/documentation/dp_libraries.md).
 
-For an example, see [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json) on the penguin dataset from sklearn.
+Complete, fully working examples of CSVW-SAFE metadata are provided in separate files within this repository (see linked resources). These examples illustrate end-to-end usage, including schema definition, partitioning, and DP contribution bounds. For instance, see [Penguin dataset.json](https://github.com/dscc-admin-ch/csvw-safe/blob/main/manual_penguin_metadata.json) on the penguin dataset from sklearn.
 
 
 ## 2. CSVW-SAFE Classes and Properties
@@ -44,13 +44,13 @@ CSVW-SAFE uses four core objects on which structural and privacy properties appl
 | Class                   | Purpose                                                 |
 | ----------------------- | ------------------------------------------------------- |
 | `csvw:Table`            | Table schema, global guarantees and informations        |
-| `csvw:Column`           | Column schema and single-column grouping space          |
-| `csvw:ColumnGroup`      | Multi-Column grouping space                             |
+| `csvw:Column`           | Column schema and single-column grouping key            |
+| `csvw:ColumnGroup`      | Multi-Column grouping key                               |
 | `csvw-safe:Partition`   | A region of the value domain (after a groupby)          |
 
 - `csvw:Table` are tables as described in `csvw`. A `csvw:Table` contains a `csvw:TableSchema` (with a list of `csvw:Columns`) and optionally a `csvw-safe:AdditionalInformation` (with a list of `csvw-safe:ColumnGroup` and their partitions).
 
-- `csvw:Column` are columns as described in `csvw`. It also defines a single column grouping space.
+- `csvw:Column` are columns as described in `csvw`. It also defines a single column grouping key.
 
 - `csvw-safe:ColumnGroup` are groups of columns. It can define the resulting keys, partitions and contributions if a GROUP BY operation was made on this group of columns.
 
@@ -134,8 +134,9 @@ a `csvw` json-ld would organise classes followign this structure:
   ]
 }
 ```
-The next section describes the `csvw-safe` properties.
+The next section describes the `csvw-safe` properties on the four classes.
 
+A `csvw:Column` defines properties that apply when grouping on a single column, while a `csvw-safe:ColumnGroup` defines properties that apply when grouping on multiple columns simultaneously. At the column level, DP-related properties (e.g. `maxGroupsPerUnit`) describe the worst-case contribution across all partitions of that column. This can be seen as an upper bound over any possible grouping on that single column. At the column group level, these properties describe the worst-case contribution across all partitions of the combined grouping key (i.e. the joint domain of the columns). The most granular level is the `Partition`, where properties such as `maxContributions` apply to a specific region of the domain (either for a column or a column group). Column and column group level properties should therefore be interpreted as upper bounds over their respective partitions.
 
 ### 2.2 CSVW-SAFE Properties
 
@@ -214,19 +215,25 @@ A bit like a mapping but where the keys are private (because they might belong t
 | `exhaustiveKeys`    | Boolean, True if the list of `publicKeys` is exhaustive                |  Column, ColumnGroup     |
 | `maxNumPartitions`  | Max number of non-empty output partitions for a column or grouping key |  Column, ColumnGroup     |
 | `partitions`        | List of partitions within a grouping key and their properties          |  Column, ColumnGroup     |
+| `exhaustivePartitions` | Boolean, True if the list of `partitions` is exhaustive (TODO)      |  Column, ColumnGroup     |
 
 `publicKeys` is the list of known public keys in a column or group of column. If the list is exhaustive `exhaustiveKeys` is True, otherwise it is False.
+TODO: add `exhaustivePartitions`.
 
 `maxNumPartitions` refers to the maximum number of non-empty groups that may appear in a query result, not the size of the value domain.
 - At the column level, it is the number of different categories in the column. For instance, a column with 3 categories has `maxNumPartitions=3`.
 - At the group of columns level, it is the number of different partitions that can be produced by grouping multiple columns (cartesian product of the partitions of each column in the simplest case).
-If `partitions` is declared and `exhaustivePartitions=true`, then maxNumPartitions equals the number of declared partitions. Otherwise, `maxNumPartitions` must be explicitly declared.
 
 
 `partitions` contain a list of `csvw-safe:Partition` which contain additional information on partitions on the column or group of columns.
 - At the column level, it is the list of public `Partition` of a given column.
 - At the group of columns level, it is the list of public `Partition` produced by grouping multiple columns.
+If the list of `partitions` is exhaustive, then `exhaustivePartitions` is True, otherwise it is False.
 
+Partitions are assumed to be disjoint by construction when defined over discrete domains (e.g. categorical values). This means that each row belongs to at most one partition for a given column or column group.
+For continuous domains (e.g. numerical ranges), partitions may overlap if explicitly defined as such (e.g. intervals). In this case, a row may belong to multiple partitions, and this must be taken into account when reasoning about contributions.
+
+If the list of declared `partitions` fully covers the value domain, then `exhaustivePartitions` MUST be set to True. Otherwise, it MUST be set to False. When `exhaustivePartitions=True`, it guarantees that every possible row belongs to at least one declared partition.
 
 #### 2.2.3 Contribution assumptions (for DP)
 
@@ -268,7 +275,7 @@ Others improve tightness and avoid unnecessary noise but are all optinal.
 - At the table level, it is the maximum number of rows a privacy unit may contribute to the entire dataset. This bound governs sensitivity of queries without grouping.
 - At the partition level, it is the maximum number of rows in the partition which concern the privacy unit.
 
-`maxLength` is the maximum theoretical number of rows. It also enables to compute additional noise requirements in case of overflow when doing some operations. See reference: [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708).
+`maxLength` is the maximum theoretical number of rows in the table or in a partition. It also enables to compute additional noise requirements in case of overflow when doing some operations. This bound is not intended to describe observed data, but to provide a safe upper limit used in query calibration. In particular, it prevents numerical issues such as floating point overflow when aggregating large numbers of values and ensures that DP mechanisms remain well-defined under worst-case assumptions. See reference: [Casacuberta et al., 2022](https://dl.acm.org/doi/pdf/10.1145/3548606.3560708).
 - At the table level, it is the maximum theoretical number of rows in the table. It is compulsory to apply DP.
 - At the partition level, it is the maximum theoretical number of rows in the partition.
 
@@ -300,9 +307,9 @@ The total number of rows a privacy unit may influence $l_1 = l_0 \cdot l_\infty$
 | `csvw-safe-constraints.ttl`   | SHACL validation rules              |
 | `csvw-safe` on pypi           | Python programming library to create and use csvw-safe metadata|
 
-[`csvw-safe-constraints.md`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constraints.md) describes constraints on metadata, ensure that they are valid and not worst than worst case bounds. [`csvw-safe-constraints.ttl`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constraints.ttl) describes part of the constraints in a turtle file.
+[`csvw-safe-constraints.md`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constraints.md) describes constraints on metadata, ensure that they are valid and not worst than worst case bounds. [`csvw-safe-constraints.ttl`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-constraints.ttl) describes part of the constraints in a turtle file. If validation against the SHACL constraints fails, the metadata MUST be considered invalid. Tools consuming CSVW-SAFE metadata SHOULD reject such metadata and MUST NOT proceed with its use for downstream tasks (e.g. query calibration or dummy data generation).
 
-This python library `csvw-safe` is availible [here on pypi](https://pypi.org/project/csvw-safe/0.0.1/) and described in [the README.md of `csvw-safe`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/README.md).
+This python library `csvw-safe` is available [here on pypi](https://pypi.org/project/csvw-safe/0.0.1/) and described in [the README.md of `csvw-safe`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/README.md).
 
 ![Overview](images/utils_scripts.png)
 
