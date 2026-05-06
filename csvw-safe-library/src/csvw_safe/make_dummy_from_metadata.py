@@ -32,6 +32,7 @@ from csvw_safe.constants import (
     DATATYPE,
     DEPENDS_ON,
     EXHAUSTIVE_KEYS,
+    EXHAUSTIVE_PARTITIONS,
     KEY_VALUES,
     LOWER_BOUND,
     NULL_PROP,
@@ -120,15 +121,24 @@ def column_group_partitions(
 ) -> pd.DataFrame:
     """Keep only rows belonging to allowed column-group partitions."""
     global_mask = pd.Series(True, index=df.index)
-    for col_group in columns_group_meta:
-        if not col_group.get(EXHAUSTIVE_KEYS, False):
-            continue
 
-        partitions = col_group.get(PUBLIC_PARTITIONS) or col_group.get(KEY_VALUES, [])
+    for col_group in columns_group_meta:
         group_mask = pd.Series(False, index=df.index)
-        for p in partitions:
-            predicate = p.get(PREDICATE, p)
-            group_mask |= _predicate_mask(df, predicate)
+
+        if col_group.get(EXHAUSTIVE_PARTITIONS, False):
+            # Partitions take precedence over keys
+            partitions = col_group.get(PUBLIC_PARTITIONS, [])
+            for p in partitions:
+                predicate = p.get(PREDICATE, p)
+                group_mask |= _predicate_mask(df, predicate)
+
+        elif col_group.get(EXHAUSTIVE_KEYS, False):
+            key_values = col_group.get(KEY_VALUES, [])
+            for key in key_values:
+                group_mask |= _predicate_mask(df, key)
+
+        else:
+            continue  # nothing to apply
 
         global_mask &= group_mask
 

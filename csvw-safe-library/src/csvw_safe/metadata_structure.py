@@ -262,9 +262,10 @@ class ColumnMetadata(BaseModel):
     max_contributions: int | None = None
 
     partitions: list[SingleColumnPartition] | None = None
-    exhaustive_keys: bool | None = None
+    exhaustive_partitions: bool | None = None
 
     public_keys_values: list[SingleColumnKey] | None = None
+    exhaustive_keys: bool | None = None
     invariant_public_keys: bool | None = None
 
     max_num_partitions: int | None = None
@@ -299,6 +300,9 @@ class ColumnMetadata(BaseModel):
 
         if self.partitions is not None:
             d[c.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
+
+        if self.exhaustive_partitions is not None:
+            d[c.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
 
         if self.public_keys_values is not None:
             d[c.KEY_VALUES] = [p.to_dict() for p in self.public_keys_values]
@@ -354,6 +358,7 @@ class ColumnMetadata(BaseModel):
             max_groups_per_unit=data.get(c.MAX_GROUPS),
             max_contributions=data.get(c.MAX_CONTRIB),
             exhaustive_keys=data.get(c.EXHAUSTIVE_KEYS),
+            exhaustive_partitions=data.get(c.EXHAUSTIVE_PARTITIONS),
             invariant_public_keys=data.get(c.INVARIANT_PUBLIC_KEYS),
         )
 
@@ -361,15 +366,9 @@ class ColumnMetadata(BaseModel):
         raw_public_keys_values = data.get(c.KEY_VALUES)
 
         if raw_partitions:
-            partitions: list[SingleColumnPartition] = [
-                SingleColumnPartition.from_dict(p) for p in raw_partitions
-            ]
-            col_metadata.partitions = partitions
+            col_metadata.partitions = [SingleColumnPartition.from_dict(p) for p in raw_partitions]
         if raw_public_keys_values:
-            public_keys_values: list[SingleColumnKey] = [
-                SingleColumnKey.from_dict(p) for p in raw_public_keys_values
-            ]
-            col_metadata.public_keys_values = public_keys_values
+            col_metadata.public_keys_values = [SingleColumnKey.from_dict(p) for p in raw_public_keys_values]
 
         return col_metadata
 
@@ -381,9 +380,10 @@ class ColumnGroupMetadata(BaseModel):
 
     # one of the two is necessary
     partitions: list[MultiColumnPartition] | None = None
-    exhaustive_keys: bool | None = None
+    exhaustive_partitions: bool | None = None
 
     public_keys_values: list[MultiColumnKeys] | None = None
+    exhaustive_keys: bool | None = None
     invariant_public_keys: bool | None = None
 
     max_num_partitions: int | None = None
@@ -402,6 +402,9 @@ class ColumnGroupMetadata(BaseModel):
 
         if self.partitions is not None:
             result[c.PUBLIC_PARTITIONS] = [p.to_dict() for p in self.partitions]
+
+        if self.exhaustive_partitions is not None:
+            result[c.EXHAUSTIVE_PARTITIONS] = self.exhaustive_partitions
 
         if self.public_keys_values is not None:
             result[c.KEY_VALUES] = [k.to_dict() for k in self.public_keys_values]
@@ -436,21 +439,18 @@ class ColumnGroupMetadata(BaseModel):
             max_groups_per_unit=data.get(c.MAX_GROUPS),
             max_contributions=data.get(c.MAX_CONTRIB),
             exhaustive_keys=data.get(c.EXHAUSTIVE_KEYS),
+            exhaustive_partitions=data.get(c.EXHAUSTIVE_PARTITIONS),
             invariant_public_keys=data.get(c.INVARIANT_PUBLIC_KEYS),
         )
         raw_partitions = data.get(c.PUBLIC_PARTITIONS)
         raw_public_keys_values = data.get(c.KEY_VALUES)
 
         if raw_partitions:
-            partitions: list[MultiColumnPartition] = [
-                MultiColumnPartition.from_dict(p) for p in raw_partitions
-            ]
-            col_group_metadata.partitions = partitions
+            col_group_metadata.partitions = [MultiColumnPartition.from_dict(p) for p in raw_partitions]
         if raw_public_keys_values:
-            public_keys_values: list[MultiColumnKeys] = [
+            col_group_metadata.public_keys_values = [
                 MultiColumnKeys.from_dict(p) for p in raw_public_keys_values
             ]
-            col_group_metadata.public_keys_values = public_keys_values
 
         return col_group_metadata
 

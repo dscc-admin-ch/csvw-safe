@@ -8,9 +8,11 @@ from csvw_safe.constants import (
     COL_NAME,
     DATATYPE,
     EXHAUSTIVE_KEYS,
+    EXHAUSTIVE_PARTITIONS,
     KEY_VALUES,
     LOWER_BOUND,
     MAXIMUM,
+    MAX_NUM_PARTITIONS,
     MINIMUM,
     PARTITION_VALUE,
     PREDICATE,
@@ -118,7 +120,7 @@ def test_column_group_partitions_public_partitions():
     df = pd.DataFrame({"col1": ["a", "b", "a", "b"], "col2": [1, 2, 3, 4]})
     columns_group_meta = [
         {
-            EXHAUSTIVE_KEYS: True,
+            EXHAUSTIVE_PARTITIONS: True,
             PUBLIC_PARTITIONS: [
                 {
                     PREDICATE: {
@@ -189,7 +191,7 @@ def test_make_dummy_applies_column_group_partitions():
         },
         ADD_INFO: [
             {
-                EXHAUSTIVE_KEYS: True,
+                EXHAUSTIVE_PARTITIONS: True,
                 PUBLIC_PARTITIONS: [
                     {
                         PREDICATE: {
