@@ -18,7 +18,6 @@ CSVW-SAFE metadata but does not guarantee semantic correctness.
 import argparse
 import json
 import string
-from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -161,17 +160,51 @@ def apply_nulls_dataframe(
 
 def build_generation_order(depends_map: dict[str, list[dict[str, Any]]]) -> list[str]:
     """
-    Compute a deterministic generation order from dependency map.
+    Compute a deterministic column generation order based on dependencies.
+
+    This function attempts to order columns such that each column appears
+    *after* all the columns it depends on (i.e., a topological ordering).
+
+    The input is a mapping of column names to a list of dependency
+    specifications. Each dependency dict may contain a `DEPENDS_ON` key
+    indicating another column that must be generated first.
+
+    Behavior
+    --------
+    1. A dependency graph is built where each column maps to the set of
+       columns it depends on.
+    2. Self-dependencies are ignored.
+    3. Columns are iteratively selected:
+       - Prefer columns whose dependencies are already resolved.
+       - Among those, selection is deterministic (alphabetical order).
+    4. If no such column exists (e.g., due to cycles or missing dependencies),
+       a fallback strategy is used:
+       - Select the column with the fewest dependencies.
+       - Break ties alphabetically.
+
+    This ensures the function always returns a complete, deterministic order,
+    even when the dependency graph is not a valid DAG.
 
     Parameters
     ----------
     depends_map : dict[str, list[dict[str, Any]]]
-        Mapping column -> list of dependency dicts.
+        Mapping of column name to a list of dependency definitions.
+        Each dependency dict may include a `DEPENDS_ON` key referencing
+        another column.
 
     Returns
     -------
     list[str]
-        Ordered columns such that dependencies appear first where possible.
+        A list of column names in generation order. Dependencies will
+        appear before dependents whenever possible.
+
+    Notes
+    -----
+    - Cycles are not explicitly detected or reported. Instead, they are
+      handled via the fallback strategy.
+    - Missing dependency references (i.e., dependencies not present as keys
+      in `depends_map`) are treated as unresolved and may influence ordering.
+    - The output is stable and deterministic for a given input.
 
     """
     # Build graph: col -> set(of columns it depends on)
@@ -197,38 +230,6 @@ def build_generation_order(depends_map: dict[str, list[dict[str, Any]]]) -> list
         remaining.remove(node)
 
     return order
-
-
-def resolve_mutual_mappings(
-    depends_map: dict[str, list[dict[str, Any]]],
-) -> dict[str, list[dict[str, Any]]]:
-    """
-    Remove bidirectional dependency edges (any type).
-
-    If A depends on B AND B depends on A,
-    keep only a deterministic direction: min(A, B).
-    """
-    resolved: dict[str, list[dict[str, Any]]] = defaultdict(list)
-
-    for col, deps in depends_map.items():
-        for dep in deps:
-            other = dep.get(DEPENDS_ON)
-
-            if not isinstance(other, str):
-                resolved[col].append(dep)
-                continue
-
-            # check if reverse edge exists (any dependency type)
-            reverse_exists = any(d.get(DEPENDS_ON) == col for d in depends_map.get(other, []))
-
-            if reverse_exists:
-                # deterministic tie-break
-                if col < other:
-                    resolved[col].append(dep)
-            else:
-                resolved[col].append(dep)
-
-    return dict(resolved)
 
 
 def make_dummy_from_metadata(
