@@ -115,12 +115,7 @@ def generate_string_column(col_meta: dict[str, Any], nb_rows: int, rng: np.rando
     """Generate string column depending on available information."""
     public_keys_values = []
     if KEY_VALUES in col_meta:
-        # new key-only format
-        for key in col_meta[KEY_VALUES]:
-            if isinstance(key, str):
-                public_keys_values.append(key)
-            else:  # isinstance(key, dict) and PARTITION_VALUE in key:
-                public_keys_values.append(key[PARTITION_VALUE])
+        public_keys_values = col_meta[KEY_VALUES]
 
         if EXHAUSTIVE_KEYS in col_meta and not col_meta[EXHAUSTIVE_KEYS]:
             diff = col_meta[MAX_NUM_PARTITIONS] - len(col_meta[KEY_VALUES])
@@ -128,10 +123,7 @@ def generate_string_column(col_meta: dict[str, Any], nb_rows: int, rng: np.rando
 
     elif PUBLIC_PARTITIONS in col_meta:
         for partition in col_meta[PUBLIC_PARTITIONS]:
-            if isinstance(partition, str):
-                public_keys_values.append(partition)
-            else:
-                public_keys_values.append(partition[PREDICATE][PARTITION_VALUE])
+            public_keys_values.append(partition[PREDICATE][PARTITION_VALUE])
 
         if EXHAUSTIVE_PARTITIONS in col_meta and not col_meta[EXHAUSTIVE_PARTITIONS]:
             diff = col_meta[MAX_NUM_PARTITIONS] - len(col_meta[PUBLIC_PARTITIONS])

@@ -9,6 +9,7 @@ from csvw_safe.constants import (
     DEPENDENCY_TYPE,
     DEPENDS_ON,
     EXHAUSTIVE_KEYS,
+    EXHAUSTIVE_PARTITIONS,
     KEY_VALUES,
     MAX_NUM_PARTITIONS,
     MAXIMUM,
@@ -95,31 +96,34 @@ def test_generate_column_series_boolean(rng):
 @pytest.mark.parametrize(
     "col_meta,nb_rows,expected_values",
     [
-        # KEY_VALUES as strings
+        # Keys
         ({DATATYPE: DataTypes.STRING, KEY_VALUES: ["x", "y"]}, 10, {"x", "y"}),
-        # KEY_VALUES as dicts
+        # Partitions
         (
             {
                 DATATYPE: DataTypes.STRING,
-                KEY_VALUES: [{PARTITION_VALUE: "p1"}, {PARTITION_VALUE: "p2"}],
+                PUBLIC_PARTITIONS: [
+                    {PREDICATE: {PARTITION_VALUE: "p1"}},
+                    {PREDICATE: {PARTITION_VALUE: "p2"}},
+                ],
+                EXHAUSTIVE_PARTITIONS: True,
             },
             5,
             {"p1", "p2"},
         ),
-        # KEY_VALUES as strings + dict with PARTITION_VALUE
+        # Keys and partitions
         (
             {
                 DATATYPE: DataTypes.STRING,
-                KEY_VALUES: ["k1", {PARTITION_VALUE: "k2"}],
+                KEY_VALUES: ["k1", "k2"],
+                EXHAUSTIVE_KEYS: True,
+                PUBLIC_PARTITIONS: [
+                    {PREDICATE: {PARTITION_VALUE: "k1"}},
+                    {PREDICATE: {PARTITION_VALUE: "k2"}},
+                ],
             },
             5,
             {"k1", "k2"},
-        ),
-        # PUBLIC_PARTITIONS as strings
-        (
-            {DATATYPE: DataTypes.STRING, PUBLIC_PARTITIONS: ["pp1", "pp2"]},
-            8,
-            {"pp1", "pp2"},
         ),
         # PUBLIC_PARTITIONS as dicts with PREDICATE
         (
@@ -137,7 +141,7 @@ def test_generate_column_series_boolean(rng):
         (
             {
                 DATATYPE: DataTypes.STRING,
-                PUBLIC_PARTITIONS: ["p1"],
+                KEY_VALUES: ["p1"],
                 EXHAUSTIVE_KEYS: False,
                 MAX_NUM_PARTITIONS: 3,
             },
@@ -149,7 +153,7 @@ def test_generate_column_series_boolean(rng):
         # Default fallback
         (
             {DATATYPE: DataTypes.STRING},
-            3,
+            30,
             set(RANDOM_STRINGS[:DEFAULT_NUMBER_PARTITIONS]),
         ),
     ],
