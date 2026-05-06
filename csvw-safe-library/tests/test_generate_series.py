@@ -125,7 +125,7 @@ def test_generate_column_series_boolean(rng):
             5,
             {"k1", "k2"},
         ),
-        # PUBLIC_PARTITIONS as dicts with PREDICATE
+        # PUBLIC_PARTITIONS with EXHAUSTIVE_PARTITIONS=False
         (
             {
                 DATATYPE: DataTypes.STRING,
@@ -133,11 +133,13 @@ def test_generate_column_series_boolean(rng):
                     {PREDICATE: {PARTITION_VALUE: "pp3"}},
                     {PREDICATE: {PARTITION_VALUE: "pp4"}},
                 ],
+                EXHAUSTIVE_PARTITIONS: False,
+                MAX_NUM_PARTITIONS: 3,
             },
             6,
-            {"pp3", "pp4"},
+            {"pp3", "pp4", "a"},
         ),
-        # EXHAUSTIVE_KEYS=False triggers extra randoms
+        # KEY_VALUES with EXHAUSTIVE_KEYS=False triggers extra randoms
         (
             {
                 DATATYPE: DataTypes.STRING,
