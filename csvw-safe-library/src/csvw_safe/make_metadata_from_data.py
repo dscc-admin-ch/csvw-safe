@@ -531,6 +531,7 @@ def attach_partitions_to_column(  # noqa: PLR0913
 
         elif col_contrib_level == ContributionLevel.PARTITION:
             column_meta.partitions = partitions_meta
+            column_meta.exhaustive_partitions = True
 
     elif column_name in continuous_partitions:
         # ContributionLevel: PARTITION only

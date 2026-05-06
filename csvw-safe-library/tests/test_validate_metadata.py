@@ -249,6 +249,7 @@ def test_validate_metadata_column_groups():
                         c.MAX_CONTRIB: 1,
                     }
                 ],
+                c.EXHAUSTIVE_PARTITIONS: True,
                 c.MAX_NUM_PARTITIONS: 2,
                 c.EXHAUSTIVE_KEYS: True,
                 c.MAX_LENGTH: 100,
