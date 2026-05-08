@@ -1,14 +1,10 @@
 # CSVW-SAFE Utility Library
 
 ![GitHub License](https://img.shields.io/github/license/dscc-admin-ch/csvw-safe)
-
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvw-safe)
 [![Documentation](https://img.shields.io/badge/docs-Read%20the%20Docs-blue)](https://dscc-admin-ch.github.io/csvw-safe-docs/index.html)
-
 [![Coverage](https://raw.githubusercontent.com/dscc-admin-ch/csvw-safe/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/dscc-admin-ch/csvw-safe/blob/python-coverage-comment-action-data/htmlcov/index.html)
-
 [![CodeQL](https://github.com/dscc-admin-ch/csvw-safe/actions/workflows/codeql.yml/badge.svg)](https://github.com/dscc-admin-ch/csvw-safe/actions/workflows/codeql.yml)
-
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
