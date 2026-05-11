@@ -12,4 +12,32 @@
          <loc>https://dscc-admin-ch.github.io/csvw-safe-docs/vocabulary/</loc>
          <lastmod>2026-05-11</lastmod>
     </url>
+    <url>
+         <loc>https://dscc-admin-ch.github.io/csvw-safe-docs/api/dummy_generation/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://dscc-admin-ch.github.io/csvw-safe-docs/api/metadata_generation/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://dscc-admin-ch.github.io/csvw-safe-docs/api/models/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://dscc-admin-ch.github.io/csvw-safe-docs/api/opendp/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://dscc-admin-ch.github.io/csvw-safe-docs/api/smartnoise_sql/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://dscc-admin-ch.github.io/csvw-safe-docs/api/utilities/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://dscc-admin-ch.github.io/csvw-safe-docs/api/validation/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
 </urlset>

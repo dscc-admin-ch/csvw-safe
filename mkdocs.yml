@@ -29,12 +29,18 @@ markdown_extensions:
 nav:
   - Home: index.md
 
-  - Concepts:
-      - Motivation: concepts/motivation.md
+  - Vocabulary:
+      - Overview: vocabulary.md
 
-  - Specification:
-      - Classes: specification/classes.md
-      - Properties: specification/properties.md
+  - Library:
+      - Overview: library.md
 
-  - Python Library:
-      - API Overview: library/api/index.md
+  - API Reference:
+      - Overview: api/index.md
+      - Metadata Generation: api/metadata_generation.md
+      - Dummy Generation: api/dummy_generation.md
+      - Validation: api/validation.md
+      - OpenDP: api/opendp.md
+      - SmartNoise SQL: api/smartnoise_sql.md
+      - Metadata Models: api/models.md
+      - Utilities: api/utilities.md

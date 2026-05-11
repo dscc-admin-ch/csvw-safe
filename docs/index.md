@@ -1,12 +1,7 @@
-# API Reference
+# CSVW Safe
 
-The CSVW-SAFE API is organized into several functional groups:
+Welcome to the documentation.
 
-- Metadata generation
-- Dummy data generation
-- Validation
-- Differential privacy integrations
-- Metadata models
-- Utility helpers
-
-Use the navigation sidebar to browse modules.
+- Vocabulary specification
+- Python library
+- API reference
