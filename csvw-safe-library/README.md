@@ -17,13 +17,13 @@ It includes five main scripts:
 4. `validate_metadata_shacl.py` (requires `pyshacl`)
 5. `assert_same_structure.py`
 
-![Overview](../images/csvwsafe_workflow_1.png)
+![Overview](images/csvwsafe_workflow_1.png)
 
 In addition, two other scripts are available for conversion of csvw-safe metadata to smartnoise sql and opendp libraries:
 6. `csvw_to_smartnoise_sql.py` converts the metadata to the format expected in smartnoise-sql
 7. `assert_same_structure.py` prepares a context object for opendp with margin and information extracted from csvw-metadata format.
 
-![Overview](../images/csvwsafe_workflow_2.png)
+![Overview](images/csvwsafe_workflow_2.png)
 
 **NOTES**:
 - These scripts assist safe data modeling workflows; they DO NOT replace governance decisions on what is public information or not.

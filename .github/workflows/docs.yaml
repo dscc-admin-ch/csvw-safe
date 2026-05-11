@@ -34,6 +34,7 @@ jobs:
         run: |
           mkdir -p docs/images
           cp -r images/* docs/images/
+          cp -r csvw-safe-library/images/* docs/images/
 
       - name: Build docs
         run: mkdocs build

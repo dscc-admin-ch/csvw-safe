@@ -313,10 +313,3 @@ The total number of rows a privacy unit may influence $l_1 = l_0 \cdot l_\infty$
 
 This python library `csvw-safe` is available [here on pypi](https://pypi.org/project/csvw-safe/0.0.1/) and described in [the README.md of `csvw-safe`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/README.md).
 
-![Overview](images/utils_scripts.png)
-
----
-
-TODO:
-- multiple privacy unit
-- reference another JSON (or JSON-LD) file instead of embedding everything inline
