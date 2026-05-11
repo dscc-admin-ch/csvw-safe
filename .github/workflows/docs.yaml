@@ -30,6 +30,11 @@ jobs:
       - name: Install library
         run: pip install -e ./csvw-safe-library
 
+      - name: Sync images
+        run: |
+          mkdir -p docs/images
+          cp -r images/* docs/images/
+
       - name: Build docs
         run: mkdocs build
 

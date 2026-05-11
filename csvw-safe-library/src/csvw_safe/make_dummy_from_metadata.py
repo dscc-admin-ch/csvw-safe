@@ -297,26 +297,7 @@ def make_dummy_from_metadata(
 
 
 def main() -> None:
-    """
-    Command-line interface for dummy dataset generation.
-
-    Parameters
-    ----------
-    metadata_file : str
-        Path to CSVW-SAFE metadata JSON file.
-
-    Optional parameters
-    -------------------
-    --rows : int
-        Number of rows to generate (default: 100)
-
-    --output : str
-        Output CSV file (default: dummy.csv)
-
-    --seed : int
-        Random seed (default: 0)
-
-    """
+    """Command-line interface for dummy dataset generation."""
     parser = argparse.ArgumentParser(description="Generate a dummy dataset from CSVW-SAFE metadata.")
 
     parser.add_argument("metadata_file", type=str)

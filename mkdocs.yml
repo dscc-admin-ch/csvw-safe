@@ -32,7 +32,7 @@ nav:
   - Vocabulary:
       - Overview: vocabulary.md
 
-  - Library:
+  - CSVW-SAFE Library:
       - Overview: library.md
 
   - API Reference:

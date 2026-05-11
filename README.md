@@ -1,5 +1,7 @@
 # CSVW Safe Vocabulary
 
+Documentation page: https://dscc-admin-ch.github.io/csvw-safe-docs/
+
 ## 1. Introduction
 
 Many datasets cannot be directly shared due to privacy, legal, or governance constraints.

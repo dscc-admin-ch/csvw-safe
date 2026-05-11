@@ -29,7 +29,7 @@ In addition, two other scripts are available for conversion of csvw-safe metadat
 - These scripts assist safe data modeling workflows; they DO NOT replace governance decisions on what is public information or not.
 - IMPORTANT: Automatically generated metadata may contain sensitive information — MANUAL REVIEW IS ALWAYS REQUIRED before further steps.
 
-For a description of [CSVW-SAFE metadata, see here](https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/README.md).
+For a description of [CSVW-SAFE metadata, see here](https://github.com/dscc-admin-ch/csvw-safe).
 
 ---
 
@@ -57,7 +57,7 @@ pytest --cov=csvw_safe --cov-report=term-missing tests/
 
 ## Learn via example
 
-To get to know the library with examples, see the [notebook on the extended penguin dataset](notebook https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/csvw-safe-library/examples/Use-Library.ipynb) and the associated outputs in [metadata example folder](https://github.com/dscc-admin-ch/csvw-safe/tree/update_readme/csvw-safe-library/examples/metadata).
+To get to know the library with examples, see the [notebook on the extended penguin dataset](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/examples/Use-Library.ipynb) and the associated outputs in [metadata example folder](https://github.com/dscc-admin-ch/csvw-safe/tree/main/csvw-safe-library/examples/metadata).
 
 
 ## Scripts Overview
