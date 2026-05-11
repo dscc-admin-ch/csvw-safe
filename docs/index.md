@@ -1,7 +1,17 @@
-# CSVW Safe
+# CSVW-SAFE
 
-Welcome to the documentation.
+CSVW-SAFE extends CSV on the Web (CSVW) with privacy-safe metadata for differential privacy workflows.
 
-- Vocabulary specification
+## Features
+
+- Metadata generation
+- Dummy data generation
+- SHACL validation
+- OpenDP integration
+- SmartNoise SQL integration
+
+## Documentation
+
+- Vocabulary
 - Python library
 - API reference

@@ -1,1 +1,0 @@
---8<-- "csvw-safe-library/README.md"

@@ -30,10 +30,21 @@ nav:
   - Home: index.md
 
   - Vocabulary:
-      - Overview: vocabulary.md
+      - Introduction: vocabulary/overview.md
+      - Classes: vocabulary/classes.md
+      - Dummy Modeling: vocabulary/dummy_modeling.md
+      - DP Contributions: vocabulary/dp_contributions.md
+      - Framework: vocabulary/framework.md
+      - Examples: vocabulary/examples.md
 
-  - CSVW-SAFE Library:
-      - Overview: library.md
+  - Python Library:
+      - Overview: library/overview.md
+      - Installation: library/installation.md
+      - Workflows: library/workflows.md
+      - Metadata Generation: library/metadata_generation.md
+      - Dummy Generation: library/dummy_generation.md
+      - Validation: library/validation.md
+      - Integrations: library/integrations.md
 
   - API Reference:
       - Overview: api/index.md
