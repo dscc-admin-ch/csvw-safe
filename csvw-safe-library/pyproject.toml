@@ -33,7 +33,8 @@ dev = [
     "pytest==8.3.3",
     "pytest-cov==6.0.0",
     "types-PyYAML==6.0.12.20250402",
-    "markdown==3.8.2"
+    "markdown==3.8.2",
+    "mkdocs==1.6.1"
 ]
 
 [build-system]

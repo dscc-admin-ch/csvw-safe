@@ -1,6 +1,7 @@
 # CSVW Safe
 
-Documentation for:
+Welcome to the documentation.
 
-- the CSVW Safe vocabulary
-- the CSVW Safe library
+- Vocabulary specification
+- Python library
+- API reference

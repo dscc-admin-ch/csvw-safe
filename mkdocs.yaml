@@ -1,20 +1,32 @@
 site_name: CSVW Safe
-site_description: CSVW Safe vocabulary and library
 site_url: https://dscc-admin-ch.github.io/csvw-safe-docs/
 
 theme:
   name: material
 
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - csvw-safe-library/src
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            show_signature_annotations: true
+
 nav:
   - Home: index.md
   - Vocabulary: vocabulary.md
-  - Library: library.md
+  - Library Guide: library.md
+  - API Reference: api.md
 
 markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.snippets
   - toc:
       permalink: true
-  - tables
-  - fenced_code
-
-docs_dir: docs
-site_dir: site
