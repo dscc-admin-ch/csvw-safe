@@ -2,8 +2,8 @@
 
 CSVW-SAFE workflows usually follow four main steps:
 
-1. Generate metadata
-2. Review and validate metadata
+1. Generate metadata with the minimal details level
+2. Review and validate metadata (remove non public information)
 3. Generate dummy datasets
 4. Use metadata in DP systems
 
@@ -100,3 +100,5 @@ dummy_df = make_dummy_from_metadata(
 **Automatically generated metadata is not safe.**
 
 **Human review is mandatory before publication or sharing.**
+
+**When in doubt, remove information.**

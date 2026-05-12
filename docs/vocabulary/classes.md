@@ -18,14 +18,20 @@ It contains:
 - table schema
 - privacy unit definition
 - global DP bounds
-- additional grouping metadata
 
 Example:
 
 ```json
 {
   "@type": "csvw:Table",
-  "name": "penguins"
+  "name": "penguins",
+  "privacyUnit":"penguin_id",
+  "maxContributions": 3,
+  "maxLength": 1000,
+  "tableSchema": {
+    "columns": []
+  },
+  "additionalInformation": []
 }
 ```
 
@@ -46,7 +52,11 @@ Example:
 {
   "@type": "csvw:Column",
   "name": "species",
-  "datatype": "string"
+  "datatype": "string",
+  "required": true,
+  "privacyId": false,
+  "keyValues":["Adelie", "Chinstrap", "Gentoo"],
+  "exhaustiveKeys": true,
 }
 ```
 
@@ -65,6 +75,36 @@ It may contain:
 - grouped contribution bounds
 - grouped public keys
 
+```json
+"additionalInformation":[
+  {
+      "@type":"ColumnGroup",
+      "columnsInGroup":[
+        "species",
+        "island"
+      ],
+      "partitions":[
+        {
+            "@type":"Partition",
+            "predicate":{
+              "species":{
+                  "partitionValue":"Adelie"
+              },
+              "island":{
+                  "partitionValue":"Biscoe"
+              }
+            },
+            "maxLength":50, # of this partition
+            "maxGroupsPerUnit":3,
+            "maxContributions":1
+        }
+      ],
+      "exhaustivePartitions": false,
+      "maxLength":200, # of any partition of this ColumnGroup
+  }
+]
+```
+
 ## Partition
 
 A `csvw-safe:Partition` defines a region of a value domain.
@@ -80,13 +120,34 @@ Partitions are indentified by predicates and may contain:
 - contribution bounds
 - public lengths
 
+A `csvw:Column` or a `csvw-safe:ColumnGroup` can have a list of partitions in the field `partition`. If they are exhaustive then, `exhaustivePartitions` may be True.
+
 Example:
+
+Categorical column
 ```json
 {
   "@type": "csvw-safe:Partition",
   "csvw-safe:predicate": {
-    "month": "January"
-  }
+    "partitionValue": "Biscoe"
+  },
+  "maxLength": 300,
+  "maxGroupsPerUnit": 3,
+  "maxContributions": 1
+}
+```
+
+Continuous column
+```json
+{
+  "@type": "csvw-safe:Partition",
+  "csvw-safe:predicate": {
+    "lowerBound": 100,
+    "upperBound": 200,
+  },
+  "maxLength": 300,
+  "maxGroupsPerUnit": 3,
+  "maxContributions": 1
 }
 ```
 
@@ -94,4 +155,5 @@ Example:
 
 CSVW-SAFE extends standard CSVW JSON-LD structures with additional properties and objects.
 This image presents the base `csvw` json-ld structure on the left and the extended `csvw-safe`.
-![Overview](images/csvw-safe_structure.png)
+
+![Overview](../images/csvw-safe_structure.png)

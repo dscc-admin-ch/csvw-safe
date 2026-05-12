@@ -1,6 +1,6 @@
 # CSVW-SAFE Python Library
 
-The `csvw-safe` Python package provides utilities for generating, validating, and using CSVW-SAFE metadata for safe data sharing and Differential Privacy (DP) workflows.
+The `csvw-safe` Python package provides utilities for generating, validating, and using CSVW-SAFE metadata for safe metadata sharing and Differential Privacy (DP) workflows.
 
 The library helps:
 
@@ -14,7 +14,7 @@ The library is designed for:
 
 - Differential Privacy workflows
 - Safe metadata publication
-- Synthetic data generation
+- Dummy data generation
 - DP query calibration
 - Testing and prototyping
 
@@ -27,7 +27,7 @@ The library includes the following tools:
 | Script | Purpose |
 |---|---|
 | `make_metadata_from_data.py` | Generate CSVW-SAFE metadata from data |
-| `make_dummy_from_metadata.py` | Generate synthetic datasets from metadata |
+| `make_dummy_from_metadata.py` | Generate dummy datasets from metadata |
 | `validate_metadata.py` | Validate metadata structure |
 | `validate_metadata_shacl.py` | Validate metadata against SHACL constraints |
 | `assert_same_structure.py` | Compare original and dummy dataset structures |
@@ -56,15 +56,14 @@ Additional integrations are available for OpenDP and SmartNoise SQL:
 
 ## Important Safety Notes
 
-The library assists safe data workflows but does not replace governance decisions.
+The library assists safe (meta)data workflows but does not replace governance decisions.
 
-Automatically generated metadata may reveal sensitive information if not reviewed carefully.
+**Automatically generated metadata may reveal sensitive information if not reviewed carefully**.
 
 Before publishing metadata:
 
-- Review all generated properties
-- Remove unnecessary statistics
+- Review all generated properties and remove unnecessary ones
 - Minimize disclosure
 - Verify that all released information is public
 
-Metadata should describe safe assumptions about possible datasets, not confidential properties of the observed dataset itself.
+Metadata should describe safe and public assumptions about possible datasets, not confidential properties of the observed dataset itself.

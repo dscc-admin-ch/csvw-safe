@@ -37,6 +37,7 @@ It checks:
 - Cross-field consistency
 - Structural restrictions
 
+TODO: As the dataset is not published yet, it is not functional for now (or put the .ttl within the library..).
 
 ### Usage
 

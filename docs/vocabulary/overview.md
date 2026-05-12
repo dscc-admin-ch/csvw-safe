@@ -1,8 +1,6 @@
 # CSVW-SAFE Overview
 
-CSVW-SAFE extends the W3C
-[CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/)
-standard with privacy-safe metadata for:
+CSVW-SAFE extends the W3C [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/) standard with privacy-safe metadata for:
 
 - Differential Privacy (DP)
 - Dummy data generation
@@ -10,8 +8,9 @@ standard with privacy-safe metadata for:
 - Public partition definitions
 - Safe schema publication
 
-CSVW-SAFE allows organizations to publish assumptions and guarantees
-about datasets without exposing sensitive underlying records.
+![Overview](../images/csvw-safe_structure.png)
+
+CSVW-SAFE allows organizations to publish assumptions and guarantees about datasets without exposing sensitive underlying records.
 
 These assumptions may include:
 
@@ -22,11 +21,11 @@ These assumptions may include:
 - contribution bounds for DP
 - logical dependencies between columns
 
-WARNING:
-Some assumptions may themselves leak sensitive information.
-Metadata must always be manually reviewed before publication.
+!!! danger "Warning"
 
-![Overview](../images/csvw-safe_structure.png)
+    Some assumptions may themselves leak sensitive information.
+    Metadata must always be manually reviewed before publication.
+
 
 ## Main Concepts
 
@@ -48,11 +47,3 @@ CSVW-SAFE extends CSVW with:
 | `csvw-safe-context.jsonld` | JSON-LD context |
 | `csvw-safe-constraints.ttl` | SHACL validation |
 | `csvw-safe-library` | Python tooling |
-
-## Documentation Sections
-
-- Classes
-- Dummy modeling
-- DP contribution assumptions
-- Framework and validation
-- Examples

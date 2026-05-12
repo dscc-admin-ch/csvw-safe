@@ -17,7 +17,10 @@ The generator infers:
 - Optional partitions
 - Optional column groups
 
-The generated metadata is intended as a draft and must always be reviewed manually.
+!!! danger "Important"
+
+    Automatically generated metadata may leak sensitive information.
+    Manual review is always required before publication.
 
 ---
 
@@ -39,6 +42,8 @@ Four contribution levels are supported:
 | `table_with_keys` | Table-level metadata with public keys |
 | `column`          | Per-column DP contribution metadata   |
 | `partition`       | Fine-grained partition-level metadata |
+
+Higher level incurr more risk of disclosure. **Always use the lowest metadata granularity sufficient for the use case.**
 
 ### Example: Table-Level Metadata
 ```bash
@@ -72,10 +77,8 @@ python make_metadata_from_data.py \
   --with_dependencies True
 ```
 
-## Important Notes
+## Notes
 - Datetime columns are inferred automatically
 - Numeric bounds are inferred for numeric columns
 - Dependency detection may increase runtime
 - Fine-grained metadata increases disclosure risk
-
-**Always use the lowest metadata granularity sufficient for the use case.**

@@ -70,6 +70,6 @@ context = csvw_to_opendp_context(
 
 ## Design Goal
 
-CSVW-SAFE aims to provide a portable metadata layer between datasets and Differential Privacy systems.
+CSVW-SAFE aims to provide a portable metadata layer between Differential Privacy systems.
 
 The metadata should remain implementation-independent while still enabling automated DP workflows.

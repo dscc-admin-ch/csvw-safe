@@ -44,7 +44,7 @@ nav:
       - Metadata Generation: library/metadata_generation.md
       - Dummy Generation: library/dummy_generation.md
       - Validation: library/validation.md
-      - Integrations: library/integrations.md
+      - Integrations: library/integration.md
 
   - API Reference:
       - Overview: api/index.md

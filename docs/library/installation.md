@@ -31,13 +31,20 @@ pip install -e .[dev]
 pytest --cov=csvw_safe --cov-report=term-missing tests/
 ```
 
+## Run linter
+
+```bash
+chmod +x run_linter.sh
+./run_linter.sh
+```
+
 ## Optional Dependencies
 
 Some features require additional libraries:
+
 | Feature                    | Dependency       |
 | -------------------------- | ---------------- |
 | SHACL validation           | `pyshacl`        |
 | OpenDP integration         | `opendp`         |
-| SmartNoise SQL integration | `smartnoise-sql` |
 
 Install optional dependencies manually when needed.
