@@ -7,6 +7,8 @@
 [![CodeQL](https://github.com/dscc-admin-ch/csvw-safe/actions/workflows/codeql.yml/badge.svg)](https://github.com/dscc-admin-ch/csvw-safe/actions/workflows/codeql.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
+See structured and more friendly documentation [here](https://dscc-admin-ch.github.io/csvw-safe-docs/library/overview/).
+
 This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
 
 It includes five main scripts:
@@ -17,19 +19,19 @@ It includes five main scripts:
 4. `validate_metadata_shacl.py` (requires `pyshacl`)
 5. `assert_same_structure.py`
 
-![Overview](../images/csvwsafe_workflow_1.png)
+![Overview](images/csvwsafe_workflow_1.png)
 
 In addition, two other scripts are available for conversion of csvw-safe metadata to smartnoise sql and opendp libraries:
 6. `csvw_to_smartnoise_sql.py` converts the metadata to the format expected in smartnoise-sql
 7. `assert_same_structure.py` prepares a context object for opendp with margin and information extracted from csvw-metadata format.
 
-![Overview](../images/csvwsafe_workflow_2.png)
+![Overview](images/csvwsafe_workflow_2.png)
 
 **NOTES**:
 - These scripts assist safe data modeling workflows; they DO NOT replace governance decisions on what is public information or not.
 - IMPORTANT: Automatically generated metadata may contain sensitive information — MANUAL REVIEW IS ALWAYS REQUIRED before further steps.
 
-For a description of [CSVW-SAFE metadata, see here](https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/README.md).
+For a description of [CSVW-SAFE metadata, see here](https://github.com/dscc-admin-ch/csvw-safe).
 
 ---
 
@@ -57,7 +59,7 @@ pytest --cov=csvw_safe --cov-report=term-missing tests/
 
 ## Learn via example
 
-To get to know the library with examples, see the [notebook on the extended penguin dataset](notebook https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/csvw-safe-library/examples/Use-Library.ipynb) and the associated outputs in [metadata example folder](https://github.com/dscc-admin-ch/csvw-safe/tree/update_readme/csvw-safe-library/examples/metadata).
+To get to know the library with examples, see the [notebook on the extended penguin dataset](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/examples/Use-Library.ipynb) and the associated outputs in [metadata example folder](https://github.com/dscc-admin-ch/csvw-safe/tree/main/csvw-safe-library/examples/metadata).
 
 
 ## Scripts Overview

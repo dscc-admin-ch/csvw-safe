@@ -1,6 +1,9 @@
-name: Build and publish docs
+name: Build docs
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -10,28 +13,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source repo
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
-      - name: Install MkDocs
+      - name: Install dependencies
         run: |
-          pip install mkdocs mkdocs-material
+          pip install \
+            mkdocs \
+            mkdocs-material \
+            mkdocstrings[python] \
+            pymdown-extensions
 
-      - name: Prepare documentation
+      - name: Install library
+        run: pip install -e ./csvw-safe-library
+
+      - name: Sync images
         run: |
-          chmod +x scripts/prepare-docs.sh
-          ./scripts/prepare-docs.sh
+          mkdir -p docs/images
+          cp -r images/* docs/images/
+          cp -r csvw-safe-library/images/* docs/images/
 
-      - name: Build site
-        run: |
-          mkdocs build
+      - name: Build docs
+        run: mkdocs build
 
-      - name: Push to docs repo
+      - name: Push generated site
         uses: cpina/github-action-push-to-another-repository@main
         env:
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY_DOCS }}

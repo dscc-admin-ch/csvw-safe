@@ -6,14 +6,12 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="CSVW Safe vocabulary and library">
+        <meta name="description" content="CSVW-SAFE vocabulary and Python library">
       
       
       
         <link rel="canonical" href="https://dscc-admin-ch.github.io/csvw-safe-docs/library/">
       
-      
-        <link rel="prev" href="../vocabulary/">
       
       
       
@@ -25,7 +23,7 @@
     
     
       
-        <title>Library - CSVW Safe</title>
+        <title>CSVW-SAFE Utility Library - CSVW-SAFE</title>
       
     
     
@@ -47,6 +45,8 @@
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -82,7 +82,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="CSVW Safe" class="md-header__button md-logo" aria-label="CSVW Safe" data-md-component="logo">
+    <a href=".." title="CSVW-SAFE" class="md-header__button md-logo" aria-label="CSVW-SAFE" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -96,13 +96,13 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            CSVW Safe
+            CSVW-SAFE
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Library
+              CSVW-SAFE Utility Library
             
           </span>
         </div>
@@ -180,13 +180,13 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="CSVW Safe" class="md-nav__button md-logo" aria-label="CSVW Safe" data-md-component="logo">
+    <a href=".." title="CSVW-SAFE" class="md-nav__button md-logo" aria-label="CSVW-SAFE" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    CSVW Safe
+    CSVW-SAFE
   </label>
   
   <ul class="md-nav__list" data-md-scrollfix>
@@ -224,15 +224,62 @@
   
   
   
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../vocabulary/" class="md-nav__link">
+      <a href="../concepts/motivation.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Vocabulary
+    Motivation
   
 
     
@@ -244,31 +291,41 @@
     </li>
   
 
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
     
       
       
   
   
+  
+  
     
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
       
         
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
           
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
     
   
-    Library
+    Specification
   
 
     
@@ -276,17 +333,35 @@
   
   
 
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specification
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/classes.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Library
+    Classes
   
 
     
@@ -295,514 +370,123 @@
   
 
       </a>
-      
-        
+    </li>
+  
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/properties.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Properties
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
   
   
   
     
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
       
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#learn-via-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Learn via example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#scripts-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scripts Overview
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Scripts Overview">
-      <ul class="md-nav__list">
         
-          <li class="md-nav__item">
-  <a href="#1-make_metadata_from_datapy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. make_metadata_from_data.py
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. make_metadata_from_data.py">
-      <ul class="md-nav__list">
         
-          <li class="md-nav__item">
-  <a href="#purpose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Purpose
-      
-    </span>
-  </a>
-  
-</li>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
-          <li class="md-nav__item">
-  <a href="#differential-privacy-dp-contribution-levels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Differential Privacy (DP) Contribution Levels
-      
-    </span>
-  </a>
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
-    <nav class="md-nav" aria-label="Differential Privacy (DP) Contribution Levels">
-      <ul class="md-nav__list">
+  
+  <span class="md-ellipsis">
+    
+  
+    Python Library
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
-          <li class="md-nav__item">
-  <a href="#1-table-level" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. table level
-      
-    </span>
-  </a>
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
   
-</li>
+    Python Library
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/index.md" class="md-nav__link">
         
-          <li class="md-nav__item">
-  <a href="#2-table_with_keys-level" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. table_with_keys level
-      
-    </span>
-  </a>
   
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-column-level" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. column level
-      
-    </span>
-  </a>
   
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-partition-level" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. partition level
-      
-    </span>
-  </a>
+  <span class="md-ellipsis">
+    
   
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Summary
-      
-    </span>
-  </a>
+    API Overview
   
-</li>
-        
-      </ul>
-    </nav>
+
+    
+  </span>
   
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-usage-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Usage Examples
-      
-    </span>
-  </a>
   
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#future-plans" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Future plans:
-      
-    </span>
-  </a>
+
+      </a>
+    </li>
   
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-make_dummy_from_metadatapy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. make_dummy_from_metadata.py
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. make_dummy_from_metadata.py">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#purpose_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#output-guarantees" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output Guarantees
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#typical-use-cases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Use Cases
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-usage-examples_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Usage Examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-validate_metadatapy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. validate_metadata.py
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. validate_metadata.py">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#purpose_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-validate_metadata_shaclpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. validate_metadata_shacl.py
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. validate_metadata_shacl.py">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#purpose_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#validation-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validation Scope
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-assert_same_structurepy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. assert_same_structure.py
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. assert_same_structure.py">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#purpose_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#core-validation-logic" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Validation Logic
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-usage_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-csvw_to_smartnoise_sqlpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. csvw_to_smartnoise_sql.py
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="6. csvw_to_smartnoise_sql.py">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#purpose_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#output-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output Structure
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-usage_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-csvw_to_opendp_contextpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. csvw_to_opendp_context.py
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="7. csvw_to_opendp_context.py">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#purpose_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#supported-privacy-models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported Privacy Models
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-usage_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Typical Workflow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#via-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Via CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#python-api-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Python API Workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -1368,18 +1052,18 @@
 <hr />
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <p>Install Python 3.11+ and</p>
-<pre><code class="language-bash">pip install csvw-safe
-</code></pre>
-<p>or for development: </p>
-<pre><code>git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>csvw-safe
+</code></pre></div>
+<p>or for development: 
+<div class="highlight"><pre><span></span><code>git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
 cd csvw-safe-library
 pip install -e .[dev]
-</code></pre>
-<p>For testing:</p>
-<pre><code>cd csvw-safe-library
+</code></pre></div></p>
+<p>For testing:
+<div class="highlight"><pre><span></span><code>cd csvw-safe-library
 pip install -e .[dev]
 pytest --cov=csvw_safe --cov-report=term-missing tests/
-</code></pre>
+</code></pre></div></p>
 <h2 id="learn-via-example">Learn via example<a class="headerlink" href="#learn-via-example" title="Permanent link">&para;</a></h2>
 <p>To get to know the library with examples, see the <a href="notebook https://github.com/dscc-admin-ch/csvw-safe/blob/update_readme/csvw-safe-library/examples/Use-Library.ipynb">notebook on the extended penguin dataset</a> and the associated outputs in <a href="https://github.com/dscc-admin-ch/csvw-safe/tree/update_readme/csvw-safe-library/examples/metadata">metadata example folder</a>.</p>
 <h2 id="scripts-overview">Scripts Overview<a class="headerlink" href="#scripts-overview" title="Permanent link">&para;</a></h2>
@@ -1505,42 +1189,42 @@ It is strongly recommended to:
 <p>Start with the <code>table</code> level and only increase granularity if required.<br />
 Always validate that all information are already public information.</p>
 <h4 id="cli-usage-examples">CLI Usage Examples<a class="headerlink" href="#cli-usage-examples" title="Permanent link">&para;</a></h4>
-<pre><code class="language-bash"># Basic usage
-python make_metadata_from_data.py data.csv --privacy_unit user_id,
-</code></pre>
-<p>It is possible to compute dependencies (bigger, depends on, etc) between columns with</p>
-<pre><code class="language-bash"># Enable dependency detection (default: True)
-python make_metadata_from_data.py data.csv \
-  --privacy_unit user_id \
-  --with_dependencies True
-</code></pre>
-<p>It is also possible to describe partitions level of continuous data if public bounds are provided</p>
-<pre><code class="language-bash"># Add continuous partitions
-python make_metadata_from_data.py data.csv \
-  --privacy_unit user_id \
-  --continuous_partitions '{&quot;age&quot;: [0, 18, 30, 50, 100]}'
-</code></pre>
-<p>It is also possible to describe group of columns information (like after grouping by a list of columns) to have their metadata</p>
-<pre><code class="language-bash"># Define column groups
-python make_metadata_from_data.py data.csv \
-  --privacy_unit user_id \
-  --column_groups '[[&quot;age&quot;, &quot;income&quot;], [&quot;city&quot;, &quot;country&quot;]]'
-</code></pre>
-<pre><code class="language-bash"># Set default contribution level
-python make_metadata_from_data.py data.csv \
-  --privacy_unit user_id \
-  --default_contributions_level table
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic usage</span>
+python<span class="w"> </span>make_metadata_from_data.py<span class="w"> </span>data.csv<span class="w"> </span>--privacy_unit<span class="w"> </span>user_id,
+</code></pre></div>
+<p>It is possible to compute dependencies (bigger, depends on, etc) between columns with
+<div class="highlight"><pre><span></span><code><span class="c1"># Enable dependency detection (default: True)</span>
+python<span class="w"> </span>make_metadata_from_data.py<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--privacy_unit<span class="w"> </span>user_id<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--with_dependencies<span class="w"> </span>True
+</code></pre></div></p>
+<p>It is also possible to describe partitions level of continuous data if public bounds are provided
+<div class="highlight"><pre><span></span><code><span class="c1"># Add continuous partitions</span>
+python<span class="w"> </span>make_metadata_from_data.py<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--privacy_unit<span class="w"> </span>user_id<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--continuous_partitions<span class="w"> </span><span class="s1">&#39;{&quot;age&quot;: [0, 18, 30, 50, 100]}&#39;</span>
+</code></pre></div></p>
+<p>It is also possible to describe group of columns information (like after grouping by a list of columns) to have their metadata
+<div class="highlight"><pre><span></span><code><span class="c1"># Define column groups</span>
+python<span class="w"> </span>make_metadata_from_data.py<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--privacy_unit<span class="w"> </span>user_id<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--column_groups<span class="w"> </span><span class="s1">&#39;[[&quot;age&quot;, &quot;income&quot;], [&quot;city&quot;, &quot;country&quot;]]&#39;</span>
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set default contribution level</span>
+python<span class="w"> </span>make_metadata_from_data.py<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--privacy_unit<span class="w"> </span>user_id<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--default_contributions_level<span class="w"> </span>table
 
-# Column-specific contribution overrides
-python make_metadata_from_data.py data.csv \
-  --privacy_unit user_id \
-  --fine_contributions_level '{&quot;age&quot;: &quot;column&quot;, &quot;income&quot;: &quot;partition&quot;}'
-</code></pre>
-<p>Save output to specific file</p>
-<pre><code class="language-bash">python make_metadata_from_data.py data.csv \
-  --privacy_unit user_id \
-  --output my_metadata.json
-</code></pre>
+<span class="c1"># Column-specific contribution overrides</span>
+python<span class="w"> </span>make_metadata_from_data.py<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--privacy_unit<span class="w"> </span>user_id<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--fine_contributions_level<span class="w"> </span><span class="s1">&#39;{&quot;age&quot;: &quot;column&quot;, &quot;income&quot;: &quot;partition&quot;}&#39;</span>
+</code></pre></div>
+<p>Save output to specific file
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>make_metadata_from_data.py<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--privacy_unit<span class="w"> </span>user_id<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>my_metadata.json
+</code></pre></div></p>
 <p>Notes
 - Datetime columns are automatically inferred using pandas.to_datetime.
 - Numeric bounds are computed only for non-string columns.
@@ -1579,16 +1263,16 @@ It does not preserve semantic meaning or real-world correlations beyond what is 
 <li>Synthetic data generation for integration tests</li>
 </ul>
 <h4 id="cli-usage-examples_1">CLI Usage Examples<a class="headerlink" href="#cli-usage-examples_1" title="Permanent link">&para;</a></h4>
-<p>Basic example with 100 rows:</p>
-<pre><code class="language-bash"># Basic
-python make_dummy_from_metadata.py metadata.json --output dummy.csv
-</code></pre>
-<p>Set a seed (seed=42) and a number of rows (rows=1000) for a reproducible example:</p>
-<pre><code class="language-bash">python make_dummy_from_metadata.py metadata.json \
-  --rows 1000 \
-  --seed 42 \
-  --output dummy.csv
-</code></pre>
+<p>Basic example with 100 rows:
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic</span>
+python<span class="w"> </span>make_dummy_from_metadata.py<span class="w"> </span>metadata.json<span class="w"> </span>--output<span class="w"> </span>dummy.csv
+</code></pre></div></p>
+<p>Set a seed (seed=42) and a number of rows (rows=1000) for a reproducible example:
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>make_dummy_from_metadata.py<span class="w"> </span>metadata.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--rows<span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--seed<span class="w"> </span><span class="m">42</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>dummy.csv
+</code></pre></div></p>
 <h3 id="3-validate_metadatapy">3. <strong><code>validate_metadata.py</code></strong><a class="headerlink" href="#3-validate_metadatapy" title="Permanent link">&para;</a></h3>
 <h4 id="purpose_2">Purpose<a class="headerlink" href="#purpose_2" title="Permanent link">&para;</a></h4>
 <p>Validate a CSVW-SAFE metadata file against the internal metadata schema.</p>
@@ -1607,8 +1291,8 @@ python make_dummy_from_metadata.py metadata.json --output dummy.csv
 - If metadata is valid → script exits silently (no output)
 - If metadata is invalid → raises a validation exception and exits with error</p>
 <h4 id="cli-usage">CLI Usage<a class="headerlink" href="#cli-usage" title="Permanent link">&para;</a></h4>
-<pre><code class="language-bash">python validate_metadata.py metadata.json
-</code></pre>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>validate_metadata.py<span class="w"> </span>metadata.json
+</code></pre></div>
 <h3 id="4-validate_metadata_shaclpy">4. <strong><code>validate_metadata_shacl.py</code></strong><a class="headerlink" href="#4-validate_metadata_shaclpy" title="Permanent link">&para;</a></h3>
 <h4 id="purpose_3">Purpose<a class="headerlink" href="#purpose_3" title="Permanent link">&para;</a></h4>
 <p>Validate CSVW-SAFE metadata using a SHACL constraint schema.</p>
@@ -1623,9 +1307,9 @@ python make_dummy_from_metadata.py metadata.json --output dummy.csv
 <blockquote>
 <p>Unlike <code>validate_metadata.py</code>, this tool performs formal SHACL validation, not just schema validation.</p>
 </blockquote>
-<p>Python usage</p>
-<pre><code class="language-bash">python validate_metadata_shacl.py metadata.jsonld shapes.ttl
-</code></pre>
+<p>Python usage
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>validate_metadata_shacl.py<span class="w"> </span>metadata.jsonld<span class="w"> </span>shapes.ttl
+</code></pre></div></p>
 <p>Validation output
 On success: SHACL validation SUCCESSFUL
 On failure: SHACL validation FAILED with a <detailed SHACL report></p>
@@ -1676,11 +1360,11 @@ On failure: SHACL validation FAILED with a <detailed SHACL report></p>
 <li>Uses <code>is_categorical()</code> to detect categorical columns</li>
 </ul>
 <h4 id="cli-usage_1">CLI Usage<a class="headerlink" href="#cli-usage_1" title="Permanent link">&para;</a></h4>
-<pre><code class="language-bash">python assert_same_structure.py original.csv dummy.csv
-</code></pre>
-<p>Skip categorical validation</p>
-<pre><code>python validate_dummy_structure.py original.csv dummy.csv --no-categories
-</code></pre>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>assert_same_structure.py<span class="w"> </span>original.csv<span class="w"> </span>dummy.csv
+</code></pre></div>
+<p>Skip categorical validation
+<div class="highlight"><pre><span></span><code>python validate_dummy_structure.py original.csv dummy.csv --no-categories
+</code></pre></div></p>
 <p>Typical Use Cases
 - Validate synthetic dataset generation correctness
 - Regression testing for metadata-driven pipelines
@@ -1708,45 +1392,45 @@ Notes
 </ul>
 <h4 id="output-structure">Output Structure<a class="headerlink" href="#output-structure" title="Permanent link">&para;</a></h4>
 <p>The generated YAML follows SmartNoise SQL format:</p>
-<pre><code class="language-yaml">&quot;&quot;: 
-  schema_name:
-    table_name:
-      max_ids: ...
-      rows: ...
-      sample_max_ids: ...
-      censor_dims: ...
-      clamp_counts: ...
-      clamp_columns: ...
-      use_dpsu: ...
-      column_name:
-        name: ...
-        type: ...
-        nullable: ...
-        lower: ...
-        upper: ...
-        private_id: ...
-</code></pre>
+<div class="highlight"><pre><span></span><code><span class="s">&quot;&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span>
+<span class="w">  </span><span class="nt">schema_name</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">table_name</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">max_ids</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="nt">rows</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="nt">sample_max_ids</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="nt">censor_dims</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="nt">clamp_counts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="nt">clamp_columns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="nt">use_dpsu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="nt">column_name</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">        </span><span class="nt">nullable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">        </span><span class="nt">lower</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">        </span><span class="nt">upper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">        </span><span class="nt">private_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div>
 <h4 id="cli-usage_2">CLI Usage<a class="headerlink" href="#cli-usage_2" title="Permanent link">&para;</a></h4>
-<p>Basic conversion</p>
-<pre><code class="language-bash">python csvw_to_smartnoise_sql.py \
-  --input metadata.json \
-  --output snsql_metadata.yaml
-</code></pre>
-<p>With custom schema and table</p>
-<pre><code class="language-bash">python csvw_to_smartnoise_sql.py \
-  --input metadata.json \
-  --output snsql_metadata.yaml \
-  --schema MySchema \
-  --table MyTable
-</code></pre>
-<p>With DP configuration options</p>
-<pre><code class="language-bash">python csvw_to_smartnoise_sql.py \
-  --input metadata.json \
-  --output snsql_metadata.yaml \
-  --sample_max_ids True \
-  --censor_dims True \
-  --clamp_columns True
-</code></pre>
+<p>Basic conversion
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>csvw_to_smartnoise_sql.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input<span class="w"> </span>metadata.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>snsql_metadata.yaml
+</code></pre></div></p>
+<p>With custom schema and table
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>csvw_to_smartnoise_sql.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input<span class="w"> </span>metadata.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>snsql_metadata.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schema<span class="w"> </span>MySchema<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--table<span class="w"> </span>MyTable
+</code></pre></div></p>
+<p>With DP configuration options
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>csvw_to_smartnoise_sql.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input<span class="w"> </span>metadata.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>snsql_metadata.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sample_max_ids<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--censor_dims<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--clamp_columns<span class="w"> </span>True
+</code></pre></div></p>
 <h3 id="7-csvw_to_opendp_contextpy">7. <strong><code>csvw_to_opendp_context.py</code></strong><a class="headerlink" href="#7-csvw_to_opendp_contextpy" title="Permanent link">&para;</a></h3>
 <h4 id="purpose_6">Purpose<a class="headerlink" href="#purpose_6" title="Permanent link">&para;</a></h4>
 <p>Create an OpenDP <code>Context</code> from CSVW-SAFE metadata and a dataset.</p>
@@ -1790,56 +1474,57 @@ Notes
 <p>You must provide either <code>epsilon</code> OR <code>rho</code>, not both.</p>
 </blockquote>
 <h4 id="cli-usage_3">CLI Usage<a class="headerlink" href="#cli-usage_3" title="Permanent link">&para;</a></h4>
-<p>Basic conversion</p>
-<pre><code class="language-bash">import polars as pl
-from csvw_safe.csvw_to_opendp_context import csvw_to_opendp_context
+<p>Basic conversion
+<div class="highlight"><pre><span></span><code>import<span class="w"> </span>polars<span class="w"> </span>as<span class="w"> </span>pl
+from<span class="w"> </span>csvw_safe.csvw_to_opendp_context<span class="w"> </span>import<span class="w"> </span>csvw_to_opendp_context
 
-data = pl.scan_csv(&quot;data.csv&quot;)
+<span class="nv">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>pl.scan_csv<span class="o">(</span><span class="s2">&quot;data.csv&quot;</span><span class="o">)</span>
 
-context = csvw_to_opendp_context(
-    csvw_meta=metadata,
-    data=data,
-    epsilon=1.0,
-)
-</code></pre>
+<span class="nv">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>csvw_to_opendp_context<span class="o">(</span>
+<span class="w">    </span><span class="nv">csvw_meta</span><span class="o">=</span>metadata,
+<span class="w">    </span><span class="nv">data</span><span class="o">=</span>data,
+<span class="w">    </span><span class="nv">epsilon</span><span class="o">=</span><span class="m">1</span>.0,
+<span class="o">)</span>
+</code></pre></div></p>
 <h2 id="typical-workflow">Typical Workflow<a class="headerlink" href="#typical-workflow" title="Permanent link">&para;</a></h2>
 <h3 id="via-cli">Via CLI<a class="headerlink" href="#via-cli" title="Permanent link">&para;</a></h3>
 <ol>
-<li>Generate baseline metadata from the original dataset:</li>
+<li>
+<p>Generate baseline metadata from the original dataset:
+<div class="highlight"><pre><span></span><code>python make_metadata_from_data.py data.csv --id user_id --mode fine
+</code></pre></div></p>
+</li>
+<li>
+<p>Review manually with a data expert and approve metadata for safety and governance compliance.
+Optionnaly after removing private information, run (to validate metadata format)
+<div class="highlight"><pre><span></span><code>python scripts/validate_metadata_shacl.py metadata.json csvw-safe-constraints.ttl
+</code></pre></div>
+and with shacl constraints:
+<div class="highlight"><pre><span></span><code>python validate_metadata.py metadata.json --shacl csvw-safe-constraints.ttl
+</code></pre></div></p>
+</li>
+<li>
+<p>Generate a dummy dataset from the approved metadata:
+<div class="highlight"><pre><span></span><code>python make_dummy_from_metadata.py metadata.json --rows 1000 --output dummy.csv
+</code></pre></div></p>
+</li>
+<li>
+<p>Verify that the dummy matches the original structure:
+<div class="highlight"><pre><span></span><code>python assert_same_structure.py data.csv dummy.csv
+</code></pre></div></p>
+</li>
 </ol>
-<pre><code>python make_metadata_from_data.py data.csv --id user_id --mode fine
-</code></pre>
-<ol>
-<li>Review manually with a data expert and approve metadata for safety and governance compliance.
-Optionnaly after removing private information, run (to validate metadata format)</li>
-</ol>
-<pre><code>python scripts/validate_metadata_shacl.py metadata.json csvw-safe-constraints.ttl
-</code></pre>
-<p>and with shacl constraints:</p>
-<pre><code>python validate_metadata.py metadata.json --shacl csvw-safe-constraints.ttl
-</code></pre>
-<ol>
-<li>Generate a dummy dataset from the approved metadata:</li>
-</ol>
-<pre><code>python make_dummy_from_metadata.py metadata.json --rows 1000 --output dummy.csv
-</code></pre>
-<ol>
-<li>Verify that the dummy matches the original structure:</li>
-</ol>
-<pre><code>python assert_same_structure.py data.csv dummy.csv
-</code></pre>
 <h3 id="python-api-workflow">Python API Workflow<a class="headerlink" href="#python-api-workflow" title="Permanent link">&para;</a></h3>
-<pre><code>import pandas as pd
+<p><div class="highlight"><pre><span></span><code>import pandas as pd
 from csvw_safe.make_metadata_from_data import make_metadata_from_data
 
 df = pd.read_csv(&quot;data.csv&quot;)
 
 # Generate metadata
 metadata = make_metadata_from_data(df, csv_url=&quot;data.csv&quot;, individual_col=&quot;user_id&quot;)
-
-</code></pre>
-<p>MANUAL REVIEW OF METADATA. VERIFY ONLY PUBLIC INFORMATION. REMOVE OTHERWISE.</p>
-<pre><code>from csvw_safe.validate_metadata import validate_metadata
+</code></pre></div>
+MANUAL REVIEW OF METADATA. VERIFY ONLY PUBLIC INFORMATION. REMOVE OTHERWISE.</p>
+<div class="highlight"><pre><span></span><code>from csvw_safe.validate_metadata import validate_metadata
 from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
 from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
 from csvw_safe.assert_same_structure import assert_same_structure
@@ -1853,9 +1538,9 @@ dummy_df = make_dummy_from_metadata(metadata, nb_rows=500)
 
 # Assert structure
 assert_same_structure(df, dummy_df)
-</code></pre>
+</code></pre></div>
 <h1 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h1>
-<pre><code>examples/
+<div class="highlight"><pre><span></span><code>examples/
 └─ Notebooks.ipynb                      # Example notebooks demonstrating CSVW-SAFE workflows
 
 src/csvw_safe/
@@ -1881,7 +1566,7 @@ tests/                                  # Unit and integration tests for CSVW-SA
 pyproject.toml                         # Project configuration and dependencies
 README.md                              # Project overview and documentation entry point
 run_linter.sh                          # Script to run linting and style checks
-</code></pre>
+</code></pre></div>
 
 
 

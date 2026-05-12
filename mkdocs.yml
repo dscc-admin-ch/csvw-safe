@@ -1,0 +1,57 @@
+site_name: CSVW-SAFE
+site_description: CSVW-SAFE vocabulary and Python library
+site_url: https://dscc-admin-ch.github.io/csvw-safe-docs/
+
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - csvw-safe-library/src
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+
+  - Vocabulary:
+      - Introduction: vocabulary/overview.md
+      - Classes: vocabulary/classes.md
+      - Dummy Modeling: vocabulary/dummy_modeling.md
+      - DP Contributions: vocabulary/dp_contributions.md
+      - Framework: vocabulary/framework.md
+      - Examples: vocabulary/examples.md
+
+  - Python Library:
+      - Overview: library/overview.md
+      - Installation: library/installation.md
+      - Workflows: library/workflows.md
+      - Metadata Generation: library/metadata_generation.md
+      - Dummy Generation: library/dummy_generation.md
+      - Validation: library/validation.md
+      - Integrations: library/integration.md
+
+  - API Reference:
+      - Overview: api/index.md
+      - Metadata Generation: api/metadata_generation.md
+      - Dummy Generation: api/dummy_generation.md
+      - Validation: api/validation.md
+      - OpenDP: api/opendp.md
+      - SmartNoise SQL: api/smartnoise_sql.md
+      - Metadata Models: api/models.md
+      - Utilities: api/utilities.md

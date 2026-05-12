@@ -6,17 +6,13 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="CSVW Safe vocabulary and library">
+        <meta name="description" content="CSVW-SAFE vocabulary and Python library">
       
       
       
         <link rel="canonical" href="https://dscc-admin-ch.github.io/csvw-safe-docs/vocabulary/">
       
       
-        <link rel="prev" href="..">
-      
-      
-        <link rel="next" href="../library/">
       
       
         
@@ -27,7 +23,7 @@
     
     
       
-        <title>Vocabulary - CSVW Safe</title>
+        <title>CSVW Safe Vocabulary - CSVW-SAFE</title>
       
     
     
@@ -49,6 +45,8 @@
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -84,7 +82,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="CSVW Safe" class="md-header__button md-logo" aria-label="CSVW Safe" data-md-component="logo">
+    <a href=".." title="CSVW-SAFE" class="md-header__button md-logo" aria-label="CSVW-SAFE" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -98,13 +96,13 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            CSVW Safe
+            CSVW-SAFE
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Vocabulary
+              CSVW Safe Vocabulary
             
           </span>
         </div>
@@ -182,13 +180,13 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="CSVW Safe" class="md-nav__button md-logo" aria-label="CSVW Safe" data-md-component="logo">
+    <a href=".." title="CSVW-SAFE" class="md-nav__button md-logo" aria-label="CSVW-SAFE" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    CSVW Safe
+    CSVW-SAFE
   </label>
   
   <ul class="md-nav__list" data-md-scrollfix>
@@ -224,26 +222,28 @@
       
   
   
+  
+  
     
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
       
         
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
           
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
     
   
-    Vocabulary
+    Concepts
   
 
     
@@ -251,17 +251,35 @@
   
   
 
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/motivation.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Vocabulary
+    Motivation
   
 
     
@@ -270,170 +288,13 @@
   
 
       </a>
-      
-        
+    </li>
+  
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-introduction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Introduction
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-csvw-safe-classes-and-properties" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. CSVW-SAFE Classes and Properties
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. CSVW-SAFE Classes and Properties">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#21-csvw-safe-classes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.1 CSVW-SAFE Classes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2.1 CSVW-SAFE Classes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#json-ld-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        JSON-LD Structure
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#22-csvw-safe-properties" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.2 CSVW-SAFE Properties
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2.2 CSVW-SAFE Properties">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#221-dummy-modeling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.2.1 Dummy modeling
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#222-privacydummy-modeling-keys-disclosure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.2.2 Privacy/Dummy modeling: Keys disclosure
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#223-contribution-assumptions-for-dp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.2.3 Contribution assumptions (for DP)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2.2.3 Contribution assumptions (for DP)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#privacy-unit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Privacy Unit
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dp-contributions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DP Contributions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-csvw-safe-framework" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. CSVW-SAFE Framework
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -445,15 +306,62 @@
   
   
   
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specification
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../library/" class="md-nav__link">
+      <a href="../specification/classes.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Library
+    Classes
   
 
     
@@ -462,6 +370,124 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/properties.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Properties
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python Library
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Python Library
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../library/api/index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -729,76 +755,76 @@ However, it is often possible, and highly valuable, to share safe, public assump
 <img alt="Overview" src="images/csvw-safe_structure.png" /></p>
 <p>All properties of <code>csvw-safe</code> apply on these four classes.</p>
 <h4 id="json-ld-structure">JSON-LD Structure<a class="headerlink" href="#json-ld-structure" title="Permanent link">&para;</a></h4>
-<p>Thus from <code>csvw</code> json-ld</p>
-<pre><code class="language-bash">{
-  &quot;@type&quot;: &quot;csvw:Table&quot;,
-  &quot;name&quot;: &quot;penguins&quot;,
-  &quot;csvw:tableSchema&quot;: {
-    &quot;columns&quot;: [
-      {
-        &quot;@type&quot;: &quot;csvw:Column&quot;,
-        &quot;name&quot;: &quot;penguin_id&quot;,
-        &quot;datatype&quot;: &quot;integer&quot;
-      },
-      {
-        &quot;@type&quot;: &quot;csvw:Column&quot;,
-        &quot;name&quot;: &quot;species&quot;,
-        &quot;datatype&quot;: &quot;string&quot;,
-      },
-      ...
-    ]
-  }
-}
-</code></pre>
-<p>a <code>csvw</code> json-ld would organise classes followign this structure:</p>
-<pre><code class="language-bash">{
-  &quot;@type&quot;: &quot;csvw:Table&quot;,
-  &quot;name&quot;: &quot;penguins&quot;,
-  &quot;csvw-safe:x&quot;: &quot;csvw-safe_table_level_properties&quot;,
-  &quot;csvw:tableSchema&quot;: {
-    &quot;columns&quot;: [
-      {
-        &quot;@type&quot;: &quot;csvw:Column&quot;,
-        &quot;name&quot;: &quot;penguin_id&quot;,
-        &quot;datatype&quot;: &quot;integer&quot;,
-        &quot;csvw-safe:x&quot;: &quot;csvw-safe_column_level_properties&quot;,
-      },
-      {
-        &quot;@type&quot;: &quot;csvw:Column&quot;,
-        &quot;name&quot;: &quot;species&quot;,
-        &quot;datatype&quot;: &quot;string&quot;,
-        &quot;csvw-safe:public.partitions&quot;: [
-          { 
-            &quot;@type&quot;: &quot;csvw-safe:Partition&quot;, 
-            &quot;csvw-safe:predicate&quot;: { &quot;partitionValue&quot;: &quot;Adelie&quot; },
-            &quot;csvw-safe:x&quot;: &quot;csvw-safe_partition_level_properties&quot;,
-          },
-          ...
-        ]
-      },
-    ]
-  },
-  &quot;csvw-safe:additionalInformation&quot;: [
-    {
-      &quot;@type&quot;: &quot;csvw-safe:ColumnGroup&quot;,
-      &quot;csvw-safe:columns&quot;: [&quot;species&quot;, &quot;island&quot;],
-      &quot;csvw-safe:x&quot;: &quot;csvw-safe_columnGroup_level_properties&quot;,
-      &quot;csvw-safe:public.partitions&quot;: [
-        {
-          &quot;@type&quot;: &quot;csvw-safe:Partition&quot;,
-          &quot;csvw-safe:predicate&quot;: {
-            &quot;species&quot;: {&quot;partitionValue&quot;: &quot;Adelie&quot;}, 
-            &quot;island&quot;: {&quot;partitionValue&quot;: &quot;Torgersen&quot;},
-          }
-          &quot;csvw-safe:x&quot;: &quot;csvw-safe_partition_level_properties&quot;,
-        },
-        ....
-      ]
-    }
-  ]
-}
-</code></pre>
-<p>The next section describes the <code>csvw-safe</code> properties on the four classes.</p>
+<p>Thus from <code>csvw</code> json-ld
+<div class="highlight"><pre><span></span><code><span class="o">{</span>
+<span class="w">  </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw:Table&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;penguins&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;csvw:tableSchema&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;columns&quot;</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">      </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw:Column&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;penguin_id&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;datatype&quot;</span>:<span class="w"> </span><span class="s2">&quot;integer&quot;</span>
+<span class="w">      </span><span class="o">}</span>,
+<span class="w">      </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw:Column&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;species&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;datatype&quot;</span>:<span class="w"> </span><span class="s2">&quot;string&quot;</span>,
+<span class="w">      </span><span class="o">}</span>,
+<span class="w">      </span>...
+<span class="w">    </span><span class="o">]</span>
+<span class="w">  </span><span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></p>
+<p>a <code>csvw</code> json-ld would organise classes followign this structure:
+<div class="highlight"><pre><span></span><code><span class="o">{</span>
+<span class="w">  </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw:Table&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;penguins&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;csvw-safe:x&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw-safe_table_level_properties&quot;</span>,
+<span class="w">  </span><span class="s2">&quot;csvw:tableSchema&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;columns&quot;</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">      </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw:Column&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;penguin_id&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;datatype&quot;</span>:<span class="w"> </span><span class="s2">&quot;integer&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;csvw-safe:x&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw-safe_column_level_properties&quot;</span>,
+<span class="w">      </span><span class="o">}</span>,
+<span class="w">      </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw:Column&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;name&quot;</span>:<span class="w"> </span><span class="s2">&quot;species&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;datatype&quot;</span>:<span class="w"> </span><span class="s2">&quot;string&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;csvw-safe:public.partitions&quot;</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">          </span><span class="o">{</span><span class="w"> </span>
+<span class="w">            </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw-safe:Partition&quot;</span>,<span class="w"> </span>
+<span class="w">            </span><span class="s2">&quot;csvw-safe:predicate&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="s2">&quot;partitionValue&quot;</span>:<span class="w"> </span><span class="s2">&quot;Adelie&quot;</span><span class="w"> </span><span class="o">}</span>,
+<span class="w">            </span><span class="s2">&quot;csvw-safe:x&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw-safe_partition_level_properties&quot;</span>,
+<span class="w">          </span><span class="o">}</span>,
+<span class="w">          </span>...
+<span class="w">        </span><span class="o">]</span>
+<span class="w">      </span><span class="o">}</span>,
+<span class="w">    </span><span class="o">]</span>
+<span class="w">  </span><span class="o">}</span>,
+<span class="w">  </span><span class="s2">&quot;csvw-safe:additionalInformation&quot;</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">    </span><span class="o">{</span>
+<span class="w">      </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw-safe:ColumnGroup&quot;</span>,
+<span class="w">      </span><span class="s2">&quot;csvw-safe:columns&quot;</span>:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;species&quot;</span>,<span class="w"> </span><span class="s2">&quot;island&quot;</span><span class="o">]</span>,
+<span class="w">      </span><span class="s2">&quot;csvw-safe:x&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw-safe_columnGroup_level_properties&quot;</span>,
+<span class="w">      </span><span class="s2">&quot;csvw-safe:public.partitions&quot;</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">        </span><span class="o">{</span>
+<span class="w">          </span><span class="s2">&quot;@type&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw-safe:Partition&quot;</span>,
+<span class="w">          </span><span class="s2">&quot;csvw-safe:predicate&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">            </span><span class="s2">&quot;species&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;partitionValue&quot;</span>:<span class="w"> </span><span class="s2">&quot;Adelie&quot;</span><span class="o">}</span>,<span class="w"> </span>
+<span class="w">            </span><span class="s2">&quot;island&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;partitionValue&quot;</span>:<span class="w"> </span><span class="s2">&quot;Torgersen&quot;</span><span class="o">}</span>,
+<span class="w">          </span><span class="o">}</span>
+<span class="w">          </span><span class="s2">&quot;csvw-safe:x&quot;</span>:<span class="w"> </span><span class="s2">&quot;csvw-safe_partition_level_properties&quot;</span>,
+<span class="w">        </span><span class="o">}</span>,
+<span class="w">        </span>....
+<span class="w">      </span><span class="o">]</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">  </span><span class="o">]</span>
+<span class="o">}</span>
+</code></pre></div>
+The next section describes the <code>csvw-safe</code> properties on the four classes.</p>
 <p>A <code>csvw:Column</code> defines properties that apply when grouping on a single column, while a <code>csvw-safe:ColumnGroup</code> defines properties that apply when grouping on multiple columns simultaneously. At the column level, DP-related properties (e.g. <code>maxGroupsPerUnit</code>) describe the worst-case contribution across all partitions of that column. This can be seen as an upper bound over any possible grouping on that single column. At the column group level, these properties describe the worst-case contribution across all partitions of the combined grouping key (i.e. the joint domain of the columns). The most granular level is the <code>Partition</code>, where properties such as <code>maxContributions</code> apply to a specific region of the domain (either for a column or a column group). Column and column group level properties should therefore be interpreted as upper bounds over their respective partitions.</p>
 <h3 id="22-csvw-safe-properties">2.2 CSVW-SAFE Properties<a class="headerlink" href="#22-csvw-safe-properties" title="Permanent link">&para;</a></h3>
 <p>CSVW-SAFE properties belong to two main categories:

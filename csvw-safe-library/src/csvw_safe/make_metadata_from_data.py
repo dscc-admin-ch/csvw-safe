@@ -635,7 +635,6 @@ def make_metadata_from_data(  # noqa: PLR0913
     df: pd.DataFrame,
     privacy_unit: str,
     with_dependencies: bool = True,
-    # max_contributions: int,
     continuous_partitions: dict[str, list[Any]] | None = None,
     column_groups: list[list[str]] | None = None,
     default_contributions_level: str = "table",
@@ -652,8 +651,6 @@ def make_metadata_from_data(  # noqa: PLR0913
         Boolean if add dependencies between columns
     privacy_unit : str
         Column identifying the privacy unit.
-    max_contributions : int
-        Maximum number of contributions per unit.
     continuous_partitions : dict, optional
         Numeric partition boundaries.
     column_groups : list, optional
@@ -755,10 +752,6 @@ def main() -> None:
 
     --with_dependencies: bool. Default is True.
 
-    --max-contributions : int, optional
-        Declared global maximum number of contributions per privacy unit
-        (L-infinity bound). Default is 2.
-
     --continuous_partitions : str, optional
         JSON string specifying bin boundaries for continuous columns.
 
@@ -793,10 +786,6 @@ def main() -> None:
     )
 
     parser.add_argument("--privacy_unit", help="Column defining the privacy unit (e.g., patient_id)")
-
-    # parser.add_argument(
-    #     "--max_contributions", help="Declared bounds.maxContributions (l_infinity)", default=None
-    # )
 
     parser.add_argument(
         "--continuous_partitions",
