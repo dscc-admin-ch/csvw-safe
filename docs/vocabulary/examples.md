@@ -69,12 +69,12 @@ This section provides example metadata structures.
 {
   "partitions": [
     {
-      "min": 0,
-      "max": 18
+      "minimum": 0,
+      "maximum": 18
     },
     {
-      "min": 18,
-      "max": 65
+      "minimum": 18,
+      "maximum": 65
     }
   ]
 }

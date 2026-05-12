@@ -2,21 +2,34 @@
 
 CSVW-SAFE defines properties useful for generating realistic dummy datasets.
 
-These properties improve synthetic data quality while remaining compatible with differential privacy workflows.
+These properties improve dummy data quality while remaining compatible with differential privacy workflows.
+
+!!! danger "Warning"
+
+    If they disclose private information, they should not be added.
+
 
 ## Nullable Proportion
 
 | Property | Meaning |
 |---|---|
 | `nullableProportion` | Approximate fraction of null values |
+| `maxNumPartitions` | Maximum number of partition (keys) |
+
 
 Example:
 
 ```json
 {
-  "nullableProportion": 0.15
+  "nullableProportion": 0.15,
+  "maxNumPartitions": 5,
+  "publicKeys": ["January", "February"],
+  "exhaustiveKeys": false
 }
 ```
+These column will be generated with arounf 15% of null values and take values in ["January", "February", "a", "b", "c"]. The public keys and then random keys to have the same number of partitions as `maxNumPartitions`.
+
+Note: `nullableProportion` may be approximate. 
 
 ## Dependencies
 
@@ -55,6 +68,18 @@ Example:
 }
 ```
 
+Another example:
+
+```json
+{
+  "dependencyType": "mapping",
+  "valueMap": {
+    "medical": ["doctor", "nurse"],
+    "engineer": ["civil", "mechanical"]
+  }
+}
+```
+
 #### `fixedPerEntity`
 
 Indicates values remain constant for the same privacy unit.
@@ -62,6 +87,7 @@ Indicates values remain constant for the same privacy unit.
 Example:
 
 - birth date per patient
+- country of birth per individual
 - height per (adult) person
 
 
@@ -71,20 +97,47 @@ CSVW-SAFE can define known public domains.
 
 | Property         | Meaning                     |
 | ---------------- | --------------------------- |
-| `publicKeys`     | Known public values         |
+| `publicKeys`     | List of public values       |
 | `exhaustiveKeys` | Whether keys are exhaustive |
 
 Example:
 
 ```json
 {
-  "publicKeys": ["January", "February"]
+  "publicKeys": ["January", "February"],
+  "exhaustiveKeys": false
 }
 ```
+
+```json
+{
+  "keyValues": [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ],
+  "exhaustiveKeys": true
+}
+```
+If `exhaustiveKeys=true`, all possible keys are publicly listed.
 
 ## Partitions
 
 Partitions describe public regions of the domain.
+
+| Property         | Meaning                     |
+| ---------------- | --------------------------- |
+| `partition`      | List of `csvw-safe:Partition` objects |
+| `exhaustivePartitions` | Whether partitions fully cover the domain |
 
 Examples:
 
@@ -97,3 +150,69 @@ Partitions may be:
 - exhaustive
 - overlapping
 - disjoint
+
+Both `csvw:Column` and `csvw:ColumnGroup` may define partitions.
+
+### Example: Column Partitions
+
+Example partitioning on the `species` column:
+
+```json
+{
+  "name": "species",
+  "datatype": "string",
+  "partitions": [
+    {
+      "@type": "Partition",
+      "predicate": {
+        "partitionValue": "Adelie"
+      },
+      "maxLength": 152
+    },
+    {
+      "@type": "Partition",
+      "predicate": {
+        "partitionValue": "Gentoo"
+      },
+      "maxLength": 124
+    }
+  ],
+  "keyValues": [
+    "Adelie",
+    "Gentoo"
+  ],
+  "exhaustiveKeys": true,
+  "maxNumPartitions": 2
+}
+```
+
+
+### Example: Column Group Partitions
+
+Example partitioning on the `(species, island)` column:
+
+```json
+{
+  "@type": "ColumnGroup",
+  "columnsInGroup": [
+    "species",
+    "island"
+  ],
+  "partitions": [
+    {
+      "@type": "Partition",
+      "predicate": {
+        "species": {
+          "partitionValue": "Adelie"
+        },
+        "island": {
+          "partitionValue": "Dream"
+        }
+      },
+      "maxLength": 100
+    }
+  ],
+  "maxNumPartitions": 5
+}
+```
+Column groups describe partitions resulting from grouping on multiple columns simultaneously.

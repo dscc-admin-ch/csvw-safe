@@ -7,6 +7,8 @@
 [![CodeQL](https://github.com/dscc-admin-ch/csvw-safe/actions/workflows/codeql.yml/badge.svg)](https://github.com/dscc-admin-ch/csvw-safe/actions/workflows/codeql.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
+See structured and more friendly documentation [here](https://dscc-admin-ch.github.io/csvw-safe-docs/library/overview/).
+
 This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
 
 It includes five main scripts:

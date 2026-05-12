@@ -49,7 +49,8 @@ The `csvw-safe-library` provides:
 - OpenDP integration
 - SmartNoise SQL conversion
 
-![Overview](../images/utils_scripts.png)
+![Workflow](../images/csvwsafe_workflow_1.png)
+![Integrations](../images/csvwsafe_workflow_2.png)
 
 ## Differential Privacy Integrations
 
@@ -58,4 +59,4 @@ CSVW-SAFE can be converted to:
 - OpenDP contexts
 - SmartNoise SQL metadata
 
-This enables metadata-driven DP pipelines.
+This enables automated DP pipelines (in [Lomas](https://github.com/dscc-admin-ch/lomas) for instance).
