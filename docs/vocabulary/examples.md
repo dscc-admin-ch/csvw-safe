@@ -84,13 +84,5 @@ This section provides example metadata structures.
 
 See:
 
-- Penguin metadata example
-- Example notebooks
-- CSVW-EO library examples
-
-Repository examples demonstrate:
-
-- metadata generation
-- validation
-- dummy data generation
-- DP workflows
+- Penguin metadata examples [here](https://github.com/dscc-admin-ch/csvw-eo/tree/main/csvw-eo-library/examples/metadata)
+- Example notebook [here](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-library/examples/Use-Library.ipynb)

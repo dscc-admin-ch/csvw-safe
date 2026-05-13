@@ -9,6 +9,14 @@ CSVW-EO workflows usually follow four main steps:
 
 ---
 
+# Jupyter notebook example
+
+The [CSVW-EO DEMO notebook](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-library/examples/Use-Library.ipynb) provides a complete end-to-end demonstration of the workflow, including several practical usage examples.
+
+The repository also includes a set of example metadata files located in: [examples/metadata/](https://github.com/dscc-admin-ch/csvw-eo/tree/main/csvw-eo-library/examples/metadata). These examples illustrate how metadata can be defined at different levels of precision for use in CSVW-EO workflows.
+
+---
+
 # CLI Workflow
 
 ## 1. Generate Metadata
@@ -97,8 +105,14 @@ dummy_df = make_dummy_from_metadata(
 
 ## Important Warning
 
-**Automatically generated metadata is not safe.**
+!!! danger "Warning"
 
-**Human review is mandatory before publication or sharing.**
+  **Automatically generated metadata is not safe.**
 
-**When in doubt, remove information.**
+!!! danger "Warning"
+
+  **Human review is mandatory before publication or sharing.**
+
+!!! danger "Warning"
+
+  **When in doubt, remove information.**
