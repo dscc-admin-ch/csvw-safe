@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from csvw_safe.constants import (
+from csvw_eo.constants import (
     COL_NAME,
     DATATYPE,
     DEFAULT_NUMBER_PARTITIONS,
@@ -23,8 +23,8 @@ from csvw_safe.constants import (
     VALUE_MAP,
     DependencyType,
 )
-from csvw_safe.datatypes import DataTypes
-from csvw_safe.generate_series import (
+from csvw_eo.datatypes import DataTypes
+from csvw_eo.generate_series import (
     bigger_series,
     fixed_series,
     mapping_series,

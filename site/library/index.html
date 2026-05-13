@@ -1062,7 +1062,7 @@ pip install -e .[dev]
 <p>For testing:
 <div class="highlight"><pre><span></span><code>cd csvw-eo-library
 pip install -e .[dev]
-pytest --cov=csvw_safe --cov-report=term-missing tests/
+pytest --cov=csvw_eo --cov-report=term-missing tests/
 </code></pre></div></p>
 <h2 id="learn-via-example">Learn via example<a class="headerlink" href="#learn-via-example" title="Permanent link">&para;</a></h2>
 <p>To get to know the library with examples, see the <a href="notebook https://github.com/dscc-admin-ch/csvw-eo/blob/update_readme/csvw-eo-library/examples/Use-Library.ipynb">notebook on the extended penguin dataset</a> and the associated outputs in <a href="https://github.com/dscc-admin-ch/csvw-eo/tree/update_readme/csvw-eo-library/examples/metadata">metadata example folder</a>.</p>
@@ -1476,7 +1476,7 @@ Notes
 <h4 id="cli-usage_3">CLI Usage<a class="headerlink" href="#cli-usage_3" title="Permanent link">&para;</a></h4>
 <p>Basic conversion
 <div class="highlight"><pre><span></span><code>import<span class="w"> </span>polars<span class="w"> </span>as<span class="w"> </span>pl
-from<span class="w"> </span>csvw_safe.csvw_to_opendp_context<span class="w"> </span>import<span class="w"> </span>csvw_to_opendp_context
+from<span class="w"> </span>csvw_eo.csvw_to_opendp_context<span class="w"> </span>import<span class="w"> </span>csvw_to_opendp_context
 
 <span class="nv">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>pl.scan_csv<span class="o">(</span><span class="s2">&quot;data.csv&quot;</span><span class="o">)</span>
 
@@ -1516,7 +1516,7 @@ and with shacl constraints:
 </ol>
 <h3 id="python-api-workflow">Python API Workflow<a class="headerlink" href="#python-api-workflow" title="Permanent link">&para;</a></h3>
 <p><div class="highlight"><pre><span></span><code>import pandas as pd
-from csvw_safe.make_metadata_from_data import make_metadata_from_data
+from csvw_eo.make_metadata_from_data import make_metadata_from_data
 
 df = pd.read_csv(&quot;data.csv&quot;)
 
@@ -1524,10 +1524,10 @@ df = pd.read_csv(&quot;data.csv&quot;)
 metadata = make_metadata_from_data(df, csv_url=&quot;data.csv&quot;, individual_col=&quot;user_id&quot;)
 </code></pre></div>
 MANUAL REVIEW OF METADATA. VERIFY ONLY PUBLIC INFORMATION. REMOVE OTHERWISE.</p>
-<div class="highlight"><pre><span></span><code>from csvw_safe.validate_metadata import validate_metadata
-from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
-from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
-from csvw_safe.assert_same_structure import assert_same_structure
+<div class="highlight"><pre><span></span><code>from csvw_eo.validate_metadata import validate_metadata
+from csvw_eo.validate_metadata_shacl import validate_metadata_shacl
+from csvw_eo.make_dummy_from_metadata import make_dummy_from_metadata
+from csvw_eo.assert_same_structure import assert_same_structure
 
 # Validate metadata
 errors = validate_metadata(metadata)
@@ -1543,7 +1543,7 @@ assert_same_structure(df, dummy_df)
 <div class="highlight"><pre><span></span><code>examples/
 └─ Notebooks.ipynb                      # Example notebooks demonstrating CSVW-EO workflows
 
-src/csvw_safe/
+src/csvw_eo/
     ├─ __init__.py                          # Package initializer for CSVW-EO library
 
     ├─ make_metadata_from_data.py          # Generate CSVW-EO metadata automatically from a dataset

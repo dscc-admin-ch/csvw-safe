@@ -28,7 +28,7 @@ pip install -e .[dev]
 ## Run Tests
 
 ```bash
-pytest --cov=csvw_safe --cov-report=term-missing tests/
+pytest --cov=csvw_eo --cov-report=term-missing tests/
 ```
 
 ## Run linter

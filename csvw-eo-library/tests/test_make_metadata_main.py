@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from csvw_safe import constants as c
-from csvw_safe.make_metadata_from_data import make_metadata_from_data
+from csvw_eo import constants as c
+from csvw_eo.make_metadata_from_data import make_metadata_from_data
 
 
 @pytest.fixture

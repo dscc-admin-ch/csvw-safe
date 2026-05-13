@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from csvw_safe.constants import (
+from csvw_eo.constants import (
     COL_LIST,
     COL_NAME,
     DATATYPE,
@@ -13,7 +13,7 @@ from csvw_safe.constants import (
     REQUIRED,
     TABLE_SCHEMA,
 )
-from csvw_safe.csvw_to_smartnoise_sql import csvw_to_smartnoise_sql
+from csvw_eo.csvw_to_smartnoise_sql import csvw_to_smartnoise_sql
 
 
 def mock_csvw_metadata():

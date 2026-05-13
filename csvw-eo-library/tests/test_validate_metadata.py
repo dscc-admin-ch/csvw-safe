@@ -1,7 +1,7 @@
-from csvw_safe import constants as c
-from csvw_safe.constants import DependencyType
-from csvw_safe.datatypes import DataTypes
-from csvw_safe.metadata_structure import (
+from csvw_eo import constants as c
+from csvw_eo.constants import DependencyType
+from csvw_eo.datatypes import DataTypes
+from csvw_eo.metadata_structure import (
     ColumnMetadata,
     ContinuousPredicate,
     MultiColumnPartition,
@@ -9,7 +9,7 @@ from csvw_safe.metadata_structure import (
     SingleColumnPartition,
     TableMetadata,
 )
-from csvw_safe.validate_metadata import validate_metadata
+from csvw_eo.validate_metadata import validate_metadata
 
 
 def test_validate_metadata_minimal():

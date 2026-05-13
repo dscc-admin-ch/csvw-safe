@@ -1,4 +1,4 @@
-from csvw_safe.constants import (
+from csvw_eo.constants import (
     ADD_INFO,
     COL_LIST,
     COL_NAME,
@@ -11,7 +11,7 @@ from csvw_safe.constants import (
     PUBLIC_LENGTH,
     TABLE_SCHEMA,
 )
-from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
+from csvw_eo.csvw_to_opendp_margins import csvw_to_opendp_margins
 
 
 def mock_csvw_metadata():

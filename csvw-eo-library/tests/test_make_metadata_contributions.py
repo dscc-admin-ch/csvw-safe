@@ -1,13 +1,13 @@
 import pandas as pd
 import pytest
 
-from csvw_safe import constants as c
-from csvw_safe.make_metadata_from_data import (
+from csvw_eo import constants as c
+from csvw_eo.make_metadata_from_data import (
     build_partitions,
     make_metadata_from_data,
     make_numeric_partitions,
 )
-from csvw_safe.metadata_structure import (
+from csvw_eo.metadata_structure import (
     CategoricalPredicate,
     ContinuousPredicate,
     MultiColumnPartition,

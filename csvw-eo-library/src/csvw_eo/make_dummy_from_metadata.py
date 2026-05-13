@@ -24,7 +24,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from csvw_safe.constants import (
+from csvw_eo.constants import (
     ADD_INFO,
     COL_LIST,
     COL_NAME,
@@ -42,8 +42,8 @@ from csvw_safe.constants import (
     TABLE_SCHEMA,
     UPPER_BOUND,
 )
-from csvw_safe.datatypes import XSD_GROUP_MAP, DataTypes, DataTypesGroups
-from csvw_safe.generate_series import generate_dataframe
+from csvw_eo.datatypes import XSD_GROUP_MAP, DataTypes, DataTypesGroups
+from csvw_eo.generate_series import generate_dataframe
 
 RANDOM_STRINGS = list(string.ascii_lowercase + string.ascii_uppercase + string.digits)
 

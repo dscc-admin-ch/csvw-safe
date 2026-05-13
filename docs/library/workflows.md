@@ -74,9 +74,9 @@ python assert_same_structure.py \
 ```bash
 import pandas as pd
 
-from csvw_safe.make_metadata_from_data import make_metadata_from_data
-from csvw_safe.validate_metadata import validate_metadata
-from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
+from csvw_eo.make_metadata_from_data import make_metadata_from_data
+from csvw_eo.validate_metadata import validate_metadata
+from csvw_eo.make_dummy_from_metadata import make_dummy_from_metadata
 
 df = pd.read_csv("data.csv")
 

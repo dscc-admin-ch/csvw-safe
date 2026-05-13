@@ -6,10 +6,10 @@ Tools for generating CSVW-EO metadata from datasets.
 
 ## Main API
 
-::: csvw_safe.make_metadata_from_data
+::: csvw_eo.make_metadata_from_data
 
 ---
 
 ## Supporting Utilities
 
-::: csvw_safe.datatypes
+::: csvw_eo.datatypes

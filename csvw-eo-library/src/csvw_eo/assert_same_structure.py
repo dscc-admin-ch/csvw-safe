@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from csvw_safe.datatypes import (
+from csvw_eo.datatypes import (
     XSD_GROUP_MAP,
     DataTypesGroups,
     infer_xmlschema_datatype,

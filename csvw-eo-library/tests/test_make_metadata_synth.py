@@ -1,7 +1,7 @@
 import pandas as pd
 
-from csvw_safe.constants import DependencyType
-from csvw_safe.make_metadata_from_data import (
+from csvw_eo.constants import DependencyType
+from csvw_eo.make_metadata_from_data import (
     get_continuous_bounds,
     identify_dependency,
 )

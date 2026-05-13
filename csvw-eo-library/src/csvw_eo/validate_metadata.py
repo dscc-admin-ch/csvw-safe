@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from csvw_safe.metadata_structure import TableMetadata
+from csvw_eo.metadata_structure import TableMetadata
 
 
 def validate_metadata(metadata: dict[str, Any]) -> TableMetadata:

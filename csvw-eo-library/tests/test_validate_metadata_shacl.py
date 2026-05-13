@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from csvw_safe import constants as c
-from csvw_safe.datatypes import DataTypes
-from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
+from csvw_eo import constants as c
+from csvw_eo.datatypes import DataTypes
+from csvw_eo.validate_metadata_shacl import validate_metadata_shacl
 
 
 @pytest.fixture(scope="session")

@@ -54,7 +54,7 @@ The `csvw_to_opendp_context.py` utility creates OpenDP contexts from metadata an
 ```bash
 import polars as pl
 
-from csvw_safe.csvw_to_opendp_context import (
+from csvw_eo.csvw_to_opendp_context import (
     csvw_to_opendp_context,
 )
 

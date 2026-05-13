@@ -20,7 +20,7 @@ from typing import Any
 
 from opendp.extras.polars import Margin
 
-from csvw_safe.constants import (
+from csvw_eo.constants import (
     ADD_INFO,
     COL_LIST,
     COL_NAME,

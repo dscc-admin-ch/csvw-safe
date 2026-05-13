@@ -6,7 +6,7 @@ from typing import TypeVar
 
 import pandas as pd
 
-from csvw_safe.constants import DATE_LENGTH
+from csvw_eo.constants import DATE_LENGTH
 
 
 class ColumnKind(StrEnum):

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from csvw_safe.constants import (
+from csvw_eo.constants import (
     ADD_INFO,
     COL_LIST,
     COL_NAME,
@@ -20,8 +20,8 @@ from csvw_safe.constants import (
     TABLE_SCHEMA,
     UPPER_BOUND,
 )
-from csvw_safe.datatypes import DataTypes
-from csvw_safe.make_dummy_from_metadata import (
+from csvw_eo.datatypes import DataTypes
+from csvw_eo.make_dummy_from_metadata import (
     _apply_value_mask,
     _predicate_mask,
     apply_nulls_serie,

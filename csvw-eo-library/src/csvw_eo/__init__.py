@@ -1,5 +1,5 @@
 """
-Top-level public interface for csvw_safe.
+Top-level public interface for csvw_eo.
 
 This module provides a simplified API by re-exporting the most commonly used
 functions, classes, and constants for working with CSVW-style metadata.

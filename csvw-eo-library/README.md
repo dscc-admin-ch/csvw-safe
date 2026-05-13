@@ -54,7 +54,7 @@ For testing:
 ```
 cd csvw-eo-library
 pip install -e .[dev]
-pytest --cov=csvw_safe --cov-report=term-missing tests/
+pytest --cov=csvw_eo --cov-report=term-missing tests/
 ```
 
 ## Learn via example
@@ -554,7 +554,7 @@ The resulting OpenDP `Context` includes:
 Basic conversion
 ```bash
 import polars as pl
-from csvw_safe.csvw_to_opendp_context import csvw_to_opendp_context
+from csvw_eo.csvw_to_opendp_context import csvw_to_opendp_context
 
 data = pl.scan_csv("data.csv")
 
@@ -598,7 +598,7 @@ python assert_same_structure.py data.csv dummy.csv
 ### Python API Workflow
 ```
 import pandas as pd
-from csvw_safe.make_metadata_from_data import make_metadata_from_data
+from csvw_eo.make_metadata_from_data import make_metadata_from_data
 
 df = pd.read_csv("data.csv")
 
@@ -609,10 +609,10 @@ metadata = make_metadata_from_data(df, csv_url="data.csv", individual_col="user_
 MANUAL REVIEW OF METADATA. VERIFY ONLY PUBLIC INFORMATION. REMOVE OTHERWISE.
 
 ```
-from csvw_safe.validate_metadata import validate_metadata
-from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
-from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
-from csvw_safe.assert_same_structure import assert_same_structure
+from csvw_eo.validate_metadata import validate_metadata
+from csvw_eo.validate_metadata_shacl import validate_metadata_shacl
+from csvw_eo.make_dummy_from_metadata import make_dummy_from_metadata
+from csvw_eo.assert_same_structure import assert_same_structure
 
 # Validate metadata
 errors = validate_metadata(metadata)
@@ -633,7 +633,7 @@ assert_same_structure(df, dummy_df)
 examples/
 └─ Notebooks.ipynb                      # Example notebooks demonstrating CSVW-EO workflows
 
-src/csvw_safe/
+src/csvw_eo/
     ├─ __init__.py                          # Package initializer for CSVW-EO library
 
     ├─ make_metadata_from_data.py          # Generate CSVW-EO metadata automatically from a dataset

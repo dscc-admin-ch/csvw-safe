@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from csvw_safe.constants import (
+from csvw_eo.constants import (
     COL_LIST,
     COL_NAME,
     DATATYPE,
@@ -23,7 +23,7 @@ from csvw_safe.constants import (
     REQUIRED,
     TABLE_SCHEMA,
 )
-from csvw_safe.datatypes import XSD_GROUP_MAP, DataTypesGroups, to_snsql_datatype
+from csvw_eo.datatypes import XSD_GROUP_MAP, DataTypesGroups, to_snsql_datatype
 
 
 def csvw_to_snsql_column(col_meta: dict[str, Any]) -> dict[str, Any]:

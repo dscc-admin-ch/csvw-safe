@@ -4,8 +4,8 @@ from typing import Any, Union
 
 from pydantic import BaseModel, Field
 
-from csvw_safe import constants as c
-from csvw_safe.datatypes import DataTypes
+from csvw_eo import constants as c
+from csvw_eo.datatypes import DataTypes
 
 
 class Dependency(BaseModel):

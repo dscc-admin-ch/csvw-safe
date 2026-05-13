@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
-from csvw_safe.constants import DependencyType
-from csvw_safe.datatypes import (
+from csvw_eo.constants import DependencyType
+from csvw_eo.datatypes import (
     ColumnKind,
     DataTypes,
     T,
@@ -27,7 +27,7 @@ from csvw_safe.datatypes import (
     is_categorical,
     is_continuous,
 )
-from csvw_safe.metadata_structure import (
+from csvw_eo.metadata_structure import (
     CategoricalPredicate,
     ColumnGroupMetadata,
     ColumnMetadata,
@@ -41,7 +41,7 @@ from csvw_safe.metadata_structure import (
     full_partition_to_key_multi,
     full_partition_to_key_single,
 )
-from csvw_safe.utils import (
+from csvw_eo.utils import (
     ContributionLevel,
     get_effective_contrib_level,
     get_group_contribution_level,

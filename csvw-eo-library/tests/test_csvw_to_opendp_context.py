@@ -2,7 +2,7 @@ import opendp.prelude as dp
 import polars as pl
 import pytest
 
-from csvw_safe.constants import (  # PRIVACY_ID,
+from csvw_eo.constants import (  # PRIVACY_ID,
     ADD_INFO,
     COL_LIST,
     COL_NAME,
@@ -14,7 +14,7 @@ from csvw_safe.constants import (  # PRIVACY_ID,
     PRIVACY_UNIT,
     TABLE_SCHEMA,
 )
-from csvw_safe.csvw_to_opendp_context import csvw_to_opendp_context
+from csvw_eo.csvw_to_opendp_context import csvw_to_opendp_context
 
 dp.enable_features("contrib")
 

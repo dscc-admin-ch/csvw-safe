@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from csvw_safe.datatypes import (
+from csvw_eo.datatypes import (
     DataTypes,
     infer_xmlschema_datatype,
     is_categorical,

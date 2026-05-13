@@ -54,8 +54,8 @@ pip install csvw-eo
 ## Quick Example
 
 ```bash
-from csvw_safe.make_metadata_from_data import make_metadata_from_data
-from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
+from csvw_eo.make_metadata_from_data import make_metadata_from_data
+from csvw_eo.make_dummy_from_metadata import make_dummy_from_metadata
 
 metadata = make_metadata_from_data(
     df,

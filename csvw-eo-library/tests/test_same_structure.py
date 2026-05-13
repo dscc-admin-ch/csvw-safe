@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from csvw_safe.assert_same_structure import assert_same_structure
+from csvw_eo.assert_same_structure import assert_same_structure
 
 
 def test_assert_same_structure():

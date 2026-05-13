@@ -4,11 +4,11 @@
 # import pandas as pd
 # import pytest
 
-# from csvw_safe.assert_same_structure import assert_same_structure
-# from csvw_safe.make_dummy_from_metadata import make_dummy_from_metadata
-# from csvw_safe.make_metadata_from_data import make_metadata_from_data
-# from csvw_safe.validate_metadata import validate_metadata
-# from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
+# from csvw_eo.assert_same_structure import assert_same_structure
+# from csvw_eo.make_dummy_from_metadata import make_dummy_from_metadata
+# from csvw_eo.make_metadata_from_data import make_metadata_from_data
+# from csvw_eo.validate_metadata import validate_metadata
+# from csvw_eo.validate_metadata_shacl import validate_metadata_shacl
 
 
 # def make_random_unique_id(

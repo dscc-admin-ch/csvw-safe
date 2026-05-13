@@ -20,7 +20,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from csvw_safe.constants import (
+from csvw_eo.constants import (
     COL_NAME,
     DATATYPE,
     DEFAULT_NUMBER_PARTITIONS,
@@ -40,7 +40,7 @@ from csvw_safe.constants import (
     VALUE_MAP,
     DependencyType,
 )
-from csvw_safe.datatypes import (
+from csvw_eo.datatypes import (
     XSD_GROUP_MAP,
     DataTypes,
     DataTypesGroups,
