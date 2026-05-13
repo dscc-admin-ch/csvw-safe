@@ -10,7 +10,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: csvw-safe-library
+        working-directory: csvw-eo-library
 
     steps:
       - name: Checkout repo

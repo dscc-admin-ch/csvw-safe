@@ -1,6 +1,6 @@
 # API Reference
 
-The CSVW-SAFE API is organized into several functional groups:
+The CSVW-EO API is organized into several functional groups:
 
 - Metadata generation
 - Dummy data generation

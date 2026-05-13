@@ -1,7 +1,7 @@
 # SmartNoise SQL Integration
 
-Convert CSVW-SAFE metadata into SmartNoise SQL configuration.
+Convert CSVW-EO metadata into SmartNoise SQL configuration.
 
 ---
 
-::: csvw_safe.csvw_to_smartnoise_sql
+::: csvw_eo.csvw_to_smartnoise_sql

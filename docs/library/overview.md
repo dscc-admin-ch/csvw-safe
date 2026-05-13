@@ -1,6 +1,6 @@
-# CSVW-SAFE Python Library
+# CSVW-EO Python Library
 
-The `csvw-safe` Python package provides utilities for generating, validating, and using CSVW-SAFE metadata for safe metadata sharing and Differential Privacy (DP) workflows.
+The `csvw-eo` Python package provides utilities for generating, validating, and using CSVW-EO metadata for safe metadata sharing and Differential Privacy (DP) workflows.
 
 The library helps:
 
@@ -26,7 +26,7 @@ The library includes the following tools:
 
 | Script | Purpose |
 |---|---|
-| `make_metadata_from_data.py` | Generate CSVW-SAFE metadata from data |
+| `make_metadata_from_data.py` | Generate CSVW-EO metadata from data |
 | `make_dummy_from_metadata.py` | Generate dummy datasets from metadata |
 | `validate_metadata.py` | Validate metadata structure |
 | `validate_metadata_shacl.py` | Validate metadata against SHACL constraints |

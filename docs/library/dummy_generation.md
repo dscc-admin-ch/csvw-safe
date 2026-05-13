@@ -1,6 +1,6 @@
 # Dummy Dataset Generation
 
-The `make_dummy_from_metadata.py` utility generates synthetic datasets from CSVW-SAFE metadata.
+The `make_dummy_from_metadata.py` utility generates synthetic datasets from CSVW-EO metadata.
 
 ---
 

@@ -28,13 +28,13 @@ jobs:
             pymdown-extensions
 
       - name: Install library
-        run: pip install -e ./csvw-safe-library
+        run: pip install -e ./csvw-eo-library
 
       - name: Sync images
         run: |
           mkdir -p docs/images
           cp -r images/* docs/images/
-          cp -r csvw-safe-library/images/* docs/images/
+          cp -r csvw-eo-library/images/* docs/images/
 
       - name: Build docs
         run: mkdocs build
@@ -46,5 +46,5 @@ jobs:
         with:
           source-directory: site/
           destination-github-username: dscc-admin-ch
-          destination-repository-name: csvw-safe-docs
+          destination-repository-name: csvw-eo-docs
           target-branch: main

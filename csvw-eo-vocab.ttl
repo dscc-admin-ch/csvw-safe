@@ -1,0 +1,205 @@
+@prefix csvw-eo: <https://w3id.org/csvw-eo#> .
+@prefix csvw:      <http://www.w3.org/ns/csvw#> .
+@prefix rdf:       <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:      <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:       <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:       <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:   <http://purl.org/dc/terms/> .
+
+
+# =====================================================
+# Ontology
+# =====================================================
+
+csvw-eo:
+    a owl:Ontology ;
+    dct:title "CSVW Differential Privacy Extension Vocabulary" ;
+    owl:versionInfo "0.3.0" ;
+    owl:versionIRI <https://w3id.org/csvw-dp/0.3.0> ;
+    dct:description """
+    A vocabulary extending W3C CSV on the Web metadata for expressing
+    safe structural and differential privacy modeling assumptions.
+    """ ;
+    dct:creator <https://github.com/dscc-admin-ch> ;
+    dct:publisher <https://github.com/dscc-admin-ch> ;
+    dct:created "2026-02-04"^^xsd:date ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:imports <http://www.w3.org/ns/csvw> ;
+    rdfs:seeAlso <https://github.com/dscc-admin-ch/csvw-dp> .
+
+
+################################################################################
+# Core Classes
+################################################################################
+
+csvw-eo:GroupingKey a owl:Class ;
+    rdfs:label "Grouping Key" ;
+    rdfs:comment "Represents a multi-column grouping space." .
+
+csvw-eo:ColumnGroup a owl:Class ;
+    rdfs:subClassOf csvw-eo:GroupingKey ;
+    rdfs:label "Column Group" ;
+    rdfs:comment "Grouping key composed of multiple columns." .
+
+csvw-eo:Partition a owl:Class ;
+    rdfs:label "Partition" ;
+    rdfs:comment "A publicly defined region of the value domain." .
+
+csvw-eo:Contribution a owl:Class ;
+    rdfs:label "Contribution" ;
+    rdfs:comment "Contribution bounds relative to a specific privacy unit." .
+
+################################################################################
+# Privacy Model
+################################################################################
+
+csvw-eo:privacyModel a owl:ObjectProperty ;
+    rdfs:domain csvw:Table ;
+    rdfs:range csvw-eo:PrivacyModel ;
+    rdfs:label "privacy model" .
+
+csvw-eo:PrivacyModel a owl:Class .
+
+csvw-eo:independent a csvw-eo:PrivacyModel .
+csvw-eo:hierarchical a csvw-eo:PrivacyModel .
+csvw-eo:joint a csvw-eo:PrivacyModel .
+
+################################################################################
+# Public Invariant Properties
+################################################################################
+
+csvw-eo:public.privacyUnit a owl:DatatypeProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-eo:Contribution)
+    ] ;
+    rdfs:range xsd:string ;
+    rdfs:label "privacy unit identifier" .
+
+csvw-eo:public.privacyId a owl:DatatypeProperty ;
+    rdfs:domain csvw:Column ;
+    rdfs:range xsd:boolean .
+
+csvw-eo:public.length a owl:DatatypeProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-eo:Partition)
+    ] ;
+    rdfs:range xsd:nonNegativeInteger .
+
+csvw-eo:public.maxNumPartitions a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:GroupingKey ;
+    rdfs:range xsd:nonNegativeInteger .
+
+csvw-eo:public.partitions a owl:ObjectProperty ;
+    rdfs:domain csvw-eo:GroupingKey ;
+    rdfs:range csvw-eo:Partition .
+
+csvw-eo:public.exhaustivePartitions a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:GroupingKey ;
+    rdfs:range xsd:boolean .
+
+################################################################################
+# Contribution Bounds (Privacy Guarantees)
+################################################################################
+
+csvw-eo:bounds.maxContributions a owl:DatatypeProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-eo:Partition csvw-eo:Contribution)
+    ] ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "l_infinity bound: max rows per privacy unit per region." .
+
+csvw-eo:bounds.maxLength a owl:DatatypeProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-eo:Partition)
+    ] ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "Maximum theoretical number of rows." .
+
+csvw-eo:bounds.maxGroupsPerUnit a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:GroupingKey ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment "l_0 bound: max partitions affected per privacy unit." .
+
+################################################################################
+# Preprocessing Recommendations
+################################################################################
+
+csvw-eo:rec.maxContributions a owl:DatatypeProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-eo:Partition csvw-eo:Contribution)
+    ] ;
+    rdfs:range xsd:nonNegativeInteger .
+
+csvw-eo:rec.maxGroupsPerUnit a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:GroupingKey ;
+    rdfs:range xsd:nonNegativeInteger .
+
+################################################################################
+# Contribution Wrapper
+################################################################################
+
+csvw-eo:contributions a owl:ObjectProperty ;
+    rdfs:domain [
+        a owl:Class ;
+        owl:unionOf (csvw:Table csvw-eo:Partition csvw-eo:GroupingKey)
+    ] ;
+    rdfs:range csvw-eo:Contribution .
+
+################################################################################
+# Partition Predicate Model
+################################################################################
+
+csvw-eo:predicate a owl:ObjectProperty ;
+    rdfs:domain csvw-eo:Partition ;
+    rdfs:range csvw-eo:Predicate .
+
+csvw-eo:Predicate a owl:Class .
+
+csvw-eo:partitionValue a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:Predicate ;
+    rdfs:range xsd:string .
+
+csvw-eo:lowerBound a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:Predicate ;
+    rdfs:range xsd:decimal .
+
+csvw-eo:upperBound a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:Predicate ;
+    rdfs:range xsd:decimal .
+
+csvw-eo:lowerInclusive a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:Predicate ;
+    rdfs:range xsd:boolean .
+
+csvw-eo:upperInclusive a owl:DatatypeProperty ;
+    rdfs:domain csvw-eo:Predicate ;
+    rdfs:range xsd:boolean .
+
+csvw-eo:components a owl:ObjectProperty ;
+    rdfs:domain csvw-eo:Predicate ;
+    rdfs:range rdf:Property ;
+    rdfs:comment "Map column name to component predicate (JSON-LD object form)." .
+
+################################################################################
+# Structural Modeling (Synthetic Hints)
+################################################################################
+
+csvw-eo:synth.nullableProportion a owl:DatatypeProperty ;
+    rdfs:domain csvw:Column ;
+    rdfs:range xsd:decimal .
+
+csvw-eo:synth.dependsOn a owl:ObjectProperty ;
+    rdfs:domain csvw:Column ;
+    rdfs:range csvw:Column .
+
+csvw-eo:synth.how a owl:DatatypeProperty ;
+    rdfs:domain csvw:Column ;
+    rdfs:range xsd:string .
+
+csvw-eo:synth.mapping a owl:ObjectProperty ;
+    rdfs:domain csvw:Column .

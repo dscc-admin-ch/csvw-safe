@@ -1,19 +1,19 @@
-# CSVW-SAFE Framework
+# CSVW-EO Framework
 
-CSVW-SAFE consists of vocabulary definitions, validation rules, and Python tooling.
+CSVW-EO consists of vocabulary definitions, validation rules, and Python tooling.
 
 ## Components
 
 | File | Purpose |
 |---|---|
-| `csvw-safe-vocab.ttl` | RDF vocabulary |
-| `csvw-safe-context.jsonld` | JSON-LD context |
-| `csvw-safe-constraints.ttl` | SHACL constraints |
-| `csvw-safe-library` | Python tooling |
+| `csvw-eo-vocab.ttl` | RDF vocabulary |
+| `csvw-eo-context.jsonld` | JSON-LD context |
+| `csvw-eo-constraints.ttl` | SHACL constraints |
+| `csvw-eo-library` | Python tooling |
 
 ## Validation Layers
 
-CSVW-SAFE metadata may be validated using:
+CSVW-EO metadata may be validated using:
 
 ### Pydantic Validation
 
@@ -41,7 +41,7 @@ Checks:
 
 ## Python Library
 
-The `csvw-safe-library` provides:
+The `csvw-eo-library` provides:
 
 - metadata generation
 - dummy data generation
@@ -54,7 +54,7 @@ The `csvw-safe-library` provides:
 
 ## Differential Privacy Integrations
 
-CSVW-SAFE can be converted to:
+CSVW-EO can be converted to:
 
 - OpenDP contexts
 - SmartNoise SQL metadata

@@ -1,6 +1,6 @@
-site_name: CSVW-SAFE
-site_description: CSVW-SAFE vocabulary and Python library
-site_url: https://dscc-admin-ch.github.io/csvw-safe-docs/
+site_name: CSVW-EO
+site_description: CSVW-EO vocabulary and Python library
+site_url: https://dscc-admin-ch.github.io/csvw-eo-docs/
 
 theme:
   name: material
@@ -11,7 +11,7 @@ plugins:
       handlers:
         python:
           paths:
-            - csvw-safe-library/src
+            - csvw-eo-library/src
           options:
             docstring_style: numpy
             show_source: true
@@ -43,6 +43,7 @@ nav:
       - Workflows: library/workflows.md
       - Metadata Generation: library/metadata_generation.md
       - Dummy Generation: library/dummy_generation.md
+      - Pydantic Model: library/table_metadata.md
       - Validation: library/validation.md
       - Integrations: library/integration.md
 

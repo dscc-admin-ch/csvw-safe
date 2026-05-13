@@ -10,7 +10,7 @@
 ## Install from PyPI
 
 ```bash
-pip install csvw-safe
+pip install csvw-eo
 ```
 
 ## Development Installation
@@ -18,9 +18,9 @@ pip install csvw-safe
 Clone the repository and install development dependencies:
 
 ```bash
-git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
+git clone https://github.com/dscc-admin-ch/csvw-eo-library.git
 
-cd csvw-safe-library
+cd csvw-eo-library
 
 pip install -e .[dev]
 ```
@@ -28,7 +28,7 @@ pip install -e .[dev]
 ## Run Tests
 
 ```bash
-pytest --cov=csvw_safe --cov-report=term-missing tests/
+pytest --cov=csvw_eo --cov-report=term-missing tests/
 ```
 
 ## Run linter

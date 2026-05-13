@@ -28,7 +28,7 @@
 
 ## Cross-Library DP Vocabulary Mapping
 
-| Type      | CSVW-SAFE Vocabulary | OpenDP                                         | Smartnoise-SQL  | Privacy on Beam | PipelineDP          |    Qrlew         | Tumult       |
+| Type      | CSVW-EO Vocabulary | OpenDP                                         | Smartnoise-SQL  | Privacy on Beam | PipelineDP          |    Qrlew         | Tumult       |
 |-----------|----------------------|------------------------------------------------|-----------------|-----------------|---------------------|------------------|--------------|
 | Table     | maxContributions     | dp.unit_of(contributions=1)                    | max_ids         |                 | max_contribution    | max_multiplicity | MaxRowsPerID |
 | Table     | publicLength         | margins=[dp.polars.Margin(invariant="length")] | n_row           |                 |                     | size             |              |

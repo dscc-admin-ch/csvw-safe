@@ -6,11 +6,11 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="CSVW-SAFE vocabulary and Python library">
+        <meta name="description" content="CSVW-EO vocabulary and Python library">
       
       
       
-        <link rel="canonical" href="https://dscc-admin-ch.github.io/csvw-safe-docs/api/smartnoise_sql/">
+        <link rel="canonical" href="https://dscc-admin-ch.github.io/csvw-eo-docs/api/smartnoise_sql/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>SmartNoise SQL Integration - CSVW-SAFE</title>
+        <title>SmartNoise SQL Integration - CSVW-EO</title>
       
     
     
@@ -82,7 +82,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="CSVW-SAFE" class="md-header__button md-logo" aria-label="CSVW-SAFE" data-md-component="logo">
+    <a href="../.." title="CSVW-EO" class="md-header__button md-logo" aria-label="CSVW-EO" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -96,7 +96,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            CSVW-SAFE
+            CSVW-EO
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -180,13 +180,13 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="CSVW-SAFE" class="md-nav__button md-logo" aria-label="CSVW-SAFE" data-md-component="logo">
+    <a href="../.." title="CSVW-EO" class="md-nav__button md-logo" aria-label="CSVW-EO" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    CSVW-SAFE
+    CSVW-EO
   </label>
   
   <ul class="md-nav__list" data-md-scrollfix>
@@ -519,7 +519,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#csvw_safe.csvw_to_smartnoise_sql" class="md-nav__link">
+  <a href="#csvw_eo.csvw_to_smartnoise_sql" class="md-nav__link">
     <span class="md-ellipsis">
       
         csvw_to_smartnoise_sql
@@ -531,7 +531,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#csvw_safe.csvw_to_smartnoise_sql.csvw_to_smartnoise_sql" class="md-nav__link">
+  <a href="#csvw_eo.csvw_to_smartnoise_sql.csvw_to_smartnoise_sql" class="md-nav__link">
     <span class="md-ellipsis">
       
         csvw_to_smartnoise_sql
@@ -542,7 +542,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#csvw_safe.csvw_to_smartnoise_sql.csvw_to_snsql_column" class="md-nav__link">
+  <a href="#csvw_eo.csvw_to_smartnoise_sql.csvw_to_snsql_column" class="md-nav__link">
     <span class="md-ellipsis">
       
         csvw_to_snsql_column
@@ -553,7 +553,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#csvw_safe.csvw_to_smartnoise_sql.main" class="md-nav__link">
+  <a href="#csvw_eo.csvw_to_smartnoise_sql.main" class="md-nav__link">
     <span class="md-ellipsis">
       
         main
@@ -586,7 +586,7 @@
 
 
 <h1 id="smartnoise-sql-integration">SmartNoise SQL Integration<a class="headerlink" href="#smartnoise-sql-integration" title="Permanent link">&para;</a></h1>
-<p>Convert CSVW-SAFE metadata into SmartNoise SQL configuration.</p>
+<p>Convert CSVW-EO metadata into SmartNoise SQL configuration.</p>
 <hr />
 
 
@@ -594,15 +594,15 @@
 
 
 
-<h2 id="csvw_safe.csvw_to_smartnoise_sql" class="doc doc-heading">
-            <code>csvw_safe.csvw_to_smartnoise_sql</code>
+<h2 id="csvw_eo.csvw_to_smartnoise_sql" class="doc doc-heading">
+            <code>csvw_eo.csvw_to_smartnoise_sql</code>
 
 
-<a href="#csvw_safe.csvw_to_smartnoise_sql" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#csvw_eo.csvw_to_smartnoise_sql" class="headerlink" title="Permanent link">&para;</a></h2>
 
     <div class="doc doc-contents first">
 
-        <p>Convert CSVW-SAFE JSON metadata to SmartNoise SQL metadata format.</p>
+        <p>Convert CSVW-EO JSON metadata to SmartNoise SQL metadata format.</p>
 <p>See smarntoise-sql documentation: https://docs.smartnoise.org/sql/metadata.html</p>
 
 
@@ -628,15 +628,15 @@
 <div class="doc doc-object doc-function">
 
 
-<h3 id="csvw_safe.csvw_to_smartnoise_sql.csvw_to_smartnoise_sql" class="doc doc-heading">
+<h3 id="csvw_eo.csvw_to_smartnoise_sql.csvw_to_smartnoise_sql" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">csvw_to_smartnoise_sql</span><span class="p">(</span><span class="n">csvw_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">schema_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;df&#39;</span><span class="p">,</span> <span class="n">sample_max_ids</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">censor_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">clamp_counts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">clamp_columns</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">use_dpsu</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></code>
 
-<a href="#csvw_safe.csvw_to_smartnoise_sql.csvw_to_smartnoise_sql" class="headerlink" title="Permanent link">&para;</a></h3>
+<a href="#csvw_eo.csvw_to_smartnoise_sql.csvw_to_smartnoise_sql" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Convert a CSVW-SAFE table metadata dictionary to SmartNoise SQL metadata.</p>
+        <p>Convert a CSVW-EO table metadata dictionary to SmartNoise SQL metadata.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -659,7 +659,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The CSVW-SAFE metadata dictionary for a single table.
+                <p>The CSVW-EO metadata dictionary for a single table.
 Must include "columns" list and "max_contributions" (used as max_ids).</p>
               </div>
             </td>
@@ -855,7 +855,7 @@ as <code>max_ids</code>.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/csvw_to_smartnoise_sql.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_eo/csvw_to_smartnoise_sql.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 74</span>
 <span class="normal"> 75</span>
 <span class="normal"> 76</span>
@@ -971,12 +971,12 @@ as <code>max_ids</code>.</p>
     <span class="n">use_dpsu</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Convert a CSVW-SAFE table metadata dictionary to SmartNoise SQL metadata.</span>
+<span class="sd">    Convert a CSVW-EO table metadata dictionary to SmartNoise SQL metadata.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    csvw_meta : Dict[str, Any]</span>
-<span class="sd">        The CSVW-SAFE metadata dictionary for a single table.</span>
+<span class="sd">        The CSVW-EO metadata dictionary for a single table.</span>
 <span class="sd">        Must include &quot;columns&quot; list and &quot;max_contributions&quot; (used as max_ids).</span>
 <span class="sd">    schema_name : str, default=&quot;&quot;</span>
 <span class="sd">        Name of the SmartNoise schema (top-level namespace) for the table.</span>
@@ -1074,10 +1074,10 @@ as <code>max_ids</code>.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="csvw_safe.csvw_to_smartnoise_sql.csvw_to_snsql_column" class="doc doc-heading">
+<h3 id="csvw_eo.csvw_to_smartnoise_sql.csvw_to_snsql_column" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">csvw_to_snsql_column</span><span class="p">(</span><span class="n">col_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></code>
 
-<a href="#csvw_safe.csvw_to_smartnoise_sql.csvw_to_snsql_column" class="headerlink" title="Permanent link">&para;</a></h3>
+<a href="#csvw_eo.csvw_to_smartnoise_sql.csvw_to_snsql_column" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -1141,7 +1141,7 @@ Expected keys: "name", "datatype".</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/csvw_to_smartnoise_sql.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_eo/csvw_to_smartnoise_sql.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">29</span>
 <span class="normal">30</span>
 <span class="normal">31</span>
@@ -1236,16 +1236,16 @@ Expected keys: "name", "datatype".</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="csvw_safe.csvw_to_smartnoise_sql.main" class="doc doc-heading">
+<h3 id="csvw_eo.csvw_to_smartnoise_sql.main" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span></code>
 
-<a href="#csvw_safe.csvw_to_smartnoise_sql.main" class="headerlink" title="Permanent link">&para;</a></h3>
+<a href="#csvw_eo.csvw_to_smartnoise_sql.main" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>CLI for converting CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata.</p>
-<p>This function reads a CSVW-SAFE JSON metadata file and converts it into SmartNoise SQL
+        <p>CLI for converting CSVW-EO JSON metadata to SmartNoise SQL YAML metadata.</p>
+<p>This function reads a CSVW-EO JSON metadata file and converts it into SmartNoise SQL
 YAML metadata.
 All table-level options are configurable via CLI arguments, except <code>max_ids</code>, which must
 be present in the CSVW metadata (as 'max_contributions').
@@ -1255,7 +1255,7 @@ Defaults and meaning are taken directly from https://docs.smartnoise.org/sql/met
 <details class="command-line-arguments" open>
   <summary>Command-line arguments</summary>
   <p>--input : str (required)
-    Path to input CSVW-SAFE JSON metadata file.
+    Path to input CSVW-EO JSON metadata file.
 --output : str (required)
     Path to output SmartNoise YAML metadata file.
 --schema : str (default="MySchema")
@@ -1275,7 +1275,7 @@ Defaults and meaning are taken directly from https://docs.smartnoise.org/sql/met
 </details>
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/csvw_to_smartnoise_sql.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_eo/csvw_to_smartnoise_sql.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">181</span>
 <span class="normal">182</span>
 <span class="normal">183</span>
@@ -1354,9 +1354,9 @@ Defaults and meaning are taken directly from https://docs.smartnoise.org/sql/met
 <span class="normal">256</span>
 <span class="normal">257</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    CLI for converting CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata.</span>
+<span class="sd">    CLI for converting CSVW-EO JSON metadata to SmartNoise SQL YAML metadata.</span>
 
-<span class="sd">    This function reads a CSVW-SAFE JSON metadata file and converts it into SmartNoise SQL</span>
+<span class="sd">    This function reads a CSVW-EO JSON metadata file and converts it into SmartNoise SQL</span>
 <span class="sd">    YAML metadata.</span>
 <span class="sd">    All table-level options are configurable via CLI arguments, except `max_ids`, which must</span>
 <span class="sd">    be present in the CSVW metadata (as &#39;max_contributions&#39;).</span>
@@ -1365,7 +1365,7 @@ Defaults and meaning are taken directly from https://docs.smartnoise.org/sql/met
 <span class="sd">    Command-line arguments</span>
 <span class="sd">    ----------------------</span>
 <span class="sd">    --input : str (required)</span>
-<span class="sd">        Path to input CSVW-SAFE JSON metadata file.</span>
+<span class="sd">        Path to input CSVW-EO JSON metadata file.</span>
 <span class="sd">    --output : str (required)</span>
 <span class="sd">        Path to output SmartNoise YAML metadata file.</span>
 <span class="sd">    --schema : str (default=&quot;MySchema&quot;)</span>
@@ -1384,9 +1384,9 @@ Defaults and meaning are taken directly from https://docs.smartnoise.org/sql/met
 <span class="sd">        Use Differential Private Set Union for rare dimensions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Convert CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata.&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Convert CSVW-EO JSON metadata to SmartNoise SQL YAML metadata.&quot;</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--input&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Input CSVW-SAFE JSON metadata file&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--input&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Input CSVW-EO JSON metadata file&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output SmartNoise YAML metadata file&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--schema&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;MySchema&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;SmartNoise SQL schema name&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--table&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;MyTable&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;SmartNoise SQL table name&quot;</span><span class="p">)</span>

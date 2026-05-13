@@ -1,6 +1,6 @@
 # Differential Privacy Contributions
 
-CSVW-SAFE defines metadata for Differential Privacy (DP) calibration.
+CSVW-EO defines metadata for Differential Privacy (DP) calibration.
 
 These properties describe worst-case assumptions about how privacy units may contribute to datasets.
 
@@ -22,7 +22,7 @@ Examples:
 
 Two datasets are considered neighbouring datasets if and only if all rows associated with one privacy unit are added or removed.
 
-CSVW-SAFE currently assumes a single privacy unit per dataset.
+CSVW-EO currently assumes a single privacy unit per dataset.
 
 | Property      | Type    | Meaning                                   | Level  |
 | ------------- | ------- | ----------------------------------------- | ------ |
@@ -135,11 +135,11 @@ where:
 - $l_\infty$ = `maxContributions`  
   (maximum number of rows contributed within one group)
 
-CSVW-SAFE does not define $l_1$ as a separate metadata property because its interpretation depends on the query structure and grouping context.
+CSVW-EO does not define $l_1$ as a separate metadata property because its interpretation depends on the query structure and grouping context.
 
 ## Contribution Levels
 
-CSVW-SAFE supports multiple granularity levels for contribution metadata.
+CSVW-EO supports multiple granularity levels for contribution metadata.
 
 | Level             | Description                          | Privacy Risk |
 | ----------------- | ------------------------------------ | ------------ |
