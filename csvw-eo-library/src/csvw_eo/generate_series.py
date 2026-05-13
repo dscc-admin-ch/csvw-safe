@@ -50,7 +50,25 @@ from csvw_eo.datatypes import (
 
 
 def get_bounds(col_meta: dict[str, Any]) -> tuple[T, T]:
-    """Get min and max."""
+    """
+    Get the lower and upper bounds from column metadata.
+
+    Parameters
+    ----------
+    col_meta : dict[str, Any]
+        Column metadata containing minimum and maximum values.
+
+    Returns
+    -------
+    tuple[T, T]
+        Tuple containing the minimum and maximum bounds.
+
+    Raises
+    ------
+    KeyError
+        If the minimum or maximum bound is missing from the metadata.
+
+    """
     if MINIMUM not in col_meta:
         raise KeyError(f"Missing {MINIMUM} in column {col_meta[COL_NAME]}")
 
@@ -61,14 +79,50 @@ def get_bounds(col_meta: dict[str, Any]) -> tuple[T, T]:
 
 
 def generate_datetime_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
-    """Generate datetime column between min and max values."""
+    """
+    Generate a datetime column between minimum and maximum values.
+
+    Parameters
+    ----------
+    col_meta : dict[str, Any]
+        Column metadata containing datetime bounds.
+    nb_rows : int
+        Number of rows to generate.
+    rng : np.random.Generator
+        NumPy random number generator.
+
+    Returns
+    -------
+    pd.Series
+        Series containing randomly generated datetime values.
+
+    """
     lower, upper = get_bounds(col_meta)
     dates = pd.date_range(start=lower, end=upper)
     return pd.Series(rng.choice(dates, size=nb_rows))
 
 
 def generate_duration_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
-    """Generate duration column between min and max values."""
+    """
+    Generate a duration column between minimum and maximum values.
+
+    Bounds are interpreted as seconds.
+
+    Parameters
+    ----------
+    col_meta : dict[str, Any]
+        Column metadata containing duration bounds.
+    nb_rows : int
+        Number of rows to generate.
+    rng : np.random.Generator
+        NumPy random number generator.
+
+    Returns
+    -------
+    pd.Series
+        Series containing randomly generated durations.
+
+    """
     lower, upper = get_bounds(col_meta)
 
     # assume bounds in seconds (simplest robust approach)
@@ -78,7 +132,31 @@ def generate_duration_column(col_meta: dict[str, Any], nb_rows: int, rng: np.ran
 
 
 def generate_integer_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
-    """Generate numeric column integer between min and max values respecting XSD subtype."""
+    """
+    Generate an integer column between minimum and maximum values.
+
+    The generated values respect the XSD integer subtype constraints.
+
+    Parameters
+    ----------
+    col_meta : dict[str, Any]
+        Column metadata containing integer bounds and datatype.
+    nb_rows : int
+        Number of rows to generate.
+    rng : np.random.Generator
+        NumPy random number generator.
+
+    Returns
+    -------
+    pd.Series
+        Series containing randomly generated integer values.
+
+    Notes
+    -----
+    If zero is allowed by the bounds, at least one generated value
+    is forced to be zero.
+
+    """
     lower, upper = get_bounds(col_meta)
     datatype: DataTypes = col_meta[DATATYPE]
 
@@ -101,18 +179,71 @@ def generate_integer_column(col_meta: dict[str, Any], nb_rows: int, rng: np.rand
 
 
 def generate_double_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
-    """Generate numeric column double between min and max values."""
+    """
+    Generate a floating-point column between minimum and maximum values.
+
+    Parameters
+    ----------
+    col_meta : dict[str, Any]
+        Column metadata containing numeric bounds.
+    nb_rows : int
+        Number of rows to generate.
+    rng : np.random.Generator
+        NumPy random number generator.
+
+    Returns
+    -------
+    pd.Series
+        Series containing randomly generated floating-point values.
+
+    """
     lower, upper = get_bounds(col_meta)
     return pd.Series(rng.uniform(float(lower), float(upper), size=nb_rows))
 
 
 def generate_boolean_column(nb_rows: int, rng: np.random.Generator) -> pd.Series:
-    """Generate boolean column."""
+    """
+    Generate a boolean column.
+
+    Parameters
+    ----------
+    nb_rows : int
+        Number of rows to generate.
+    rng : np.random.Generator
+        NumPy random number generator.
+
+    Returns
+    -------
+    pd.Series
+        Series containing randomly generated boolean values.
+
+    """
     return pd.Series(rng.choice([True, False], size=nb_rows), dtype="boolean")
 
 
 def generate_string_column(col_meta: dict[str, Any], nb_rows: int, rng: np.random.Generator) -> pd.Series:
-    """Generate string column depending on available information."""
+    """
+    Generate a string column based on partition metadata.
+
+    The generated values are selected from public keys, public
+    partitions, or randomly generated strings depending on the
+    available metadata.
+
+    Parameters
+    ----------
+    col_meta : dict[str, Any]
+        Column metadata describing available partitions or keys.
+    nb_rows : int
+        Number of rows to generate.
+    rng : np.random.Generator
+        NumPy random number generator.
+
+    Returns
+    -------
+    pd.Series
+        Series containing randomly generated string values.
+
+    """
     public_keys_values = []
     if KEY_VALUES in col_meta:
         public_keys_values = col_meta[KEY_VALUES]
@@ -143,9 +274,30 @@ def generate_column_series(
     rng: np.random.Generator,
 ) -> pd.Series:
     """
-    Generate a single column series based on metadata.
+    Generate a column series based on metadata and datatype.
 
-    Handles datetime, numeric, and partitioned columns, applying nulls.
+    Supports datetime, integer, floating-point, boolean,
+    string, and duration datatypes.
+
+    Parameters
+    ----------
+    col_meta : dict[str, Any]
+        Column metadata describing datatype and constraints.
+    nb_rows : int
+        Number of rows to generate.
+    rng : np.random.Generator
+        NumPy random number generator.
+
+    Returns
+    -------
+    pd.Series
+        Generated pandas Series with the appropriate datatype.
+
+    Raises
+    ------
+    ValueError
+        If the datatype is unknown or unsupported.
+
     """
     datatype: DataTypes = col_meta[DATATYPE]
     group = XSD_GROUP_MAP.get(datatype)
@@ -342,7 +494,34 @@ def generate_dataframe(
     nb_rows: int,
     rng: np.random.Generator,
 ) -> pd.DataFrame:
-    """Generate dataframe."""
+    """
+    Generate a dummy dataframe based on column metadata and dependency rules.
+
+    Columns are generated in a specified order, optionally using dependency
+    relationships between columns (e.g., mapping, fixed, or relational constraints).
+
+    Parameters
+    ----------
+    depends_map : dict[str, list[dict[str, Any]]]
+        Mapping of column names to their dependency definitions.
+        Each dependency may define how a column depends on another column.
+    order : list[str]
+        Ordered list of column names defining generation sequence.
+    meta_map : dict[str, dict[str, Any]]
+        Metadata for each column describing datatype, constraints,
+        and generation rules.
+    nb_rows : int
+        Number of rows to generate.
+    rng : np.random.Generator
+        NumPy random number generator used for all stochastic operations.
+
+    Returns
+    -------
+    pd.DataFrame
+        Generated dataframe with dummy random values respecting metadata
+        and dependency constraints.
+
+    """
     data = {}
 
     for col in order:

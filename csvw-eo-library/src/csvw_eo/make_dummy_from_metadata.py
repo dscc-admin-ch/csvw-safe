@@ -118,7 +118,25 @@ def column_group_partitions(
     df: pd.DataFrame,
     columns_group_meta: list[dict[str, Any]],
 ) -> pd.DataFrame:
-    """Keep only rows belonging to allowed column-group partitions."""
+    """
+    Filter a dataframe to keep only rows belonging to allowed column-group partitions.
+
+    The function builds a global boolean mask by combining per-column-group
+    partition or key constraints, depending on metadata configuration.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe to filter.
+    columns_group_meta : list[dict[str, Any]]
+        Metadata describing column groups and their partitioning rules.
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered dataframe containing only rows that satisfy all group constraints.
+
+    """
     global_mask = pd.Series(True, index=df.index)
 
     for col_group in columns_group_meta:
@@ -147,7 +165,28 @@ def column_group_partitions(
 def apply_nulls_dataframe(
     df: pd.DataFrame, columns_meta: list[dict[str, Any]], rng: np.random.Generator
 ) -> pd.DataFrame:
-    """Apply null proportion on dataframe."""
+    """
+    Apply missing values (nulls) to a dataframe according to metadata.
+
+    Each column is assigned null values based on its configured null
+    proportion and datatype-specific null handling strategy.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe to modify.
+    columns_meta : list[dict[str, Any]]
+        Metadata describing each column, including null proportions
+        and datatype information.
+    rng : np.random.Generator
+        NumPy random number generator used for stochastic null injection.
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe with null values applied according to metadata rules.
+
+    """
     columns_meta_map = {c[COL_NAME]: c for c in columns_meta}
     for col in df.columns:
         series = df[col]
