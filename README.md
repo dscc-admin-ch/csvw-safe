@@ -2,23 +2,23 @@
 
 [Full report](https://htmlpreview.github.io/?https://github.com/dscc-admin-ch/csvw-eo/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
-| Name                                          |    Stmts |     Miss |   Branch |   BrPart |   Cover |   Missing |
-|---------------------------------------------- | -------: | -------: | -------: | -------: | ------: | --------: |
-| src/csvw\_safe/\_\_init\_\_.py                |       11 |        0 |        0 |        0 |    100% |           |
-| src/csvw\_safe/assert\_same\_structure.py     |       25 |        0 |       10 |        0 |    100% |           |
-| src/csvw\_safe/constants.py                   |       49 |        0 |        0 |        0 |    100% |           |
-| src/csvw\_safe/csvw\_to\_opendp\_context.py   |       31 |        1 |        6 |        1 |     95% |       169 |
-| src/csvw\_safe/csvw\_to\_opendp\_margins.py   |       32 |        0 |       20 |        0 |    100% |           |
-| src/csvw\_safe/csvw\_to\_smartnoise\_sql.py   |       39 |        2 |       20 |        2 |     93% |  152, 164 |
-| src/csvw\_safe/datatypes.py                   |      133 |        0 |       56 |        0 |    100% |           |
-| src/csvw\_safe/generate\_series.py            |      133 |        8 |       54 |        3 |     92% |295-298, 366-367, 372-376 |
-| src/csvw\_safe/make\_dummy\_from\_metadata.py |       93 |        0 |       30 |        0 |    100% |           |
-| src/csvw\_safe/make\_metadata\_from\_data.py  |      161 |        2 |       58 |        2 |     98% |  151, 448 |
-| src/csvw\_safe/metadata\_structure.py         |      191 |        0 |       64 |        0 |    100% |           |
-| src/csvw\_safe/utils.py                       |       50 |        0 |       22 |        0 |    100% |           |
-| src/csvw\_safe/validate\_metadata.py          |        7 |        0 |        0 |        0 |    100% |           |
-| src/csvw\_safe/validate\_metadata\_shacl.py   |       12 |        0 |        0 |        0 |    100% |           |
-| **TOTAL**                                     |  **967** |   **13** |  **340** |    **8** | **98%** |           |
+| Name                                        |    Stmts |     Miss |   Branch |   BrPart |   Cover |   Missing |
+|-------------------------------------------- | -------: | -------: | -------: | -------: | ------: | --------: |
+| src/csvw\_eo/\_\_init\_\_.py                |       11 |        0 |        0 |        0 |    100% |           |
+| src/csvw\_eo/assert\_same\_structure.py     |       25 |        0 |       10 |        0 |    100% |           |
+| src/csvw\_eo/constants.py                   |       49 |        0 |        0 |        0 |    100% |           |
+| src/csvw\_eo/csvw\_to\_opendp\_context.py   |       31 |        1 |        6 |        1 |     95% |       169 |
+| src/csvw\_eo/csvw\_to\_opendp\_margins.py   |       32 |        0 |       20 |        0 |    100% |           |
+| src/csvw\_eo/csvw\_to\_smartnoise\_sql.py   |       39 |        2 |       20 |        2 |     93% |  152, 164 |
+| src/csvw\_eo/datatypes.py                   |      133 |        0 |       56 |        0 |    100% |           |
+| src/csvw\_eo/generate\_series.py            |      133 |        8 |       54 |        3 |     92% |295-298, 366-367, 372-376 |
+| src/csvw\_eo/make\_dummy\_from\_metadata.py |       93 |        0 |       30 |        0 |    100% |           |
+| src/csvw\_eo/make\_metadata\_from\_data.py  |      161 |        2 |       58 |        2 |     98% |  151, 448 |
+| src/csvw\_eo/metadata\_structure.py         |      191 |        0 |       64 |        0 |    100% |           |
+| src/csvw\_eo/utils.py                       |       50 |        0 |       22 |        0 |    100% |           |
+| src/csvw\_eo/validate\_metadata.py          |        7 |        0 |        0 |        0 |    100% |           |
+| src/csvw\_eo/validate\_metadata\_shacl.py   |       12 |        0 |        0 |        0 |    100% |           |
+| **TOTAL**                                   |  **967** |   **13** |  **340** |    **8** | **98%** |           |
 
 
 ## Setup coverage badge
