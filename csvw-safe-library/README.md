@@ -1,15 +1,15 @@
-# CSVW-SAFE Utility Library
+# CSVW-EO Utility Library
 
-![GitHub License](https://img.shields.io/github/license/dscc-admin-ch/csvw-safe)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvw-safe)
-[![Documentation](https://img.shields.io/badge/docs-Read%20the%20Docs-blue)](https://dscc-admin-ch.github.io/csvw-safe-docs/index.html)
-[![Coverage](https://raw.githubusercontent.com/dscc-admin-ch/csvw-safe/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/dscc-admin-ch/csvw-safe/blob/python-coverage-comment-action-data/htmlcov/index.html)
-[![CodeQL](https://github.com/dscc-admin-ch/csvw-safe/actions/workflows/codeql.yml/badge.svg)](https://github.com/dscc-admin-ch/csvw-safe/actions/workflows/codeql.yml)
+![GitHub License](https://img.shields.io/github/license/dscc-admin-ch/csvw-eo)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/csvw-eo)
+[![Documentation](https://img.shields.io/badge/docs-Read%20the%20Docs-blue)](https://dscc-admin-ch.github.io/csvw-eo-docs/index.html)
+[![Coverage](https://raw.githubusercontent.com/dscc-admin-ch/csvw-eo/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/dscc-admin-ch/csvw-eo/blob/python-coverage-comment-action-data/htmlcov/index.html)
+[![CodeQL](https://github.com/dscc-admin-ch/csvw-eo/actions/workflows/codeql.yml/badge.svg)](https://github.com/dscc-admin-ch/csvw-eo/actions/workflows/codeql.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-See structured and more friendly documentation [here](https://dscc-admin-ch.github.io/csvw-safe-docs/library/overview/).
+See structured and more friendly documentation [here](https://dscc-admin-ch.github.io/csvw-eo-docs/library/overview/).
 
-This library provides Python utilities for generating, validating, and testing CSVW-SAFE metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
+This library provides Python utilities for generating, validating, and testing CSVW-EO metadata and associated dummy datasets for differential privacy (DP) development and safe data modeling workflows.
 
 It includes five main scripts:
 
@@ -21,7 +21,7 @@ It includes five main scripts:
 
 ![Overview](images/csvwsafe_workflow_1.png)
 
-In addition, two other scripts are available for conversion of csvw-safe metadata to smartnoise sql and opendp libraries:
+In addition, two other scripts are available for conversion of csvw-eo metadata to smartnoise sql and opendp libraries:
 6. `csvw_to_smartnoise_sql.py` converts the metadata to the format expected in smartnoise-sql
 7. `assert_same_structure.py` prepares a context object for opendp with margin and information extracted from csvw-metadata format.
 
@@ -31,7 +31,7 @@ In addition, two other scripts are available for conversion of csvw-safe metadat
 - These scripts assist safe data modeling workflows; they DO NOT replace governance decisions on what is public information or not.
 - IMPORTANT: Automatically generated metadata may contain sensitive information — MANUAL REVIEW IS ALWAYS REQUIRED before further steps.
 
-For a description of [CSVW-SAFE metadata, see here](https://github.com/dscc-admin-ch/csvw-safe).
+For a description of [CSVW-EO metadata, see here](https://github.com/dscc-admin-ch/csvw-eo).
 
 ---
 
@@ -40,26 +40,26 @@ For a description of [CSVW-SAFE metadata, see here](https://github.com/dscc-admi
 Install Python 3.11+ and
 
 ```bash
-pip install csvw-safe
+pip install csvw-eo
 ```
 
 or for development: 
 ```
-git clone https://github.com/dscc-admin-ch/csvw-safe-library.git
-cd csvw-safe-library
+git clone https://github.com/dscc-admin-ch/csvw-eo-library.git
+cd csvw-eo-library
 pip install -e .[dev]
 ```
 
 For testing:
 ```
-cd csvw-safe-library
+cd csvw-eo-library
 pip install -e .[dev]
 pytest --cov=csvw_safe --cov-report=term-missing tests/
 ```
 
 ## Learn via example
 
-To get to know the library with examples, see the [notebook on the extended penguin dataset](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/examples/Use-Library.ipynb) and the associated outputs in [metadata example folder](https://github.com/dscc-admin-ch/csvw-safe/tree/main/csvw-safe-library/examples/metadata).
+To get to know the library with examples, see the [notebook on the extended penguin dataset](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-library/examples/Use-Library.ipynb) and the associated outputs in [metadata example folder](https://github.com/dscc-admin-ch/csvw-eo/tree/main/csvw-eo-library/examples/metadata).
 
 
 ## Scripts Overview
@@ -67,7 +67,7 @@ To get to know the library with examples, see the [notebook on the extended peng
 ### 1. **`make_metadata_from_data.py`**
 #### Purpose
 
-Automatically generate baseline CSVW-SAFE metadata from an existing dataset.
+Automatically generate baseline CSVW-EO metadata from an existing dataset.
 
 This script infers:
 - Column datatypes
@@ -80,7 +80,7 @@ This script infers:
 
 **Important**: This tool is for automated metadata *drafting only*. All outputs must be manually reviewed (and properties can be removed) before publication.
 
-The script first builds a pydantic `TableMetadata` model and then serialises it to a json-ld via a `to_dict()` method. See [TableMetadata.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/TableMetadata.md) for more detailed explanation on the inner workings.
+The script first builds a pydantic `TableMetadata` model and then serialises it to a json-ld via a `to_dict()` method. See [TableMetadata.md](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-library/TableMetadata.md) for more detailed explanation on the inner workings.
 
 #### Differential Privacy (DP) Contribution Levels
 
@@ -249,7 +249,7 @@ Notes
 - Numeric bounds are computed only for non-string columns.
 - Contribution levels control per-privacy-unit contribution constraints.
 - Dependency detection may increase runtime on large datasets.
-- Output is a JSON-serializable CSVW-SAFE metadata structure.
+- Output is a JSON-serializable CSVW-EO metadata structure.
 
 #### Future plans:
 - Allow a DP vs non-DP mode (with/without) DP attributes
@@ -259,7 +259,7 @@ Notes
 
 #### Purpose
 
-Generate a synthetic dummy dataset from CSVW-SAFE metadata.
+Generate a synthetic dummy dataset from CSVW-EO metadata.
 
 The generator creates structured data that follows the declared metadata constraints, including:
 - Column datatypes
@@ -283,7 +283,7 @@ The generated dataset:
 
 #### Typical Use Cases
 
-- Unit testing of CSVW-SAFE and DP pipelines
+- Unit testing of CSVW-EO and DP pipelines
 - Schema validation without real data access
 - Debugging metadata-driven transformations
 - Synthetic data generation for integration tests
@@ -307,9 +307,9 @@ python make_dummy_from_metadata.py metadata.json \
 
 #### Purpose
 
-Validate a CSVW-SAFE metadata file against the internal metadata schema.
+Validate a CSVW-EO metadata file against the internal metadata schema.
 
-This tool ensures that a metadata file is structurally correct and conforms to the expected CSVW-SAFE specification as defined by the internal `TableMetadata` model.
+This tool ensures that a metadata file is structurally correct and conforms to the expected CSVW-EO specification as defined by the internal `TableMetadata` model.
 
 It is primarily used as a validation step before using metadata for:
 - dummy dataset generation
@@ -323,7 +323,7 @@ This validator performs schema-level validation only, including:
 - Structural consistency of metadata objects
 - Compatibility with the `TableMetadata` model
 
-Validation is implemented via a Pydantic model (`TableMetadata.from_dict`). See [TableMetadata.md](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/TableMetadata.md) for more detailed explanation of the underlying pydantic model used to validate the metadata.
+Validation is implemented via a Pydantic model (`TableMetadata.from_dict`). See [TableMetadata.md](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-library/TableMetadata.md) for more detailed explanation of the underlying pydantic model used to validate the metadata.
 
 Output behaviour:
 - If metadata is valid → script exits silently (no output)
@@ -339,11 +339,11 @@ python validate_metadata.py metadata.json
 
 #### Purpose
 
-Validate CSVW-SAFE metadata using a SHACL constraint schema.
+Validate CSVW-EO metadata using a SHACL constraint schema.
 
 This tool performs structural validation of metadata expressed in JSON-LD format against a SHACL shapes graph defined in Turtle format.
 
-It is the most strict validation layer in the CSVW-SAFE toolchain, intended to ensure full compliance with RDF-based constraints.
+It is the most strict validation layer in the CSVW-EO toolchain, intended to ensure full compliance with RDF-based constraints.
 
 #### Validation Scope
 
@@ -367,7 +367,7 @@ On failure: SHACL validation FAILED with a <detailed SHACL report>
 
 
 Typical Use Cases
-- Formal compliance validation of CSVW-SAFE metadata
+- Formal compliance validation of CSVW-EO metadata
 - CI/CD enforcement of metadata correctness
 - Pre-deployment validation in RDF-based pipelines
 - Ensuring compatibility with external SHACL-aware systems
@@ -382,7 +382,7 @@ Notes
 
 #### Purpose
 
-Verify that a generated dummy CSV preserves the structural properties of an original dataset under the CSVW-SAFE assumptions.
+Verify that a generated dummy CSV preserves the structural properties of an original dataset under the CSVW-EO assumptions.
 
 This tool ensures that synthetic data produced by `make_dummy_from_metadata.py` remains schema-compatible with the original dataset used to derive metadata.
 
@@ -391,7 +391,7 @@ This validator checks structure only.  It does not assess statistical similarity
 
 The tool checks:
 - Column names and ordering
-- Inferred CSVW-SAFE datatypes
+- Inferred CSVW-EO datatypes
 - Nullability constraints (required vs optional columns)
 - Optional categorical domain compatibility (subset check)
 
@@ -409,7 +409,7 @@ Ensures that both datasets share identical schema:
 - Same column names
 - Same column ordering
 
-Each column is type-checked using CSVW-SAFE inference:
+Each column is type-checked using CSVW-EO inference:
 
 - Datatypes are inferred via `infer_xmlschema_datatype`
 - Integer subtype differences are tolerated (e.g., small vs large integer variants)
@@ -449,11 +449,11 @@ Notes
 
 #### Purpose
 
-Convert CSVW-SAFE metadata into the format expected by SmartNoise SQL.
+Convert CSVW-EO metadata into the format expected by SmartNoise SQL.
 
-This script transforms a CSVW-SAFE JSON metadata file into a SmartNoise-compatible YAML configuration, enabling direct use in differential privacy queries with SmartNoise SQL.
+This script transforms a CSVW-EO JSON metadata file into a SmartNoise-compatible YAML configuration, enabling direct use in differential privacy queries with SmartNoise SQL.
 
-The script maps CSVW-SAFE metadata into SmartNoise SQL structure:
+The script maps CSVW-EO metadata into SmartNoise SQL structure:
 
 - Table-level privacy constraints:
   - `max_contributions` → `max_ids`
@@ -521,9 +521,9 @@ python csvw_to_smartnoise_sql.py \
 
 #### Purpose
 
-Create an OpenDP `Context` from CSVW-SAFE metadata and a dataset.
+Create an OpenDP `Context` from CSVW-EO metadata and a dataset.
 
-This script bridges CSVW-SAFE metadata with the OpenDP library by:
+This script bridges CSVW-EO metadata with the OpenDP library by:
 - Converting metadata into OpenDP margins
 - Defining privacy units and privacy loss
 - Building a ready-to-use OpenDP `Context` for DP queries
@@ -577,11 +577,11 @@ python make_metadata_from_data.py data.csv --id user_id --mode fine
 2. Review manually with a data expert and approve metadata for safety and governance compliance.
 Optionnaly after removing private information, run (to validate metadata format)
 ```
-python scripts/validate_metadata_shacl.py metadata.json csvw-safe-constraints.ttl
+python scripts/validate_metadata_shacl.py metadata.json csvw-eo-constraints.ttl
 ```
 and with shacl constraints:
 ```
-python validate_metadata.py metadata.json --shacl csvw-safe-constraints.ttl
+python validate_metadata.py metadata.json --shacl csvw-eo-constraints.ttl
 ```
 
 3. Generate a dummy dataset from the approved metadata:
@@ -631,27 +631,27 @@ assert_same_structure(df, dummy_df)
 
 ```
 examples/
-└─ Notebooks.ipynb                      # Example notebooks demonstrating CSVW-SAFE workflows
+└─ Notebooks.ipynb                      # Example notebooks demonstrating CSVW-EO workflows
 
 src/csvw_safe/
-    ├─ __init__.py                          # Package initializer for CSVW-SAFE library
+    ├─ __init__.py                          # Package initializer for CSVW-EO library
 
-    ├─ make_metadata_from_data.py          # Generate CSVW-SAFE metadata automatically from a dataset
-    ├─ make_dummy_from_metadata.py         # Generate synthetic dummy datasets from CSVW-SAFE metadata
+    ├─ make_metadata_from_data.py          # Generate CSVW-EO metadata automatically from a dataset
+    ├─ make_dummy_from_metadata.py         # Generate synthetic dummy datasets from CSVW-EO metadata
     ├─ validate_metadata.py                # Validate metadata using internal schema (TableMetadata model)
     ├─ validate_metadata_shacl.py          # Validate metadata using SHACL constraints via RDF graphs
     ├─ assert_same_structure.py            # Compare original and dummy CSVs for structural consistency
 
-    ├─ csvw_to_opendp_context.py           # Convert CSVW-SAFE metadata into OpenDP analysis context
-    ├─ csvw_to_opendp_margins.py           # Translate CSVW-SAFE metadata into OpenDP margin definitions
-    ├─ csvw_to_smartnoise_sql.py           # Convert CSVW-SAFE metadata into SmartNoise SQL format
+    ├─ csvw_to_opendp_context.py           # Convert CSVW-EO metadata into OpenDP analysis context
+    ├─ csvw_to_opendp_margins.py           # Translate CSVW-EO metadata into OpenDP margin definitions
+    ├─ csvw_to_smartnoise_sql.py           # Convert CSVW-EO metadata into SmartNoise SQL format
 
     ├─ generate_series.py                  # Generate synthetic column values based on metadata rules
-    ├─ metadata_structure.py               # Core data models defining CSVW-SAFE metadata schema
+    ├─ metadata_structure.py               # Core data models defining CSVW-EO metadata schema
     ├─ constants.py                        # Shared constants used across metadata pipeline
-    ├─ datatypes.py                        # Datatype inference and CSVW-SAFE type utilities
+    ├─ datatypes.py                        # Datatype inference and CSVW-EO type utilities
     └─ utils.py                            # General helper utilities for metadata processing
-tests/                                  # Unit and integration tests for CSVW-SAFE library
+tests/                                  # Unit and integration tests for CSVW-EO library
 
 pyproject.toml                         # Project configuration and dependencies
 README.md                              # Project overview and documentation entry point

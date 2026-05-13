@@ -9,7 +9,7 @@ import numpy as np
 
 def sanitize(obj: dict[str, Any]) -> dict[str, Any]:
     """
-    Recursively convert objects into JSON/CSVW-SAFE serializable types.
+    Recursively convert objects into JSON/CSVW-EO serializable types.
 
     - NumPy scalars → Python scalars
     - NaN or Inf → None
@@ -32,7 +32,7 @@ def sanitize(obj: dict[str, Any]) -> dict[str, Any]:
 
 class ContributionLevel(IntEnum):
     """
-    Represents the level at which contribution bounds are applied in CSVW-SAFE metadata.
+    Represents the level at which contribution bounds are applied in CSVW-EO metadata.
 
     Levels:
     - TABLE: global table-level contribution bounds

@@ -1,6 +1,6 @@
-# CSVW-SAFE
+# CSVW-EO
 
-CSVW-SAFE extends the W3C
+CSVW-EO extends the W3C
 [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/) with privacy-safe metadata for differential privacy workflows and dummy dataset generation.
 
 ## Features

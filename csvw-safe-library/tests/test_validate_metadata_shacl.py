@@ -9,7 +9,7 @@ from csvw_safe.validate_metadata_shacl import validate_metadata_shacl
 
 @pytest.fixture(scope="session")
 def shacl_path():
-    return "../csvw-safe-constraints.ttl"
+    return "../csvw-eo-constraints.ttl"
 
 
 @pytest.fixture(scope="session")

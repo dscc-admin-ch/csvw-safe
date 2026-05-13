@@ -17,7 +17,7 @@ from csvw_safe.csvw_to_smartnoise_sql import csvw_to_smartnoise_sql
 
 
 def mock_csvw_metadata():
-    """Return a small CSVW-SAFE JSON metadata for testing."""
+    """Return a small CSVW-EO JSON metadata for testing."""
     return {
         MAX_CONTRIB: 1,  # required by csvw_to_smartnoise_sql
         TABLE_SCHEMA: {

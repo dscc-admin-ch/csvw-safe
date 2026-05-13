@@ -1,6 +1,6 @@
 # Metadata Generation
 
-The `make_metadata_from_data.py` utility generates baseline CSVW-SAFE metadata from an existing dataset.
+The `make_metadata_from_data.py` utility generates baseline CSVW-EO metadata from an existing dataset.
 
 ---
 

@@ -1,12 +1,12 @@
 """
-CSVW-SAFE Metadata Generator.
+CSVW-EO Metadata Generator.
 
-This module generates CSVW-SAFE metadata from a CSV dataset. It automatically
+This module generates CSVW-EO metadata from a CSV dataset. It automatically
 infers column datatypes, detects dependencies, builds partitions for categorical
 and numeric attributes, and computes contribution bounds relative to a defined
 privacy unit.
 
-The output metadata follows the CSVW and CSVW-SAFE conventions used for
+The output metadata follows the CSVW and CSVW-EO conventions used for
 privacy-preserving data synthesis and differential privacy pipelines.
 """
 
@@ -258,10 +258,10 @@ def build_partitions(
     column_specs: list[dict[str, Any]],
 ) -> list[Partition]:
     """
-    Build CSVW-SAFE partitions and compute contribution bounds per partition.
+    Build CSVW-EO partitions and compute contribution bounds per partition.
 
     This function groups the dataset according to the provided column
-    specifications and calculates metadata required by CSVW-SAFE, including
+    specifications and calculates metadata required by CSVW-EO, including
     maximum partition size and per-privacy-unit contribution bounds.
 
     Numeric columns are first discretized into bins before grouping.
@@ -293,13 +293,13 @@ def build_partitions(
     Returns
     -------
     list of dict
-        A list of CSVW-SAFE partition metadata objects. Each entry contains:
+        A list of CSVW-EO partition metadata objects. Each entry contains:
 
         - "@type": Partition type
-        - "csvw-safe:predicate": partition condition
-        - "csvw-safe:bounds.maxLength": maximum rows in partition
-        - "csvw-safe:bounds.maxGroupsPerUnit": maximum rows per privacy unit
-        - "csvw-safe:bounds.maxContributions": maximum partitions per unit
+        - "csvw-eo:predicate": partition condition
+        - "csvw-eo:bounds.maxLength": maximum rows in partition
+        - "csvw-eo:bounds.maxGroupsPerUnit": maximum rows per privacy unit
+        - "csvw-eo:bounds.maxContributions": maximum partitions per unit
 
     """
     df_work = df.copy() if any(spec["kind"] == ColumnKind.CONTINUOUS for spec in column_specs) else df
@@ -390,7 +390,7 @@ def make_column_groups(  # noqa: PLR0913
     privacy_unit: str,
 ) -> list[ColumnGroupMetadata]:
     """
-    Build CSVW-SAFE metadata for column groups.
+    Build CSVW-EO metadata for column groups.
 
     A column group represents a set of columns that should be treated jointly
     when defining contribution bounds and partitions. Partitions are computed
@@ -423,7 +423,7 @@ def make_column_groups(  # noqa: PLR0913
     Returns
     -------
     list[dict[str, Any]]
-        A list of CSVW-SAFE column group metadata dictionaries including
+        A list of CSVW-EO column group metadata dictionaries including
         partition definitions and contribution bounds.
 
     """
@@ -555,7 +555,7 @@ def build_column_metadata(  # noqa: PLR0913
     Construct metadata for a single column.
 
     This function infers column properties and computes metadata fields
-    required by CSVW-SAFE, including datatype inference, nullability,
+    required by CSVW-EO, including datatype inference, nullability,
     dependencies, fixed-per-entity attributes, and optional contribution
     partitions.
 
@@ -590,7 +590,7 @@ def build_column_metadata(  # noqa: PLR0913
     Returns
     -------
     ColumnMetadata
-        Metadata object describing the column according to the CSVW-SAFE
+        Metadata object describing the column according to the CSVW-EO
         specification.
 
     """
@@ -641,7 +641,7 @@ def make_metadata_from_data(  # noqa: PLR0913
     fine_contributions_level: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """
-    Generate CSVW-SAFE metadata from a dataset and return JSON-serializable dictionary.
+    Generate CSVW-EO metadata from a dataset and return JSON-serializable dictionary.
 
     Parameters
     ----------
@@ -663,7 +663,7 @@ def make_metadata_from_data(  # noqa: PLR0913
     Returns
     -------
     TableMetadata
-        CSVW-SAFE metadata structure as a dataclass.
+        CSVW-EO metadata structure as a dataclass.
 
     """
     default_level, fine_level, continuous_partitions, column_groups = prepare_metadata_inputs(
@@ -729,11 +729,11 @@ def make_metadata_from_data(  # noqa: PLR0913
 # ============================================================
 def main() -> None:
     """
-    Command-line entry point for generating CSVW-SAFE metadata.
+    Command-line entry point for generating CSVW-EO metadata.
 
     This function parses command-line arguments, loads the input CSV dataset,
     performs basic datatype inference (including datetime detection), and
-    generates CSVW-SAFE metadata describing the dataset structure, privacy
+    generates CSVW-EO metadata describing the dataset structure, privacy
     unit, contribution bounds, and optional partitions.
 
     The resulting metadata is written as a JSON file.
@@ -769,11 +769,11 @@ def main() -> None:
     Datetime inference is attempted automatically for all columns by
     attempting to parse values using ``pandas.to_datetime``.
 
-    The generated metadata conforms to the CSVW-SAFE specification and
+    The generated metadata conforms to the CSVW-EO specification and
     can be used by downstream privacy-preserving data synthesis systems.
 
     """
-    parser = argparse.ArgumentParser(description="Generate CSVW-SAFE metadata from a CSV dataset.")
+    parser = argparse.ArgumentParser(description="Generate CSVW-EO metadata from a CSV dataset.")
 
     parser.add_argument("csv_file", help="Path to input CSV file")
 
@@ -828,7 +828,7 @@ def main() -> None:
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
 
-    print(f"CSVW-SAFE metadata written to {args.output}")  # noqa: T201
+    print(f"CSVW-EO metadata written to {args.output}")  # noqa: T201
 
 
 if __name__ == "__main__":

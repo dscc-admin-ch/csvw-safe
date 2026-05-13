@@ -1,8 +1,8 @@
 """
-Create an OpenDP Context from CSVW-SAFE metadata and a dataset.
+Create an OpenDP Context from CSVW-EO metadata and a dataset.
 
 This module:
-- Converts CSVW-SAFE metadata into OpenDP margins
+- Converts CSVW-EO metadata into OpenDP margins
 - Builds an OpenDP Context using a provided dataset
 - Supports epsilon-based (Laplace) and rho-based (Gaussian) DP
 - Exposes both a Python API and CLI
@@ -68,12 +68,12 @@ def get_privacy_unit(
     csvw_meta: dict[str, Any], distance: str
 ) -> tuple[Metric, Union[float, Sequence[Bound]]]:
     """
-    Construct an OpenDP privacy unit from CSVW-SAFE metadata.
+    Construct an OpenDP privacy unit from CSVW-EO metadata.
 
     Parameters
     ----------
     csvw_meta : Dict[str, Any]
-        CSVW-SAFE metadata dictionary.
+        CSVW-EO metadata dictionary.
     distance : str
         Type of privacy distance metric to use (e.g. "contributions", "changes").
 
@@ -122,13 +122,13 @@ def csvw_to_opendp_context(  # noqa: PLR0913
     distance: str = "contributions",
 ) -> dp.Context:
     """
-    Create an OpenDP Context from CSVW-SAFE metadata and a dataset.
+    Create an OpenDP Context from CSVW-EO metadata and a dataset.
 
     Parameters
     ----------
     csvw_meta : Dict[str, Any]
-        CSVW-SAFE metadata dictionary.
-        Must include `csvw-safe.dp.maxContributions`.
+        CSVW-EO metadata dictionary.
+        Must include `csvw-eo.dp.maxContributions`.
     data : pl.LazyFrame
         Input dataset (recommended as LazyFrame).
     epsilon : float, optional

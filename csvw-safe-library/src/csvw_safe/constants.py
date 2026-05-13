@@ -1,4 +1,4 @@
-"""Defaults, constants and metadata objects for csvw-safe."""
+"""Defaults, constants and metadata objects for csvw-eo."""
 
 import string
 from enum import StrEnum
@@ -21,7 +21,7 @@ TABLE_TYPE = "Table"
 # ============================================================
 # CSVW_SAFE Namespaces
 # ============================================================
-CSVW_SAFE_CONTEXT = str((Path(__file__).resolve().parents[2] / "csvw-safe-context.jsonld").resolve())  # tmp
+CSVW_SAFE_CONTEXT = str((Path(__file__).resolve().parents[2] / "csvw-eo-context.jsonld").resolve())  # tmp
 
 # Column groups / partitions
 COLUMN_GROUP = "ColumnGroup"

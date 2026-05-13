@@ -1,8 +1,8 @@
 """
-Convert CSVW-SAFE JSON metadata into OpenDP margin descriptors.
+Convert CSVW-EO JSON metadata into OpenDP margin descriptors.
 
 This module provides:
-- A function to translate CSVW-SAFE differential privacy metadata into
+- A function to translate CSVW-EO differential privacy metadata into
   OpenDP `dp.polars.Margin` objects.
 - A CLI for generating margin specifications from a JSON metadata file.
 
@@ -77,12 +77,12 @@ def get_margins(col_meta: dict[str, Any], by: list[str]) -> dict[str, Any]:
 
 def csvw_to_opendp_margins(csvw_meta: dict[str, Any]) -> list["Margin"]:
     """
-    Convert CSVW-SAFE metadata to a list of OpenDP Margin objects.
+    Convert CSVW-EO metadata to a list of OpenDP Margin objects.
 
     Parameters
     ----------
     csvw_meta : Dict[str, Any]
-        CSVW-SAFE metadata dictionary.
+        CSVW-EO metadata dictionary.
 
     Returns
     -------

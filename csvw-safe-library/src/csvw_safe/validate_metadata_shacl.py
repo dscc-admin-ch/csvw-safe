@@ -1,7 +1,7 @@
 """
-SHACL validation for CSVW-SAFE metadata.
+SHACL validation for CSVW-EO metadata.
 
-This module validates CSVW-SAFE metadata files against a SHACL schema
+This module validates CSVW-EO metadata files against a SHACL schema
 using the pySHACL engine. The metadata is expected to be in JSON-LD
 format and the SHACL shapes in Turtle format.
 
@@ -21,7 +21,7 @@ from rdflib import Graph
 
 def validate_metadata_shacl(metadata_file: Path, shacl_file: Path) -> tuple[bool, str]:
     """
-    Validate CSVW-SAFE metadata against a SHACL schema.
+    Validate CSVW-EO metadata against a SHACL schema.
 
     Parameters
     ----------
@@ -58,7 +58,7 @@ def validate_metadata_shacl(metadata_file: Path, shacl_file: Path) -> tuple[bool
 
 def main() -> None:
     """
-    Command-line interface for SHACL validation of CSVW-SAFE metadata.
+    Command-line interface for SHACL validation of CSVW-EO metadata.
 
     This function parses command-line arguments specifying the metadata
     JSON-LD file and the SHACL shapes file, then runs SHACL validation.
@@ -67,7 +67,7 @@ def main() -> None:
     fails, the validation report is printed and the program exits with
     a non-zero status code.
     """
-    parser = argparse.ArgumentParser(description="SHACL validation for CSVW-SAFE metadata")
+    parser = argparse.ArgumentParser(description="SHACL validation for CSVW-EO metadata")
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("shacl_file", type=str, help="SHACL TTL file")
     args = parser.parse_args()

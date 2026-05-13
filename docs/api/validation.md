@@ -1,6 +1,6 @@
 # Validation
 
-Validation utilities for CSVW-SAFE metadata and generated datasets.
+Validation utilities for CSVW-EO metadata and generated datasets.
 
 ---
 

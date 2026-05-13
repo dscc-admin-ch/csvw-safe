@@ -1,4 +1,4 @@
-# CSVW-SAFE Examples
+# CSVW-EO Examples
 
 This section provides example metadata structures.
 
@@ -30,8 +30,8 @@ This section provides example metadata structures.
 
 ```json
 {
-  "@type": "csvw-safe:Partition",
-  "csvw-safe:predicate": {
+  "@type": "csvw-eo:Partition",
+  "csvw-eo:predicate": {
     "month": "January"
   },
   "maxContributions": 31
@@ -42,8 +42,8 @@ This section provides example metadata structures.
 
 ```json
 {
-  "@type": "csvw-safe:ColumnGroup",
-  "csvw-safe:columns": [
+  "@type": "csvw-eo:ColumnGroup",
+  "csvw-eo:columns": [
     "year",
     "month"
   ]
@@ -86,7 +86,7 @@ See:
 
 - Penguin metadata example
 - Example notebooks
-- CSVW-SAFE library examples
+- CSVW-EO library examples
 
 Repository examples demonstrate:
 

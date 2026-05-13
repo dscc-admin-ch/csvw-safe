@@ -1,5 +1,5 @@
 """
-Convert CSVW-SAFE JSON metadata to SmartNoise SQL metadata format.
+Convert CSVW-EO JSON metadata to SmartNoise SQL metadata format.
 
 See smarntoise-sql documentation: https://docs.smartnoise.org/sql/metadata.html
 """
@@ -82,12 +82,12 @@ def csvw_to_smartnoise_sql(  # noqa: PLR0913
     use_dpsu: bool | None = None,
 ) -> dict[str, Any]:
     """
-    Convert a CSVW-SAFE table metadata dictionary to SmartNoise SQL metadata.
+    Convert a CSVW-EO table metadata dictionary to SmartNoise SQL metadata.
 
     Parameters
     ----------
     csvw_meta : Dict[str, Any]
-        The CSVW-SAFE metadata dictionary for a single table.
+        The CSVW-EO metadata dictionary for a single table.
         Must include "columns" list and "max_contributions" (used as max_ids).
     schema_name : str, default=""
         Name of the SmartNoise schema (top-level namespace) for the table.
@@ -180,9 +180,9 @@ def csvw_to_smartnoise_sql(  # noqa: PLR0913
 
 def main() -> None:
     """
-    CLI for converting CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata.
+    CLI for converting CSVW-EO JSON metadata to SmartNoise SQL YAML metadata.
 
-    This function reads a CSVW-SAFE JSON metadata file and converts it into SmartNoise SQL
+    This function reads a CSVW-EO JSON metadata file and converts it into SmartNoise SQL
     YAML metadata.
     All table-level options are configurable via CLI arguments, except `max_ids`, which must
     be present in the CSVW metadata (as 'max_contributions').
@@ -191,7 +191,7 @@ def main() -> None:
     Command-line arguments
     ----------------------
     --input : str (required)
-        Path to input CSVW-SAFE JSON metadata file.
+        Path to input CSVW-EO JSON metadata file.
     --output : str (required)
         Path to output SmartNoise YAML metadata file.
     --schema : str (default="MySchema")
@@ -210,9 +210,9 @@ def main() -> None:
         Use Differential Private Set Union for rare dimensions.
     """
     parser = argparse.ArgumentParser(
-        description="Convert CSVW-SAFE JSON metadata to SmartNoise SQL YAML metadata."
+        description="Convert CSVW-EO JSON metadata to SmartNoise SQL YAML metadata."
     )
-    parser.add_argument("--input", required=True, help="Input CSVW-SAFE JSON metadata file")
+    parser.add_argument("--input", required=True, help="Input CSVW-EO JSON metadata file")
     parser.add_argument("--output", required=True, help="Output SmartNoise YAML metadata file")
     parser.add_argument("--schema", default="MySchema", help="SmartNoise SQL schema name")
     parser.add_argument("--table", default="MyTable", help="SmartNoise SQL table name")

@@ -1,4 +1,4 @@
-"""CSVW-SAFE DataTypes Utilities."""
+"""CSVW-EO DataTypes Utilities."""
 
 from datetime import datetime
 from enum import StrEnum

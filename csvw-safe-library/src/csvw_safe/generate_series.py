@@ -1,7 +1,7 @@
 """
-CSVW-SAFE Dummy Dataset Generator.
+CSVW-EO Dummy Dataset Generator.
 
-This module generates a synthetic dummy dataset from CSVW-SAFE metadata.
+This module generates a synthetic dummy dataset from CSVW-EO metadata.
 It is intended for testing pipelines and validating metadata structures.
 
 The generator supports:
@@ -12,7 +12,7 @@ The generator supports:
 - column groups (joint partitions)
 
 The resulting dataset respects the structural information contained in
-CSVW-SAFE metadata but does not guarantee semantic correctness.
+CSVW-EO metadata but does not guarantee semantic correctness.
 """
 
 from typing import Any

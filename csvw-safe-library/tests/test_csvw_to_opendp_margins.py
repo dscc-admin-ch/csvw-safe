@@ -15,7 +15,7 @@ from csvw_safe.csvw_to_opendp_margins import csvw_to_opendp_margins
 
 
 def mock_csvw_metadata():
-    """CSVW-SAFE metadata for margins testing."""
+    """CSVW-EO metadata for margins testing."""
     return {
         MAX_LENGTH: 1000,
         PUBLIC_LENGTH: 1000,
@@ -115,7 +115,7 @@ def test_no_optional_fields():
 
 
 def test_column_group():
-    """CSVW-SAFE metadata for margins testing."""
+    """CSVW-EO metadata for margins testing."""
     csvw_meta = {
         MAX_CONTRIB: 10,
         TABLE_SCHEMA: {COL_LIST: [{COL_NAME: "col1"}]},

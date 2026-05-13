@@ -6,11 +6,11 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="CSVW-SAFE vocabulary and Python library">
+        <meta name="description" content="CSVW-EO vocabulary and Python library">
       
       
       
-        <link rel="canonical" href="https://dscc-admin-ch.github.io/csvw-safe-docs/api/validation/">
+        <link rel="canonical" href="https://dscc-admin-ch.github.io/csvw-eo-docs/api/validation/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Validation - CSVW-SAFE</title>
+        <title>Validation - CSVW-EO</title>
       
     
     
@@ -82,7 +82,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="CSVW-SAFE" class="md-header__button md-logo" aria-label="CSVW-SAFE" data-md-component="logo">
+    <a href="../.." title="CSVW-EO" class="md-header__button md-logo" aria-label="CSVW-EO" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -96,7 +96,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            CSVW-SAFE
+            CSVW-EO
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -180,13 +180,13 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="CSVW-SAFE" class="md-nav__button md-logo" aria-label="CSVW-SAFE" data-md-component="logo">
+    <a href="../.." title="CSVW-EO" class="md-nav__button md-logo" aria-label="CSVW-EO" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    CSVW-SAFE
+    CSVW-EO
   </label>
   
   <ul class="md-nav__list" data-md-scrollfix>
@@ -686,7 +686,7 @@
 
 
 <h1 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h1>
-<p>Validation utilities for CSVW-SAFE metadata and generated datasets.</p>
+<p>Validation utilities for CSVW-EO metadata and generated datasets.</p>
 <hr />
 <h2 id="metadata-validation">Metadata Validation<a class="headerlink" href="#metadata-validation" title="Permanent link">&para;</a></h2>
 
@@ -736,7 +736,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>Command-line interface for SHACL validation of CSVW-SAFE metadata.</p>
+        <p>Command-line interface for SHACL validation of CSVW-EO metadata.</p>
 <p>This function parses command-line arguments specifying the metadata
 JSON-LD file and the SHACL shapes file, then runs SHACL validation.</p>
 <p>If validation succeeds, a success message is printed. If validation
@@ -745,7 +745,7 @@ a non-zero status code.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/validate_metadata.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_safe/validate_metadata.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">24</span>
 <span class="normal">25</span>
 <span class="normal">26</span>
@@ -770,7 +770,7 @@ a non-zero status code.</p>
 <span class="normal">45</span>
 <span class="normal">46</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Command-line interface for SHACL validation of CSVW-SAFE metadata.</span>
+<span class="sd">    Command-line interface for SHACL validation of CSVW-EO metadata.</span>
 
 <span class="sd">    This function parses command-line arguments specifying the metadata</span>
 <span class="sd">    JSON-LD file and the SHACL shapes file, then runs SHACL validation.</span>
@@ -779,7 +779,7 @@ a non-zero status code.</p>
 <span class="sd">    fails, the validation report is printed and the program exits with</span>
 <span class="sd">    a non-zero status code.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;SHACL validation for CSVW-SAFE metadata&quot;</span><span class="p">)</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;SHACL validation for CSVW-EO metadata&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;metadata_file&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 
@@ -808,7 +808,7 @@ a non-zero status code.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Validate CSVW-SAFE metadata against the pydantic model.</p>
+        <p>Validate CSVW-EO metadata against the pydantic model.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -831,7 +831,7 @@ a non-zero status code.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>CSVW-SAFE metadata structure.</p>
+                <p>CSVW-EO metadata structure.</p>
               </div>
             </td>
             <td>
@@ -843,7 +843,7 @@ a non-zero status code.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/validate_metadata.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_safe/validate_metadata.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
@@ -856,12 +856,12 @@ a non-zero status code.</p>
 <span class="normal">20</span>
 <span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TableMetadata</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Validate CSVW-SAFE metadata against the pydantic model.</span>
+<span class="sd">    Validate CSVW-EO metadata against the pydantic model.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    metadata : dict</span>
-<span class="sd">        CSVW-SAFE metadata structure.</span>
+<span class="sd">        CSVW-EO metadata structure.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">TableMetadata</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
@@ -893,8 +893,8 @@ a non-zero status code.</p>
 
     <div class="doc doc-contents first">
 
-        <p>SHACL validation for CSVW-SAFE metadata.</p>
-<p>This module validates CSVW-SAFE metadata files against a SHACL schema
+        <p>SHACL validation for CSVW-EO metadata.</p>
+<p>This module validates CSVW-EO metadata files against a SHACL schema
 using the pySHACL engine. The metadata is expected to be in JSON-LD
 format and the SHACL shapes in Turtle format.</p>
 
@@ -935,7 +935,7 @@ rdflib</p>
 
     <div class="doc doc-contents ">
 
-        <p>Command-line interface for SHACL validation of CSVW-SAFE metadata.</p>
+        <p>Command-line interface for SHACL validation of CSVW-EO metadata.</p>
 <p>This function parses command-line arguments specifying the metadata
 JSON-LD file and the SHACL shapes file, then runs SHACL validation.</p>
 <p>If validation succeeds, a success message is printed. If validation
@@ -944,7 +944,7 @@ a non-zero status code.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/validate_metadata_shacl.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_safe/validate_metadata_shacl.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">59</span>
 <span class="normal">60</span>
 <span class="normal">61</span>
@@ -984,7 +984,7 @@ a non-zero status code.</p>
 <span class="normal">95</span>
 <span class="normal">96</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Command-line interface for SHACL validation of CSVW-SAFE metadata.</span>
+<span class="sd">    Command-line interface for SHACL validation of CSVW-EO metadata.</span>
 
 <span class="sd">    This function parses command-line arguments specifying the metadata</span>
 <span class="sd">    JSON-LD file and the SHACL shapes file, then runs SHACL validation.</span>
@@ -993,7 +993,7 @@ a non-zero status code.</p>
 <span class="sd">    fails, the validation report is printed and the program exits with</span>
 <span class="sd">    a non-zero status code.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;SHACL validation for CSVW-SAFE metadata&quot;</span><span class="p">)</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;SHACL validation for CSVW-EO metadata&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;metadata_file&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;shacl_file&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;SHACL TTL file&quot;</span><span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
@@ -1037,7 +1037,7 @@ a non-zero status code.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Validate CSVW-SAFE metadata against a SHACL schema.</p>
+        <p>Validate CSVW-EO metadata against a SHACL schema.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1113,7 +1113,7 @@ a non-zero status code.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/validate_metadata_shacl.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_safe/validate_metadata_shacl.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">22</span>
 <span class="normal">23</span>
 <span class="normal">24</span>
@@ -1150,7 +1150,7 @@ a non-zero status code.</p>
 <span class="normal">55</span>
 <span class="normal">56</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_metadata_shacl</span><span class="p">(</span><span class="n">metadata_file</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">shacl_file</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Validate CSVW-SAFE metadata against a SHACL schema.</span>
+<span class="sd">    Validate CSVW-EO metadata against a SHACL schema.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1215,7 +1215,7 @@ a non-zero status code.</p>
 <p>properties of an original CSV dataset.</p>
 <p>The script checks:
 - column names and order
-- inferred CSVW-SAFE datatypes
+- inferred CSVW-EO datatypes
 - nullability (required vs optional columns)
 - optional categorical value compatibility</p>
 <p>It does NOT check statistical similarity, only structural compatibility.</p>
@@ -1344,7 +1344,7 @@ are subsets of those in the original data.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/assert_same_structure.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_safe/assert_same_structure.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">29</span>
 <span class="normal">30</span>
 <span class="normal">31</span>
@@ -1505,7 +1505,7 @@ are subsets of those in the original data.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>csvw-safe-library/src/csvw_safe/assert_same_structure.py</code></summary>
+              <summary>Source code in <code>csvw-eo-library/src/csvw_safe/assert_same_structure.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
@@ -1537,7 +1537,7 @@ are subsets of those in the original data.</p>
 <span class="normal">129</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Command-line entry point for the CSV structure validator.&quot;&quot;&quot;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Assert that two CSV files match CSVW-SAFE structural properties&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Assert that two CSV files match CSVW-EO structural properties&quot;</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;original_csv&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Original CSV file&quot;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;dummy_csv&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dummy CSV file&quot;</span><span class="p">)</span>

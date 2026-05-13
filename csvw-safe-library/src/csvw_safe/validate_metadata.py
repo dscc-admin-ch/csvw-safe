@@ -10,12 +10,12 @@ from csvw_safe.metadata_structure import TableMetadata
 
 def validate_metadata(metadata: dict[str, Any]) -> TableMetadata:
     """
-    Validate CSVW-SAFE metadata against the pydantic model.
+    Validate CSVW-EO metadata against the pydantic model.
 
     Parameters
     ----------
     metadata : dict
-        CSVW-SAFE metadata structure.
+        CSVW-EO metadata structure.
 
     """
     return TableMetadata.from_dict(metadata)
@@ -23,7 +23,7 @@ def validate_metadata(metadata: dict[str, Any]) -> TableMetadata:
 
 def main() -> None:
     """
-    Command-line interface for SHACL validation of CSVW-SAFE metadata.
+    Command-line interface for SHACL validation of CSVW-EO metadata.
 
     This function parses command-line arguments specifying the metadata
     JSON-LD file and the SHACL shapes file, then runs SHACL validation.
@@ -32,7 +32,7 @@ def main() -> None:
     fails, the validation report is printed and the program exits with
     a non-zero status code.
     """
-    parser = argparse.ArgumentParser(description="SHACL validation for CSVW-SAFE metadata")
+    parser = argparse.ArgumentParser(description="SHACL validation for CSVW-EO metadata")
     parser.add_argument("metadata_file", type=str)
     args = parser.parse_args()
 

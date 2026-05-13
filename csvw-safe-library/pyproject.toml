@@ -1,5 +1,5 @@
 [project]
-name = "csvw-safe"
+name = "csvw-eo"
 version = "0.1.0"
 description = "Safe processing utilities for CSVW data"
 readme = "README.md"
@@ -7,7 +7,7 @@ requires-python = ">=3.9"
 authors = [
   { name = "DSCC, FSO", email = "dscc@example.com" }
 ]
-urls = { Homepage = "https://github.com/dsccadminch/csvw-safe-library/csvw-safe" }
+urls = { Homepage = "https://github.com/dsccadminch/csvw-eo-library/csvw-eo" }
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",

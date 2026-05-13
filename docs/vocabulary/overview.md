@@ -1,6 +1,6 @@
-# CSVW-SAFE Overview
+# CSVW-EO Overview
 
-CSVW-SAFE extends the W3C [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/) standard with privacy-safe metadata for:
+CSVW-EO extends the W3C [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-data-model/) standard with privacy-safe metadata for:
 
 - Differential Privacy (DP)
 - Dummy data generation
@@ -8,9 +8,9 @@ CSVW-SAFE extends the W3C [CSV on the Web (CSVW)](https://www.w3.org/TR/tabular-
 - Public partition definitions
 - Safe schema publication
 
-![Overview](../images/csvw-safe_structure.png)
+![Overview](../images/csvw-eo_structure.png)
 
-CSVW-SAFE allows organizations to publish assumptions and guarantees about datasets without exposing sensitive underlying records.
+CSVW-EO allows organizations to publish assumptions and guarantees about datasets without exposing sensitive underlying records.
 
 These assumptions may include:
 
@@ -29,7 +29,7 @@ These assumptions may include:
 
 ## Main Concepts
 
-CSVW-SAFE extends CSVW with:
+CSVW-EO extends CSVW with:
 
 | Concept | Purpose |
 |---|---|
@@ -43,7 +43,7 @@ CSVW-SAFE extends CSVW with:
 
 | File | Purpose |
 |---|---|
-| `csvw-safe-vocab.ttl` | RDF vocabulary |
-| `csvw-safe-context.jsonld` | JSON-LD context |
-| `csvw-safe-constraints.ttl` | SHACL validation |
-| `csvw-safe-library` | Python tooling |
+| `csvw-eo-vocab.ttl` | RDF vocabulary |
+| `csvw-eo-context.jsonld` | JSON-LD context |
+| `csvw-eo-constraints.ttl` | SHACL validation |
+| `csvw-eo-library` | Python tooling |

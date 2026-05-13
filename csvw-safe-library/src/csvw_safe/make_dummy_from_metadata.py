@@ -1,7 +1,7 @@
 """
-CSVW-SAFE Dummy Dataset Generator.
+CSVW-EO Dummy Dataset Generator.
 
-This module generates a synthetic dummy dataset from CSVW-SAFE metadata.
+This module generates a synthetic dummy dataset from CSVW-EO metadata.
 It is intended for testing pipelines and validating metadata structures.
 
 The generator supports:
@@ -12,7 +12,7 @@ The generator supports:
 - column groups (joint partitions)
 
 The resulting dataset respects the structural information contained in
-CSVW-SAFE metadata but does not guarantee semantic correctness.
+CSVW-EO metadata but does not guarantee semantic correctness.
 """
 
 import argparse
@@ -238,12 +238,12 @@ def make_dummy_from_metadata(
     seed: int = 0,
 ) -> pd.DataFrame:
     """
-    Generate a dummy dataset from CSVW-SAFE metadata, respecting exhaustive column group partitions.
+    Generate a dummy dataset from CSVW-EO metadata, respecting exhaustive column group partitions.
 
     Parameters
     ----------
     metadata : dict
-        CSVW-SAFE metadata structure.
+        CSVW-EO metadata structure.
     nb_rows : int, default=100
         Number of rows to generate.
     seed : int, default=0
@@ -298,7 +298,7 @@ def make_dummy_from_metadata(
 
 def main() -> None:
     """Command-line interface for dummy dataset generation."""
-    parser = argparse.ArgumentParser(description="Generate a dummy dataset from CSVW-SAFE metadata.")
+    parser = argparse.ArgumentParser(description="Generate a dummy dataset from CSVW-EO metadata.")
 
     parser.add_argument("metadata_file", type=str)
     parser.add_argument("--rows", type=int, default=100)

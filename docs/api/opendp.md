@@ -1,6 +1,6 @@
 # OpenDP Integration
 
-Utilities for integrating CSVW-SAFE metadata with OpenDP.
+Utilities for integrating CSVW-EO metadata with OpenDP.
 
 ---
 

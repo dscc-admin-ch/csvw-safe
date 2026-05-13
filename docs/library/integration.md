@@ -1,6 +1,6 @@
 # Integrations
 
-CSVW-SAFE metadata can be integrated with Differential Privacy libraries and systems.
+CSVW-EO metadata can be integrated with Differential Privacy libraries and systems.
 
 Currently supported integrations include:
 
@@ -11,13 +11,13 @@ Currently supported integrations include:
 
 # SmartNoise SQL Integration
 
-The `csvw_to_smartnoise_sql.py` utility converts CSVW-SAFE metadata into SmartNoise SQL YAML configuration.
+The `csvw_to_smartnoise_sql.py` utility converts CSVW-EO metadata into SmartNoise SQL YAML configuration.
 
 ---
 
 ## Supported Mappings
 
-| CSVW-SAFE | SmartNoise SQL |
+| CSVW-EO | SmartNoise SQL |
 |---|---|
 | `maxContributions` | `max_ids` |
 | `minimum` | `lower` |
@@ -70,6 +70,6 @@ context = csvw_to_opendp_context(
 
 ## Design Goal
 
-CSVW-SAFE aims to provide a portable metadata layer between Differential Privacy systems.
+CSVW-EO aims to provide a portable metadata layer between Differential Privacy systems.
 
 The metadata should remain implementation-independent while still enabling automated DP workflows.

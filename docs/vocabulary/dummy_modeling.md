@@ -1,6 +1,6 @@
 # Dummy Modeling Properties
 
-CSVW-SAFE defines properties useful for generating realistic dummy datasets.
+CSVW-EO defines properties useful for generating realistic dummy datasets.
 
 These properties improve dummy data quality while remaining compatible with differential privacy workflows.
 
@@ -93,7 +93,7 @@ Example:
 
 ## Public Keys
 
-CSVW-SAFE can define known public domains.
+CSVW-EO can define known public domains.
 
 | Property         | Meaning                     |
 | ---------------- | --------------------------- |
@@ -136,7 +136,7 @@ Partitions describe public regions of the domain.
 
 | Property         | Meaning                     |
 | ---------------- | --------------------------- |
-| `partition`      | List of `csvw-safe:Partition` objects |
+| `partition`      | List of `csvw-eo:Partition` objects |
 | `exhaustivePartitions` | Whether partitions fully cover the domain |
 
 Examples:

@@ -1,8 +1,8 @@
-# TableMetadata (CSVW-SAFE)
+# TableMetadata (CSVW-EO)
 
 ## Overview
 
-`TableMetadata` is the top-level container for describing a CSVW-SAFE table in the library. It aggregates:
+`TableMetadata` is the top-level container for describing a CSVW-EO table in the library. It aggregates:
 
 - Global privacy constraints
 - Column-level metadata
@@ -45,9 +45,9 @@ It supports:
 
 ## `to_dict()` and `from_dict()` Representation
 
-The `to_dict()` method converts the `TableMetadata` instance into a CSVW-SAFE compliant JSON-LD dictionary.
+The `to_dict()` method converts the `TableMetadata` instance into a CSVW-EO compliant JSON-LD dictionary.
 
-The `from_dict()` method reconstructs a `TableMetadata` instance from a CSVW-SAFE compliant JSON-LD dictionary.
+The `from_dict()` method reconstructs a `TableMetadata` instance from a CSVW-EO compliant JSON-LD dictionary.
 
 
 ### Field Mapping
@@ -89,7 +89,7 @@ The `from_dict()` method reconstructs a `TableMetadata` instance from a CSVW-SAF
 - `tableSchema.columns` is **required** and always parsed
 - `additionalInformation` is **optional**
 - Missing optional fields do **not** raise errors (handled by Pydantic defaults)
-- (For now): Input is assumed to already follow CSVW-SAFE structure (no deep validation layer beyond model constraints). TODO: be more strict here (like datatypes options).
+- (For now): Input is assumed to already follow CSVW-EO structure (no deep validation layer beyond model constraints). TODO: be more strict here (like datatypes options).
 
 
 ## Example
@@ -110,7 +110,7 @@ Serialized json-ld output after `json_repr = metadata.to_dict()`:
 json_repr = {
   "@context": [
     "http://www.w3.org/ns/csvw",
-    "path/to/csvw-safe-context.jsonld"
+    "path/to/csvw-eo-context.jsonld"
   ],
   "@type": "Table",
   "privacyUnit": "user_id",
@@ -141,7 +141,7 @@ metadata = TableMetadata.from_dict(json_repr)
 
 ## Summary
 
-`TableMetadata` is the entry point for CSVW-SAFE metadata, providing:
+`TableMetadata` is the entry point for CSVW-EO metadata, providing:
 - A structured way to define dataset privacy constraints
 - Full schema description (columns + groups)
 - Bidirectional conversion:

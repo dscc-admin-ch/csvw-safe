@@ -1,6 +1,6 @@
 # Metadata Validation
 
-CSVW-SAFE provides two validation layers:
+CSVW-EO provides two validation layers:
 
 1. Internal schema validation
 2. SHACL validation
@@ -44,7 +44,7 @@ TODO: As the dataset is not published yet, it is not functional for now (or put 
 ```bash
 python validate_metadata_shacl.py \
   metadata.json \
-  csvw-safe-constraints.ttl
+  csvw-eo-constraints.ttl
 ```
 
 ## Validation Recommendations

@@ -1,6 +1,6 @@
-# CSVW-SAFE Constraints
+# CSVW-EO Constraints
 
-CSVW-SAFE enforces constraints to ensure:
+CSVW-EO enforces constraints to ensure:
 
 - Structural consistency of the admissible dataset universe
 - Sound worst-case sensitivity computation
@@ -15,9 +15,9 @@ Applied to `csvw:Table`:
 The following properties are required if the dataset is intended for DP calibration:
 | Property                            | Constraint                                |
 | ----------------------------------- | ----------------------------------------- |
-| `csvw-safe:public.privacyUnit`      | MUST reference an existing column         |
-| `csvw-safe:bounds.maxLength`        | MUST be declared                          |
-| `csvw-safe:bounds.maxContributions` | MUST be declared and ≤ `bounds.maxLength` |
+| `csvw-eo:public.privacyUnit`      | MUST reference an existing column         |
+| `csvw-eo:bounds.maxLength`        | MUST be declared                          |
+| `csvw-eo:bounds.maxContributions` | MUST be declared and ≤ `bounds.maxLength` |
 
 If there is no groupy, then these fields are compulsory at the table level.
 If there is a groupby, then these fields are compulsory at the partition level. 
@@ -27,8 +27,8 @@ If there is a groupby, then these fields are compulsory at the partition level.
 
 | Property                            | Constraint                                                               |
 | ----------------------------------- | ------------------------------------------------------------------------ |
-| `csvw-safe:public.length`           | If declared, MUST be ≤ `bounds.maxLength` and invariant across neighbors |
-| `csvw-safe:bounds.maxNumPartitions` | If declared at table level, MUST be ≥ 1                                  |
+| `csvw-eo:public.length`           | If declared, MUST be ≤ `bounds.maxLength` and invariant across neighbors |
+| `csvw-eo:bounds.maxNumPartitions` | If declared at table level, MUST be ≥ 1                                  |
 
 ### 4.1.3 Global consistency rules
 
@@ -64,7 +64,7 @@ If column-level bounds are omitted, table-level bounds apply.
 
 ## 4.3 Multi-Column GroupingKey Constraints
 
-Applied to `csvw-safe:GroupingKey`.
+Applied to `csvw-eo:GroupingKey`.
 
 ### 4.3.1 Structural consistency
 
@@ -98,7 +98,7 @@ For a grouping key G composed of columns $C_1, C_2, ..., C_n$:
 
 ## 4.4 Partition-Level Constraints
 
-Applied to `csvw-safe:Partition`.
+Applied to `csvw-eo:Partition`.
 
 A Partition represents exactly one output coordinate.
 
@@ -128,7 +128,7 @@ Implicit rule:
 
 ## 4.5 Contribution Object Constraints (Multiple Privacy Units)
 
-Applied to `csvw-safe:Contribution`.
+Applied to `csvw-eo:Contribution`.
 
 ### 4.5.1 Structural rules
 | Rule                                    | Enforcement                                         |
@@ -187,5 +187,5 @@ If any required property is missing: DP bounds are undefined.
 
 ## 4.9 SHACL Enforcement
 
-Some constraints are enforcet in [`csvw-safe-constraints.ttl`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/csvw-safe-constraints.ttl). 
-Other more detailed constraints are in [`validate_metadata.py`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/csvw-safe/validate_metadata.py) and [`validate_metadata_shacl.py`](https://github.com/dscc-admin-ch/csvw-safe/blob/main/csvw-safe-library/csvw-safe/validate_metadata_shacl.py) can run the shacl constraints.
+Some constraints are enforcet in [`csvw-eo-constraints.ttl`](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-library/csvw-eo-constraints.ttl). 
+Other more detailed constraints are in [`validate_metadata.py`](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-library/csvw-eo/validate_metadata.py) and [`validate_metadata_shacl.py`](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-library/csvw-eo/validate_metadata_shacl.py) can run the shacl constraints.

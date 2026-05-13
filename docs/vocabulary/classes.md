@@ -1,13 +1,13 @@
-# CSVW-SAFE Classes
+# CSVW-EO Classes
 
-CSVW-SAFE defines four main classes.
+CSVW-EO defines four main classes.
 
 | Class | Purpose |
 |---|---|
 | `csvw:Table` | Dataset-level metadata |
 | `csvw:Column` | Single-column metadata |
-| `csvw-safe:ColumnGroup` | Multi-column grouping metadata |
-| `csvw-safe:Partition` | Public partition definitions |
+| `csvw-eo:ColumnGroup` | Multi-column grouping metadata |
+| `csvw-eo:Partition` | Public partition definitions |
 
 ## Table
 
@@ -62,7 +62,7 @@ Example:
 
 ## ColumnGroup
 
-A `csvw-safe:ColumnGroup` describes grouping assumptions on multiple columns simultaneously.
+A `csvw-eo:ColumnGroup` describes grouping assumptions on multiple columns simultaneously.
 
 Typical use cases:
 
@@ -107,7 +107,7 @@ It may contain:
 
 ## Partition
 
-A `csvw-safe:Partition` defines a region of a value domain.
+A `csvw-eo:Partition` defines a region of a value domain.
 
 Examples:
 
@@ -120,15 +120,15 @@ Partitions are indentified by predicates and may contain:
 - contribution bounds
 - public lengths
 
-A `csvw:Column` or a `csvw-safe:ColumnGroup` can have a list of partitions in the field `partition`. If they are exhaustive then, `exhaustivePartitions` may be True.
+A `csvw:Column` or a `csvw-eo:ColumnGroup` can have a list of partitions in the field `partition`. If they are exhaustive then, `exhaustivePartitions` may be True.
 
 Example:
 
 Categorical column
 ```json
 {
-  "@type": "csvw-safe:Partition",
-  "csvw-safe:predicate": {
+  "@type": "csvw-eo:Partition",
+  "csvw-eo:predicate": {
     "partitionValue": "Biscoe"
   },
   "maxLength": 300,
@@ -140,8 +140,8 @@ Categorical column
 Continuous column
 ```json
 {
-  "@type": "csvw-safe:Partition",
-  "csvw-safe:predicate": {
+  "@type": "csvw-eo:Partition",
+  "csvw-eo:predicate": {
     "lowerBound": 100,
     "upperBound": 200,
   },
@@ -153,7 +153,7 @@ Continuous column
 
 ## JSON-LD Structure
 
-CSVW-SAFE extends standard CSVW JSON-LD structures with additional properties and objects.
-This image presents the base `csvw` json-ld structure on the left and the extended `csvw-safe`.
+CSVW-EO extends standard CSVW JSON-LD structures with additional properties and objects.
+This image presents the base `csvw` json-ld structure on the left and the extended `csvw-eo`.
 
-![Overview](../images/csvw-safe_structure.png)
+![Overview](../images/csvw-eo_structure.png)

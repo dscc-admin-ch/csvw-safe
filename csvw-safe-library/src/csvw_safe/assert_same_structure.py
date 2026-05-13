@@ -5,7 +5,7 @@ properties of an original CSV dataset.
 
 The script checks:
 - column names and order
-- inferred CSVW-SAFE datatypes
+- inferred CSVW-EO datatypes
 - nullability (required vs optional columns)
 - optional categorical value compatibility
 
@@ -101,7 +101,7 @@ def assert_same_structure(
 def main() -> None:
     """Command-line entry point for the CSV structure validator."""
     parser = argparse.ArgumentParser(
-        description="Assert that two CSV files match CSVW-SAFE structural properties"
+        description="Assert that two CSV files match CSVW-EO structural properties"
     )
     parser.add_argument("original_csv", type=str, help="Original CSV file")
     parser.add_argument("dummy_csv", type=str, help="Dummy CSV file")

@@ -1,6 +1,6 @@
 # Typical Workflows
 
-CSVW-SAFE workflows usually follow four main steps:
+CSVW-EO workflows usually follow four main steps:
 
 1. Generate metadata with the minimal details level
 2. Review and validate metadata (remove non public information)
@@ -41,7 +41,7 @@ python validate_metadata.py metadata.json
 ```bash
 python validate_metadata_shacl.py \
   metadata.json \
-  csvw-safe-constraints.ttl
+  csvw-eo-constraints.ttl
 ```
 
 ## 4. Generate Dummy Dataset

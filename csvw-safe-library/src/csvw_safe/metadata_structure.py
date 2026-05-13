@@ -1,4 +1,4 @@
-"""Pydantic models for CSVW-SAFE metadata structure."""
+"""Pydantic models for CSVW-EO metadata structure."""
 
 from typing import Any, Union
 
@@ -21,7 +21,7 @@ class Dependency(BaseModel):
     value_map: dict[Any, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert the dependency to a CSVW-SAFE compliant dictionary."""
+        """Convert the dependency to a CSVW-EO compliant dictionary."""
         d: dict[str, Any] = {
             c.DEPENDS_ON: self.depends_on,
             c.DEPENDENCY_TYPE: self.dependency_type,
@@ -34,7 +34,7 @@ class Dependency(BaseModel):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Dependency":
-        """Create a Dependency instance from CSVW-SAFE metadata."""
+        """Create a Dependency instance from CSVW-EO metadata."""
         return cls(
             depends_on=data[c.DEPENDS_ON],
             dependency_type=data[c.DEPENDENCY_TYPE],
@@ -48,12 +48,12 @@ class CategoricalPredicate(BaseModel):
     partition_value: Any | None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert the predicate into CSVW-SAFE JSON format."""
+        """Convert the predicate into CSVW-EO JSON format."""
         return {c.PARTITION_VALUE: self.partition_value}
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CategoricalPredicate":
-        """Create a Predicate from CSVW-SAFE metadata."""
+        """Create a Predicate from CSVW-EO metadata."""
         return cls(partition_value=data[c.PARTITION_VALUE])
 
 
@@ -64,7 +64,7 @@ class ContinuousPredicate(BaseModel):
     upper_bound: float | str | None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert the predicate into CSVW-SAFE JSON format."""
+        """Convert the predicate into CSVW-EO JSON format."""
         return {
             c.LOWER_BOUND: self.lower_bound,
             c.UPPER_BOUND: self.upper_bound,
@@ -72,7 +72,7 @@ class ContinuousPredicate(BaseModel):
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ContinuousPredicate":
-        """Create a Predicate from CSVW-SAFE metadata."""
+        """Create a Predicate from CSVW-EO metadata."""
         return cls(
             lower_bound=data[c.LOWER_BOUND],
             upper_bound=data[c.UPPER_BOUND],
@@ -105,7 +105,7 @@ class Partition(BaseModel):
         raise NotImplementedError
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert the partition to CSVW-SAFE JSON format."""
+        """Convert the partition to CSVW-EO JSON format."""
         return {
             "@type": c.PARTITION,
             c.PREDICATE: self._predicate_to_dict(),
@@ -174,7 +174,7 @@ class SingleColumnKey(BaseModel):
 
     def to_dict(self) -> Any:  # noqa: ANN401
         """
-        Convert a categorical partition to CSVW-SAFE JSON format.
+        Convert a categorical partition to CSVW-EO JSON format.
 
         Returns:
             The partition value (e.g., 'blue').
@@ -210,12 +210,12 @@ class MultiColumnKeys(BaseModel):
     predicate: dict[str, Predicate]
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert the partition to CSVW-SAFE JSON format."""
+        """Convert the partition to CSVW-EO JSON format."""
         return {k: v.to_dict() for k, v in self.predicate.items()}
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "MultiColumnKeys":
-        """Create a MultiColumnKeys from CSVW-SAFE metadata."""
+        """Create a MultiColumnKeys from CSVW-EO metadata."""
         predicates = {k: parse_predicate(v) for k, v in data.items()}
         return cls(predicate=predicates)
 
@@ -271,7 +271,7 @@ class ColumnMetadata(BaseModel):
     max_num_partitions: int | None = None
 
     def to_dict(self) -> dict[str, Any]:  # noqa: PLR0912
-        """Convert the column metadata to CSVW-SAFE JSON format."""
+        """Convert the column metadata to CSVW-EO JSON format."""
         d: dict[str, Any] = {
             "@type": c.COL_TYPE,
             c.COL_NAME: self.name,
@@ -330,7 +330,7 @@ class ColumnMetadata(BaseModel):
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ColumnMetadata":
         """
-        Parse column metadata from CSVW-SAFE JSON.
+        Parse column metadata from CSVW-EO JSON.
 
         Parameters
         ----------
@@ -456,7 +456,7 @@ class ColumnGroupMetadata(BaseModel):
 
 
 class TableMetadata(BaseModel):
-    """Top-level metadata object describing a CSVW-SAFE table."""
+    """Top-level metadata object describing a CSVW-EO table."""
 
     privacy_unit: str | None = None
     max_contributions: int | None = None
@@ -471,7 +471,7 @@ class TableMetadata(BaseModel):
     table_type: str = c.TABLE_TYPE
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize the full metadata object to CSVW-SAFE JSON."""
+        """Serialize the full metadata object to CSVW-EO JSON."""
         d: dict[str, Any] = {
             "@context": self.context,
             "@type": self.table_type,
@@ -490,7 +490,7 @@ class TableMetadata(BaseModel):
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "TableMetadata":
         """
-        Parse a CSVW-SAFE metadata document.
+        Parse a CSVW-EO metadata document.
 
         Parameters
         ----------

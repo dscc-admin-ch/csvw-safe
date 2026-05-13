@@ -21,7 +21,7 @@ dp.enable_features("contrib")
 
 @pytest.fixture
 def mock_csvw_meta():
-    """Return a small CSVW-SAFE metadata dict for testing."""
+    """Return a small CSVW-EO metadata dict for testing."""
     return {
         MAX_CONTRIB: 3,
         TABLE_SCHEMA: {
@@ -165,7 +165,7 @@ def test_changes_distance(mock_csvw_meta, mock_data):
 
 
 def test_column_group_context(mock_data):
-    """CSVW-SAFE metadata for margins testing."""
+    """CSVW-EO metadata for margins testing."""
     mock_csvw_meta = {
         MAX_CONTRIB: 10,
         MAX_LENGTH: 100,
@@ -195,7 +195,7 @@ def test_column_group_context(mock_data):
 
 
 def test_column_group_context_not_invariant(mock_data):
-    """CSVW-SAFE metadata for margins testing."""
+    """CSVW-EO metadata for margins testing."""
     mock_csvw_meta = {
         MAX_CONTRIB: 10,
         MAX_LENGTH: 100,

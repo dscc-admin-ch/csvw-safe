@@ -1,6 +1,6 @@
 # Metadata Generation
 
-Tools for generating CSVW-SAFE metadata from datasets.
+Tools for generating CSVW-EO metadata from datasets.
 
 ---
 
