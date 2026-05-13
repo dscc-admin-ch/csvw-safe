@@ -191,7 +191,24 @@ def make_predicate(spec: dict[str, Any], value: Any) -> Predicate:  # noqa: ANN4
 def make_categorical_partitions(
     df: pd.DataFrame, privacy_unit: str, column_name: str
 ) -> list[SingleColumnPartition]:
-    """Generate partitions for a categorical column."""
+    """
+    Generate partitions for a categorical column.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe containing the data to partition.
+    privacy_unit : str
+        Name of the privacy unit column.
+    column_name : str
+        Name of the categorical column.
+
+    Returns
+    -------
+    list[SingleColumnPartition]
+        List of generated partitions for the categorical column.
+
+    """
     partitions_meta = build_partitions(
         df,
         privacy_unit,
@@ -206,7 +223,26 @@ def make_numeric_partitions(
     column_name: str,
     bounds: list[Any],
 ) -> list[SingleColumnPartition]:
-    """Generate partitions for a numeric column using provided bins."""
+    """
+    Generate partitions for a numeric column using predefined bounds.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe containing the data to partition.
+    privacy_unit : str
+        Name of the privacy unit column.
+    column_name : str
+        Name of the numeric column.
+    bounds : list[Any]
+        List of partition boundaries used to define bins.
+
+    Returns
+    -------
+    list[SingleColumnPartition]
+        List of generated partitions for the numeric column.
+
+    """
     partitions_meta = build_partitions(
         df,
         privacy_unit,
@@ -228,7 +264,29 @@ def get_multi_group_partitions(
     continuous_partitions: dict[str, list[Any]],
     privacy_unit: str,
 ) -> list[MultiColumnPartition]:
-    """Generate partitions when grouping by multiple columns."""
+    """
+    Generate multi-column partitions for a group of columns.
+
+    Columns are classified as either continuous or categorical
+    depending on the provided partition configuration.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe containing the data to partition.
+    col_group : list[str]
+        List of column names used for grouping.
+    continuous_partitions : dict[str, list[Any]]
+        Mapping of continuous column names to their partition bins.
+    privacy_unit : str
+        Name of the privacy unit column.
+
+    Returns
+    -------
+    list[MultiColumnPartition]
+        List of generated multi-column partitions.
+
+    """
     specs = []
     for col in col_group:
         if col in continuous_partitions:
@@ -371,7 +429,23 @@ def get_column_level_contribution(
 def build_base_column_group_kwargs(
     col_group: list[str], partitions_meta: list[MultiColumnPartition]
 ) -> dict[str, Any]:
-    """Return default arguments included in all column groups."""
+    """
+    Build the default keyword arguments for a column group.
+
+    Parameters
+    ----------
+    col_group : list[str]
+        List of column names belonging to the column group.
+    partitions_meta : list[MultiColumnPartition]
+        Metadata describing the available multi-column partitions.
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary containing the default configuration for the
+        column group, including partition information and invariants.
+
+    """
     return {
         "columns": col_group,
         "public_keys_values": full_partition_to_key_multi(partitions_meta),

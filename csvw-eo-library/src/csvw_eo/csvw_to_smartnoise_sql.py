@@ -192,20 +192,28 @@ def main() -> None:
     ----------------------
     --input : str (required)
         Path to input CSVW-EO JSON metadata file.
+
     --output : str (required)
         Path to output SmartNoise YAML metadata file.
+
     --schema : str (default="MySchema")
         SmartNoise schema name.
+
     --table : str (default="MyTable")
         SmartNoise table name.
+
     --sample_max_ids : bool (default=True)
         Skip reservoir sampling if users appear at most max_ids times.
+
     --censor_dims : bool (default=True)
         Drop GROUP BY output rows that might reveal rare individuals.
+
     --clamp_counts : bool (default=False)
         Clamp negative DP counts to zero.
+
     --clamp_columns : bool (default=True)
         Clamp all input data to the column lower/upper bounds.
+
     --use_dpsu : bool (default=False)
         Use Differential Private Set Union for rare dimensions.
     """

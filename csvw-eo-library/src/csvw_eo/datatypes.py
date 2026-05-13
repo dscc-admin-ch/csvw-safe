@@ -121,7 +121,21 @@ def is_datetime(value: str) -> bool:
 
 
 def refine_integer_type(series: pd.Series) -> DataTypes:
-    """Infer type of integer."""
+    """
+    Refine an integer series into a more specific XML Schema datatype.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Input integer series.
+
+    Returns
+    -------
+    DataTypes
+        The most specific integer subtype (e.g., positiveInteger,
+        negativeInteger, or integer).
+
+    """
     s = series.dropna()
 
     if (s > 0).all():
@@ -134,7 +148,25 @@ def refine_integer_type(series: pd.Series) -> DataTypes:
 
 
 def is_categorical(series: pd.Series, max_unique: int = 20) -> bool:
-    """Infer is the series is categorical (by type or number of unique values)."""
+    """
+    Determine whether a series should be treated as categorical.
+
+    A series is considered categorical if it is of a categorical-like
+    type (string/boolean) or has a small number of unique values.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Input column.
+    max_unique : int, default=20
+        Maximum number of unique values allowed for categorical inference.
+
+    Returns
+    -------
+    bool
+        True if the series is categorical, False otherwise.
+
+    """
     non_null = series.dropna()
     if non_null.empty:
         return True
@@ -174,7 +206,23 @@ def is_continuous(series: pd.Series, max_unique: int = 20) -> bool:
 def infer_xmlschema_datatype(  # noqa: PLR0911, PLR0912
     series: pd.Series,
 ) -> DataTypes:
-    """Infer xml schema datatype."""
+    """
+    Infer the most appropriate XML Schema datatype for a pandas series.
+
+    The inference considers pandas dtypes, string parsing, and fallback
+    heuristics for object types.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Input column to analyze.
+
+    Returns
+    -------
+    DataTypes
+        Inferred XML Schema datatype.
+
+    """
     s = series.dropna()
 
     if s.empty:
@@ -226,7 +274,25 @@ def infer_xmlschema_datatype(  # noqa: PLR0911, PLR0912
 
 
 def to_pandas_dtype(csvw_type: DataTypes) -> str:
-    """Xml datatype to pandas datatype."""
+    """
+    Convert a CSVW XML Schema datatype to a pandas dtype.
+
+    Parameters
+    ----------
+    csvw_type : DataTypes
+        XML Schema datatype.
+
+    Returns
+    -------
+    str
+        Equivalent pandas dtype string.
+
+    Raises
+    ------
+    ValueError
+        If the datatype is missing or invalid.
+
+    """
     if not csvw_type:
         raise ValueError("Missing DataTypes")
 
@@ -251,7 +317,25 @@ def to_pandas_dtype(csvw_type: DataTypes) -> str:
 
 
 def to_snsql_datatype(csvw_type: DataTypes) -> str:
-    """Smartnoise-sql datatype to pandas datatype."""
+    """
+    Convert a CSVW XML Schema datatype to a SmartNoise SQL datatype.
+
+    Parameters
+    ----------
+    csvw_type : DataTypes
+        XML Schema datatype.
+
+    Returns
+    -------
+    str
+        Equivalent SmartNoise SQL datatype.
+
+    Raises
+    ------
+    ValueError
+        If the datatype is missing or invalid.
+
+    """
     if not csvw_type:
         raise ValueError("Missing DataTypes")
 
