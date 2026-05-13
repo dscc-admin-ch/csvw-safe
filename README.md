@@ -30,7 +30,7 @@ Examples include:
 - contribution bounds for DP
 - logical dependencies
 
-![Overview](docs/images/csvw-safe_structure.png)
+![Overview](images/csvw-safe_structure.png)
 
 ---
 
@@ -68,6 +68,6 @@ dummy_df = make_dummy_from_metadata(metadata)
 
 | Section        | Link                                                                                                                     |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Vocabulary     | [https://dscc-admin-ch.github.io/csvw-safe-docs/vocabulary/](https://dscc-admin-ch.github.io/csvw-safe-docs/vocabulary/) |
-| Python Library | [https://dscc-admin-ch.github.io/csvw-safe-docs/library/](https://dscc-admin-ch.github.io/csvw-safe-docs/library/)       |
+| Vocabulary     | [https://dscc-admin-ch.github.io/csvw-safe-docs/vocabulary/overview/](https://dscc-admin-ch.github.io/csvw-safe-docs/vocabulary/overview/) |
+| Python Library | [https://dscc-admin-ch.github.io/csvw-safe-docs/library/overview/](https://dscc-admin-ch.github.io/csvw-safe-docs/library/overview/)       |
 | API Reference  | [https://dscc-admin-ch.github.io/csvw-safe-docs/api/](https://dscc-admin-ch.github.io/csvw-safe-docs/api/)               |
