@@ -4,4 +4,4 @@ General helper functions and shared utilities.
 
 ---
 
-::: csvw_eotils
+::: csvw_eo.utils

@@ -7,10 +7,11 @@ EO stands for "Eyes-Off", highlighting privacy-preserving workflows in which sen
 ## Features
 
 - Metadata generation
+- Metadata validation
 - Dummy data generation
-- SHACL validation
-- OpenDP integration
-- SmartNoise SQL integration
+- [SHACL validation](https://github.com/dscc-admin-ch/csvw-eo/blob/main/csvw-eo-constraints.ttl)
+- [opendp](https://docs.opendp.org/en/stable/index.html) integration
+- [smartnoise_sql](https://docs.smartnoise.org/sql/index.html#metadata) integration
 
 ## Documentation
 
